@@ -502,7 +502,9 @@ double	AgentPopulation::ComputeSumOfUtilities()
 
 void	inline	AgentPopulation::GetSerialAgentPair (AgentPtr& Agent1, AgentPtr& Agent2)
 {
-	Agent1 = Agents[RNG.IntegerInRange(1, NumberOfAgents)];
+	int access = RNG.IntegerInRange(1, NumberOfAgents);
+	std::cout << access;
+	Agent1 = Agents[access];
 	do
 		Agent2 = Agents[RNG.IntegerInRange(1, NumberOfAgents)];
 	while (Agent2 == Agent1);
