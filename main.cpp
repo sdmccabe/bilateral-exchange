@@ -17,6 +17,8 @@ Extended by Stefan McCabe
 
 #include <cmath>
 #include <iostream>
+#include <random>
+
 
 const double Version = 0.97;
 
@@ -31,7 +33,7 @@ const double alphaMax = 0.99;
 const int wealthMin = 50;
 const int wealthMax = 150;
 
-const bool DefaultSerialExecution = false;	// FALSE means parallel
+const bool DefaultSerialExecution = true;	// FALSE means parallel
 const int AgentsToRandomize = NumberOfAgents / 10;	// This is done only for parallel interactions	
 const int RandomizationMethod = 0;	// 0 means swap pairs
 									// 1 means "threaded"
@@ -99,7 +101,8 @@ public:
 
 class RandomNumberGenerator
 {
-	int last;
+	//int last;
+	std::mt19937 random;
 public:
 	RandomNumberGenerator();
 	int LongInteger();								//	Return INTEGER-valued random numbers in the interval (0, MaxLongInt)
@@ -290,13 +293,16 @@ void	MemoryObject::WriteMemoryRequirements()
 	std::cout << std::endl;
 }	//	MemoryObject::WriteMemoryRequirements()
 
-RandomNumberGenerator::RandomNumberGenerator():
-  last(0)
+// last(0)
+RandomNumberGenerator::RandomNumberGenerator():  
+	random(std::mt19937(time(0)))
 {
 	if (UseRandomSeed)
-		last = (int)time(NULL);
+		//last = (int)time(NULL);
+		random = std::mt19937(time(0));
 	else
-		last = NonRandomSeed;
+		//last = NonRandomSeed;
+		random = std::mt19937(NonRandomSeed);
 }	//	RandomNumberGenerator::Init()
 
 int	RandomNumberGenerator::LongInteger()
@@ -304,11 +310,13 @@ int	RandomNumberGenerator::LongInteger()
  This method generates INTEGER-valued random numbers in the interval [1, INT_MAX - 1]}
  Source: Bratley, Fox and Schrage, 1987
  */
-	int k = last / 127773;
-	last = 16807 * (last - k	*	127773) - k	*	2836;
-	if (last < 0)
-		last += INT_MAX;
-	return last;
+	// int k = last / 127773;
+	// last = 16807 * (last - k	*	127773) - k	*	2836;
+	// if (last < 0)
+	// 	last += INT_MAX;
+	// return last;
+
+ 	return random();
 }	//	RandomNumberGenerator::LongInteger()
 
 int	RandomNumberGenerator::IntegerInRange (int min, int max)
