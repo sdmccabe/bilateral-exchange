@@ -20,43 +20,49 @@ Extended by Stefan McCabe
 
 const double Version = 0.97;
 
-const int NumberOfAgents = 10000000;				//	10^7
-const int NumberOfCommodities = 2;				// 	2 x 10^4
+const int NumberOfAgents = 10000000; //	10^7
+const int NumberOfCommodities = 2;	 // 	2 x 10^4
 
 //const int PairwiseInteractionsPerPeriod = NumberOfAgents / 2;
 const int PairwiseInteractionsPerPeriod = 50;
 
-const	double alphaMin = 0.01;
+const double alphaMin = 0.01;
 const double alphaMax = 0.99;
 const int wealthMin = 50;
 const int wealthMax = 150;
 
-const bool DefaultSerialExecution = true;										// FALSE means parallel
-const int AgentsToRandomize = NumberOfAgents / 10;					// This is done only for parallel interactions	
-const int RandomizationMethod = 0;													// 0 means swap pairs
-																														// 1 means "threaded"
+const bool DefaultSerialExecution = false;	// FALSE means parallel
+const int AgentsToRandomize = NumberOfAgents / 10;	// This is done only for parallel interactions	
+const int RandomizationMethod = 0;	// 0 means swap pairs
+									// 1 means "threaded"
 const int RequestedEquilibrations = 1;
 const bool SameAgentInitialCondition = false;
 
 const double trade_eps = 0.01;
 const double exp_trade_eps = exp(trade_eps);
 
-const int termination_criterion = -1;							// -2 means termination based on time
-																									// -1 means use L2 norm on MRSs
-																									//	0 means use L∞ norm on MRSs
-																									//	1 means use relative increase in V
-																									//	2 means use absolute increase in V
+const int termination_criterion = -1; 	// -2 means termination based on time
+										// -1 means use L2 norm on MRSs
+										//	0 means use L∞ norm on MRSs
+										//	1 means use relative increase in V
+										//	2 means use absolute increase in V
 const long TerminationTime = 20000;
 const double termination_eps = 0.01;	//	10^-1
-const long CheckTerminationThreshhold = 100000;			//	1.5 x 10^9 periods ~ 60 x 10^9 interactions
-const int CheckTerminationPeriod = 10000;						//	Typical values:
-																										//	A = 1000, N = 2,			 use 1											A = 100, N = 10,			use 1
-																										//	A = 10,000, N = 2,		 use 10											A = 100, N = 50,			use 25
-																										//	A = 100,000, N = 2,		 use 100										A = 100, N = 100,			use 100
-																										//	A = 1,000,000, N = 2,	 use 1000										A = 100, N = 500,			use 2500
-																										//	A = 10,000,000, N = 2, use 10,000									A = 100, N = 1000,		use 10,000
-																										//																										A = 100, N = 5000,		use 250,000
-																										//																										A = 100, N = 10,000,	use 1,000,000
+const long CheckTerminationThreshhold = 100000;	//	1.5 x 10^9 periods ~ 60 x 10^9 interactions
+const int CheckTerminationPeriod = 10000;	//	Typical values:
+											//	A = 100, 		N = 10,		use 1	
+											//	A = 100, 		N = 50,		use 25
+											//	A = 100, 		N = 100,	use 100
+											//	A = 100, 		N = 500,	use 2500
+											//	A = 100, 		N = 1000,	use 10,000
+											//	A = 100, 		N = 5000,	use 250,000
+											//	A = 100, 		N = 10,000,	use 1,000,000
+											//	A = 1000, 		N = 2, 		use 1												
+											//	A = 10,000, 	N = 2, 		use 10											
+											//	A = 100,000, 	N = 2,		use 100											
+											//	A = 1,000,000, 	N = 2, 		use 1000									
+											//	A = 10,000,000, N = 2, 		use 10,000
+
 const bool ShockPreferences = false;
 const int ShockPeriod = 10;
 const double MinShock = 1.0;
@@ -72,11 +78,11 @@ const int NonRandomSeed = 1;
 
 const bool PrintEndowments = Off;
 const bool PrintIntermediateOutput = On;
-const int IntermediateOutputPrintPeriod = 10000;		//	20x10^6
+const int IntermediateOutputPrintPeriod = 10000; //	20x10^6
 const bool PrintConvergenceStats = true;
 const bool PrintFinalCommodityList = Off;
 
-typedef double	CommodityArray[NumberOfCommodities+1];								//	Size: NumberOfCommodities * 8 bytes
+typedef double	CommodityArray[NumberOfCommodities+1];	//	Size: NumberOfCommodities * 8 bytes
 typedef CommodityArray *CommodityArrayPtr;
 
 double inline	Dot (CommodityArrayPtr vector1, CommodityArrayPtr vector2);
@@ -96,19 +102,19 @@ class RandomNumberGenerator
 	int last;
 public:
 	RandomNumberGenerator();
-	int LongInteger();														//	Return INTEGER-valued random numbers in the interval (0, MaxLongInt)
-	int IntegerInRange (int min, int max);				//	Return INTEGER-valued random numbers in the interval [min, max]
-	double UnitReal();														//	Return REAL-valued random numbers in the interval [0, 1]
+	int LongInteger();								//	Return INTEGER-valued random numbers in the interval (0, MaxLongInt)
+	int IntegerInRange (int min, int max);			//	Return INTEGER-valued random numbers in the interval [min, max]
+	double UnitReal();								//	Return REAL-valued random numbers in the interval [0, 1]
 	double RealInRange (double min, double max);	//	Return REAL-valued random numbers in the interval [min, max]
 } RNG;
 
 class Data
-{																											//	Size:
-	int N;																							//		4 bytes
-	double min;																					//		8 bytes
-	double max;																					//		8 bytes
-	double sum;																					//		8 bytes
-	double sum2;																				//		8 bytes
+{					//	Size:
+	int N;			//		4 bytes
+	double min;		//		8 bytes
+	double max;		//		8 bytes
+	double sum;		//		8 bytes
+	double sum2;	//		8 bytes
 public:
 	Data();
 	void Init();
@@ -121,31 +127,31 @@ public:
 	double GetExpAverage() {return exp(GetAverage());};
 	double GetVariance();
 	double GetStdDev() {return sqrt(GetVariance());};
-};																										//	Total:  36 bytes
+};	//	Total:  36 bytes
 
 typedef Data *DataPtr;
 
 class CommodityData
-{																											//	Size:																								
-	Data data[NumberOfCommodities+1];										//		NumberOfCommodities * 8 bytes
+{														//	Size:																								
+	Data data[NumberOfCommodities+1];					//		NumberOfCommodities * 8 bytes
 public:
 	CommodityData();
 	void Clear();
 	DataPtr GetData(int index) {return &data[index];};
 	double L2StdDev();
 	double LinfStdDev();																		
-};																										//	Total:	NumberOfCommodities * 8 bytes									
-//	Example:	NumberOfCommodities = 100, size = 800 bytes
+};														//	Total:	NumberOfCommodities * 8 bytes									
+														//	Example:	NumberOfCommodities = 100, size = 800 bytes
 
 class Agent
-{																											//	Size:
-	CommodityArray alphas;															//		NumberOfCommodities * 8 bytes
-	CommodityArray endowment;														//		NumberOfCommodities * 8 bytes							
-	CommodityArray initialMRSs;													//		NumberOfCommodities * 8 bytes
-	CommodityArray allocation;													//		NumberOfCommodities * 8 bytes
-	CommodityArray currentMRSs;													//		NumberOfCommodities * 8 bytes
-	double initialUtility;															//		8 bytes
-	double initialWealth;																//		8 bytes
+{								//	Size:
+	CommodityArray alphas;		//		NumberOfCommodities * 8 bytes
+	CommodityArray endowment;	//		NumberOfCommodities * 8 bytes							
+	CommodityArray initialMRSs;	//		NumberOfCommodities * 8 bytes
+	CommodityArray allocation;	//		NumberOfCommodities * 8 bytes
+	CommodityArray currentMRSs;	//		NumberOfCommodities * 8 bytes
+	double initialUtility;		//		8 bytes
+	double initialWealth;		//		8 bytes
 public:
 	Agent();
 	void Init();
@@ -164,16 +170,17 @@ public:
 	double GetInitialUtility() {return initialUtility;};
 	double Wealth (CommodityArrayPtr prices) {return Dot(&allocation, prices);};
 	double GetInitialWealth() {return initialWealth;};
-};																										//	Total:	20 + NumberOfCommodities * 40 bytes
-																											//	Example:	NumberOfCommodities = 2, size = 20 + 80 = 100
-																											//	Example:	NumberOfCommodities = 100, size = 20 + 4000 = 4020
+};
+								//	Total:	20 + NumberOfCommodities * 40 bytes
+								//	Example:	NumberOfCommodities = 2, size = 20 + 80 = 100
+								//	Example:	NumberOfCommodities = 100, size = 20 + 4000 = 4020
 typedef Agent *AgentPtr;
 
 class AgentPopulation
-{																														//	Size:
-	AgentPtr Agents[NumberOfAgents + 1];											//	NumberOfAgents * 4 bytes
-	CommodityArray Volume;																		//
-	CommodityData AlphaData, EndowmentData, LnMRSsData;				//
+{													//	Size:
+	AgentPtr Agents[NumberOfAgents + 1];			//	NumberOfAgents * 4 bytes
+	CommodityArray Volume;	
+	CommodityData AlphaData, EndowmentData, LnMRSsData;
 	bool LnMRSsDataUpToDate;
 	void ComputeLnMRSsDistribution();
 	double LastSumOfUtilities;
@@ -187,14 +194,15 @@ class AgentPopulation
 	void GetParallelAgentPair (AgentPtr& Agent1, AgentPtr& Agent2);
 	void (AgentPopulation::*GetAgentPair) (AgentPtr& Agent1, AgentPtr& Agent2);
 public:
-	AgentPopulation();																						//	Constructor...
+	AgentPopulation();								//	Constructor...
 	void Init();
 	void Reset();
 	long Equilibrate(int NumberOfEquilibrationsSoFar);
 	void ConvergenceStatistics(CommodityArray VolumeStats);
 	void CompareTwoAgents(AgentPtr Agent1, AgentPtr Agent2);
 	void ShockAgentPreferences();
-};																										//	Example:	NumberOfAgents = 100, size = 400 bytes
+};
+													//	Example:	NumberOfAgents = 100, size = 400 bytes
 
 typedef AgentPopulation *AgentPopulationPtr;
 
