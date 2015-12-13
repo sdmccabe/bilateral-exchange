@@ -19,7 +19,7 @@ Extended by Stefan McCabe
 #include <cmath>
 #include <iostream>
 #include <random>
-
+#include <algorithm>
 
 const double Version = 0.97;
 
@@ -100,15 +100,17 @@ double inline   Dot(CommodityArrayPtr vector1, CommodityArrayPtr vector2);
 void    WriteActualTimeAndDate(char DescriptionString[63]);
 
 class   MemoryObject {
-    long    start;
+    long start;
+
  public:
     MemoryObject();
     void WriteMemoryRequirements();
 } MemoryState;
 
 class RandomNumberGenerator {
-    //  int last;
-    std::mt19937 random;
+      int last;
+    // std::mt19937 random;
+    // std::uniform_int_distribution<int> random_agent(1, NumberOfAgents);
  public:
     RandomNumberGenerator();
 
@@ -123,6 +125,9 @@ class RandomNumberGenerator {
 
     double RealInRange(double min, double max);
     //  Return REAL-valued random numbers in the interval [min, max]
+
+    // int AgentIndex();
+    // //  Return int in the range (1, NumberOfAgents)
 } RNG;
 
 class Data {        //      Size:
@@ -333,59 +338,58 @@ void MemoryObject::WriteMemoryRequirements() {
     std::cout << std::endl;
 }   //  MemoryObject::WriteMemoryRequirements()
 
-// last(0)
+// random(std::mt19937(time(0)))
 RandomNumberGenerator::RandomNumberGenerator():
-random(std::mt19937(time(0)))
-{
-    if (UseRandomSeed)
-        //last = (int)time(NULL);
-        random = std::mt19937(time(0));
-    else
-        //last = NonRandomSeed;
-        random = std::mt19937(NonRandomSeed);
+last(0) {
+    if (UseRandomSeed) {
+          last = static_cast<int>(time(NULL));
+      //  random = std::mt19937(time(0));
+    } else {
+          last = NonRandomSeed;
+     //   random = std::mt19937(NonRandomSeed);
+    }
 }   //  RandomNumberGenerator::Init()
 
-int RandomNumberGenerator::LongInteger()
-{/*
+int RandomNumberGenerator::LongInteger() {
+/*
  This method generates INTEGER-valued random numbers in the interval [1, INT_MAX - 1]}
  Source: Bratley, Fox and Schrage, 1987
  */
-    // int k = last / 127773;
-    // last = 16807 * (last - k *   127773) - k *   2836;
-    // if (last < 0)
-    //  last += INT_MAX;
-    // return last;
+    int k = last / 127773;
+    last = 16807 * (last - k *   127773) - k *   2836;
+    if (last < 0)
+     last += INT_MAX;
+    return last;
 
- return random();
+    return random();
 }   //  RandomNumberGenerator::LongInteger()
 
-int RandomNumberGenerator::IntegerInRange (int min, int max)
-{/*
+int RandomNumberGenerator::IntegerInRange(int min, int max) {
+/*
  This method generates INTEGER-valued random numbers in the interval [min, max]
  */
- return min + LongInteger() % (max - min + 1);
+    return min + LongInteger() % (max - min + 1);
 }   //  RandomNumberGenerator::IntegerInRange()
 
-double  RandomNumberGenerator::UnitReal()
-{/*
+double  RandomNumberGenerator::UnitReal() {
+/*
  This method generates REAL-valued random numbers in the interval [0, 1]
  */
- return double(LongInteger()) / double(INT_MAX);
+    return static_cast<double>(LongInteger()) / static_cast<double>(INT_MAX);
 }   //  RandomNumberGenerator::UnitReal()
 
-double  RandomNumberGenerator::RealInRange (double min, double max)
-{/*
+double  RandomNumberGenerator::RealInRange(double min, double max) {
+/*
  This method generates REAL-valued random numbers in the interval [min, max]}
  */
- return min + (max - min) * UnitReal();
+    return min + (max - min) * UnitReal();
 }   //  RandomNumberGenerator::RealInRange()
 
 Data::Data():
-N(0), min(1000000.0), max (0.0), sum (0.0), sum2(0.0)
+N(0), min(1000000.0), max(0.0), sum(0.0), sum2(0.0)
 {}  //  Data::Data()
 
-void Data::Init()
-{
+void Data::Init() {
     N = 0;
     min = 1000000.0;    //  10^6
     max = 0.0;
@@ -393,8 +397,7 @@ void Data::Init()
     sum2 = 0.0;
 }   //  Data::Data()
 
-void    Data::AddDatuum (double Datuum)
-{
+void Data::AddDatuum(double Datuum) {
     N = N + 1;
     if (Datuum < min)
         min = Datuum;
@@ -404,79 +407,71 @@ void    Data::AddDatuum (double Datuum)
     sum2 += Datuum * Datuum;
 }   //  Data::AddDatuum()
 
-double  Data::GetVariance()
-{
+double Data::GetVariance() {
     double avg, arg;
-    
-    if (N > 1)
-    {
+
+    if (N > 1) {
         avg = GetAverage();
         arg = sum2 - N * avg * avg;
         return arg / (N - 1);
-    }
-    else
+    } else {
         return 0.0;
+    }
 }   //  Data::GetVariance()
 
 CommodityData::CommodityData()
 {}
 
-void    CommodityData::Clear()
-{
+void CommodityData::Clear() {
     //  Initialize data objects
     //
-    for (int i = 1; i <= NumberOfCommodities; ++i)
+    for (int i = 1; i <= NumberOfCommodities; ++i) {
         data[i].Init();
+    }
 }   //  CommodityData::Clear()
 
-double  CommodityData::L2StdDev()
-{
+double CommodityData::L2StdDev() {
     double sum = 0.0;
-    
-    // Instead of computing the standard deviation for each commodity (and calling sqrt() N times), find the largest variance and from it get the std dev
-    //
-    for (int i = 1; i <= NumberOfCommodities; ++i)
+
+    // Instead of computing the standard deviation for each commodity (and calling sqrt() N times),
+    // find the largest variance and from it get the std dev
+    for (int i = 1; i <= NumberOfCommodities; ++i) {
         sum += data[i].GetVariance();
+    }
     return sqrt(sum);
 }   //  CommodityData::L2StdDev
 
-double  CommodityData::LinfStdDev()
-{
+double  CommodityData::LinfStdDev() {
     double var, max = 0.0;
-    
-    // Instead of computing the standard deviation for each commodity (and  calling sqrt() N times), find the largest variance and from it get the std dev
-    //
-    for (int i = 1; i <= NumberOfCommodities; ++i)
-    {
+
+    // Instead of computing the standard deviation for each commodity (and calling sqrt() N times),
+    // find the largest variance and from it get the std dev
+    for (int i = 1; i <= NumberOfCommodities; ++i) {
         var = data[i].GetVariance();
-        if (var > max)
+        if (var > max) {
             max = var;
+        }
     }
     return sqrt(max);
 }   //  CommodityData::LinfStdDev
 
-Agent::Agent():
-initialUtility(0.0), initialWealth(0.0)
-{
+Agent::Agent(): initialUtility(0.0), initialWealth(0.0) {
     Init();
-}   
+}
 
-void    Agent::Init()
-{
+void Agent::Init() {
     int CommodityIndex;
-    
+
     //  First generate and normalize the exponents...
     //
     double sum = 0.0;
-    for (CommodityIndex = 1; CommodityIndex <= NumberOfCommodities; ++CommodityIndex)
-    {
+    for (CommodityIndex = 1; CommodityIndex <= NumberOfCommodities; ++CommodityIndex) {
         alphas[CommodityIndex] = RNG.RealInRange(alphaMin, alphaMax);
         sum += alphas[CommodityIndex];
     }
     //  Next, fill up the rest of the agent fields...
     //
-    for (CommodityIndex = 1; CommodityIndex <= NumberOfCommodities; ++CommodityIndex)
-    {
+    for (CommodityIndex = 1; CommodityIndex <= NumberOfCommodities; ++CommodityIndex) {
         alphas[CommodityIndex] = alphas[CommodityIndex] / sum;
         endowment[CommodityIndex] = RNG.RealInRange(wealthMin, wealthMax);
         allocation[CommodityIndex] = endowment[CommodityIndex];
@@ -487,119 +482,110 @@ void    Agent::Init()
     initialWealth = Wealth(&initialMRSs);
 }   //  Agent:Init()
 
-void    Agent::Reset()
-{
-    for (int CommodityIndex = 1; CommodityIndex <= NumberOfCommodities; ++CommodityIndex)
-    {
+void Agent::Reset() {
+    for (int CommodityIndex = 1; CommodityIndex <= NumberOfCommodities; ++CommodityIndex) {
         allocation[CommodityIndex] =  endowment[CommodityIndex];
         currentMRSs[CommodityIndex] = initialMRSs[CommodityIndex];
     }
 }   //  Agent::Reset
 
-double  Agent::MRS (int CommodityIndex, int Numeraire)
-{
+double Agent::MRS (int CommodityIndex, int Numeraire) {
     return (alphas[CommodityIndex] * allocation[Numeraire]) / (alphas[Numeraire] * allocation[CommodityIndex]);
 }   //  Agent::MRS()
 
-void    Agent::ComputeMRSs()
-{
+void Agent::ComputeMRSs() {
     int i;
     currentMRSs[1] = 1.0;
-    for (i = 2; i <= NumberOfCommodities; ++i)
+    for (i = 2; i <= NumberOfCommodities; ++i) {
         currentMRSs[i] = MRS(i, 1);
+    }
 }   //      Agent::ComputeMRSs()
 
-double  Agent::Utility()
-{
+double Agent::Utility() {
     double product = 1.0;
-    
-    for (int i = 1; i <= NumberOfCommodities; ++i)
+
+    for (int i = 1; i <= NumberOfCommodities; ++i) {
         product *= pow(allocation[i], alphas[i]);
+    }
     return product;
 }   //  Agent::Utility()
 
-void    AgentPopulation::ComputeLnMRSsDistribution()
-{
+void AgentPopulation::ComputeLnMRSsDistribution() {
     LnMRSsData.Clear();
-    
-    for (int i = 1; i <= NumberOfAgents; ++i)
-    {
+
+    for (int i = 1; i <= NumberOfAgents; ++i) {
         Agents[i]->ComputeMRSs();
-        for (int j = 1; j <= NumberOfCommodities; ++j)
-            LnMRSsData.GetData(j)->AddDatuum(log(Agents[i]->GetCurrentMRS(j)));     
+        for (int j = 1; j <= NumberOfCommodities; ++j) {
+            LnMRSsData.GetData(j)->AddDatuum(log(Agents[i]->GetCurrentMRS(j)));
+        }
     }       //  for i...
     LnMRSsDataUpToDate = true;
 }   //  AgentPopulation::ComputeLnMRSsDistribution()
 
-double  AgentPopulation::ComputeSumOfUtilities()
-{
+double  AgentPopulation::ComputeSumOfUtilities() {
     double sum = 0.0;
-    
+
     for (int i = 1; i <= NumberOfAgents; ++i)
         sum += Agents[i]->Utility();
     return sum;
 }   //  AgentPopulation::ComputeSumOfUtilities()
 
-void    inline  AgentPopulation::GetSerialAgentPair (AgentPtr& Agent1, AgentPtr& Agent2)
-{
+void inline AgentPopulation::GetSerialAgentPair(AgentPtr& Agent1, AgentPtr& Agent2) {
     int access = RNG.IntegerInRange(1, NumberOfAgents);
-    std::cout << access;
+    // std::cout << access;
     Agent1 = Agents[access];
-    do
+
+    do {
     Agent2 = Agents[RNG.IntegerInRange(1, NumberOfAgents)];
-    while (Agent2 == Agent1);
+    } while (Agent2 == Agent1);
 }   //  AgentPopulation::GetSerialAgentPair()
 
-void    inline AgentPopulation::RandomizeAgents (int NumberToRandomize)
-{
+void inline AgentPopulation::RandomizeAgents(int NumberToRandomize) {
     // Note:  If NumberToRandomize < 2 then it is increased to 2, so that 1 pair is swapped each period
     //
     int AgentIndex1, AgentIndex2;
-    int PairsToRandomize; 
+    int PairsToRandomize;
     AgentPtr TempPtr;
-    
+
     PairsToRandomize = NumberToRandomize / 2;
-    if (PairsToRandomize < 1)
+    if (PairsToRandomize < 1) {
         PairsToRandomize = 1;
-    
-    for (int i = 1; i <= PairsToRandomize; ++i)
-    {
+    }
+
+    for (int i = 1; i <= PairsToRandomize; ++i) {
         AgentIndex1 = RNG.IntegerInRange(1, NumberOfAgents);
-        do
+        do {
         AgentIndex2 = RNG.IntegerInRange(1, NumberOfAgents);
-        while (AgentIndex1 == AgentIndex2);
+        } while (AgentIndex1 == AgentIndex2);
+
         TempPtr = Agents[AgentIndex1];
         Agents[AgentIndex1] = Agents[AgentIndex2];
         Agents[AgentIndex2] = TempPtr;
     }
 }   //  AgentPopulation::RandomizeAgents()
 
-void    inline AgentPopulation::RandomizeAgents2 (int NumberToRandomize)
-{
+void inline AgentPopulation::RandomizeAgents2(int NumberToRandomize) {
     // Note:  The NumberToRandomize need not be even, just > 1
     //
     int AgentIndex1, AgentIndex2;
     AgentPtr TempPtr;
-    
+
     AgentIndex1 = RNG.IntegerInRange(1, NumberOfAgents);
     TempPtr = Agents[AgentIndex1];
-    
-    if (NumberToRandomize == 1)
+
+    if (NumberToRandomize == 1) {
         NumberToRandomize = 2;
-    for (int i = 1; i < NumberToRandomize; ++i)
-    {
+    }
+    for (int i = 1; i < NumberToRandomize; ++i) {
         AgentIndex2 = RNG.IntegerInRange(1, NumberOfAgents);
         Agents[AgentIndex1] = Agents[AgentIndex2];
         AgentIndex1 = AgentIndex2;
     }
     Agents[AgentIndex2] = TempPtr;
-    
 }   //  AgentPopulation::RandomizeAgents2()
 
-void    inline AgentPopulation::GetParallelAgentPair (AgentPtr& Agent1, AgentPtr& Agent2)
-{
-    if (ActiveAgentIndex > NumberOfAgents)
-    {
+void inline AgentPopulation::GetParallelAgentPair (AgentPtr& Agent1, AgentPtr& Agent2) {
+    if (ActiveAgentIndex > NumberOfAgents) {
         ActiveAgentIndex = 1;
         RandomizeAgents(AgentsToRandomize);
     }
@@ -609,8 +595,7 @@ void    inline AgentPopulation::GetParallelAgentPair (AgentPtr& Agent1, AgentPtr
 }   //  AgentPopulation::GetParallelAgentPair()
 
 AgentPopulation::AgentPopulation():
-AlphaData(), EndowmentData(), LnMRSsData(), LnMRSsDataUpToDate(true), LastSumOfUtilities(0.0), ActiveAgentIndex(0), GetAgentPair(NULL)
-{
+AlphaData(), EndowmentData(), LnMRSsData(), LnMRSsDataUpToDate(true), LastSumOfUtilities(0.0), ActiveAgentIndex(0), GetAgentPair(NULL) {
     for (int i = 1; i <= NumberOfAgents; i++)
         Agents[i] = new Agent;
 
@@ -620,34 +605,30 @@ AlphaData(), EndowmentData(), LnMRSsData(), LnMRSsDataUpToDate(true), LastSumOfU
         GetAgentPair = &AgentPopulation::GetParallelAgentPair;
 }   // Constructor...
 
-void    AgentPopulation::Init()
-{
+void AgentPopulation::Init() {
     AgentPtr ActiveAgent;
     int CommodityIndex;
-    Data    InitialOwnWealthData;
-    
+    Data InitialOwnWealthData;
+
     ActiveAgentIndex = 1;
     AlphaData.Clear();
     EndowmentData.Clear();
     LnMRSsData.Clear();
-    
+
     //  Cycle through the agents...
     //
-    for (int AgentIndex = 1; AgentIndex <= NumberOfAgents; ++AgentIndex)
-    {
+    for (int AgentIndex = 1; AgentIndex <= NumberOfAgents; ++AgentIndex) {
         ActiveAgent = Agents[AgentIndex];
         ActiveAgent->Init();
-        
+
         //  Next, fill up the rest of the agent fields...
         //
-        for (CommodityIndex = 1; CommodityIndex <= NumberOfCommodities; ++CommodityIndex)
-        {
+        for (CommodityIndex = 1; CommodityIndex <= NumberOfCommodities; ++CommodityIndex) {
             AlphaData.GetData(CommodityIndex)->AddDatuum(ActiveAgent->GetAlpha(CommodityIndex));
             EndowmentData.GetData(CommodityIndex)->AddDatuum(ActiveAgent->GetEndowment(CommodityIndex));
             LnMRSsData.GetData(CommodityIndex)->AddDatuum(log(ActiveAgent->GetInitialMRS(CommodityIndex)));
         }   //  for (CommodityIndex...
             InitialOwnWealthData.AddDatuum(ActiveAgent->GetInitialWealth());
-
     }   //  for (AgentIndex...
 
         LnMRSsDataUpToDate = true;
@@ -656,12 +637,10 @@ void    AgentPopulation::Init()
     //  Finally, display stats on the instantiated population...
     //
         std::cout << "******************************" << std::endl;
-        std::cout << std::endl;         
-        if (PrintEndowments)
-        {
+        std::cout << std::endl;
+        if (PrintEndowments) {
             std::cout << "Initial endowments:" << std::endl;
-            for (CommodityIndex = 1; CommodityIndex <= NumberOfCommodities; ++CommodityIndex)
-            {
+            for (CommodityIndex = 1; CommodityIndex <= NumberOfCommodities; ++CommodityIndex) {
                 std::cout << "Commodity " << CommodityIndex << ": <exp.> = " << AlphaData.GetData(CommodityIndex)->GetAverage() << "; s.d. = " << AlphaData.GetData(CommodityIndex)->GetStdDev();
                 std::cout << "; <endow.> = " << EndowmentData.GetData(CommodityIndex)->GetAverage() << "; s.d. = " << EndowmentData.GetData(CommodityIndex)->GetStdDev();
                 std::cout << "; <MRS> = " << LnMRSsData.GetData(CommodityIndex)->GetExpAverage() << "; s.d. = " << LnMRSsData.GetData(CommodityIndex)->GetStdDev() << std::endl;
@@ -673,14 +652,12 @@ void    AgentPopulation::Init()
         std::cout << std::endl;
 }   //  AgentPopulation::Init()
 
-void    AgentPopulation::Reset()
-{
+void AgentPopulation::Reset() {
     for (int AgentIndex = 1; AgentIndex <= NumberOfAgents; ++AgentIndex)
         Agents[AgentIndex]->Reset();
 }   //  AgentPopulation::Reset
 
-long    AgentPopulation::Equilibrate (int NumberOfEquilibrationsSoFar)
-{
+long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
     char OutputStr[63];
     bool Converged = false;
     long theTime = 0;
@@ -691,67 +668,61 @@ long    AgentPopulation::Equilibrate (int NumberOfEquilibrationsSoFar)
     register double LAgentalpha1, LAgentalpha2, LAgentx1, LAgentx2, SAgentalpha1, SAgentalpha2, SAgentx1, SAgentx2;
     register double num, denom, delta1, delta2;
     double Agent1PreTradeUtility, Agent2PreTradeUtility;
-    
+
     std::cout << "******************************" << std::endl;
     std::cout << std::endl;
     sprintf(OutputStr, "Equilibration #%d starting at time: ", NumberOfEquilibrationsSoFar);
     WriteActualTimeAndDate(OutputStr);
     std::cout << std::endl;
-    
+
     //  Next, initialize some variables...
     //
-    for (int i = 1; i <= NumberOfCommodities; ++i)
+    for (int i = 1; i <= NumberOfCommodities; ++i){
         Volume[i] = 0.0;
-    
+    }
+
     //  Start up the exchange process here...
     //
     do {
-        LnMRSsDataUpToDate = false; //  Since these data are gonna change...
-        
+        LnMRSsDataUpToDate = false;  //  Since these data are gonna change...
+
         ++theTime;
-        if ((ShockPreferences) && (theTime % ShockPeriod == 0))
+        if ((ShockPreferences) && (theTime % ShockPeriod == 0)) {
             ShockAgentPreferences();
-        for (int i = 1; i <= PairwiseInteractionsPerPeriod; ++i)
-        {
+        }
+        for (int i = 1; i <= PairwiseInteractionsPerPeriod; ++i) {
             //  First, select the agents to be active...
             //
             (this->*GetAgentPair) (Agent1, Agent2);
-            
-            if (debug)
-            {
+
+            if (debug) {
                 Agent1PreTradeUtility = Agent1->Utility();
                 Agent2PreTradeUtility = Agent2->Utility();
             }
             //  Next, select the commodities to trade...
             //
-            if (NumberOfCommodities == 2)
-            {
+            if (NumberOfCommodities == 2) {
                 Commodity1 = 1;
                 Commodity2 = 2;
-            }
-            else
-            {
+            } else {
                 Commodity1 = RNG.IntegerInRange(1, NumberOfCommodities);
-                do
+                do {
                 Commodity2 = RNG.IntegerInRange(1, NumberOfCommodities);
-                while (Commodity2 == Commodity1);
+                } while (Commodity2 == Commodity1);
             }
             //  Compare MRSs...
             //
             MRSratio12 = Agent1->MRS(Commodity2, Commodity1) / Agent2->MRS(Commodity2, Commodity1);
-            if (MRSratio12 > 1.0)
+            if (MRSratio12 > 1.0) {
                 MRSratio = MRSratio12;
-            else
+            } else {
                 MRSratio = 1.0/MRSratio12;
-            if (MRSratio >= exp_trade_eps)  //  do exchange...
-            {
-                if (MRSratio12 > 1.0)
-                {
+            }
+            if (MRSratio >= exp_trade_eps)  {  //  do exchange
+                if (MRSratio12 > 1.0) {
                     LargerMRSAgent = Agent1;
                     SmallerMRSAgent = Agent2;
-                }
-                else
-                {
+                } else {
                     LargerMRSAgent = Agent2;
                     SmallerMRSAgent = Agent1;
                 }
@@ -765,70 +736,68 @@ long    AgentPopulation::Equilibrate (int NumberOfEquilibrationsSoFar)
                 LAgentalpha2 = LargerMRSAgent->GetAlpha(Commodity2);
                 LAgentx1 = LargerMRSAgent->GetAllocation(Commodity1);
                 LAgentx2 = LargerMRSAgent->GetAllocation(Commodity2);
-                
+
                 num = (SAgentalpha1 * LAgentalpha2 * LAgentx1 * SAgentx2) - (LAgentalpha1 * SAgentalpha2 * LAgentx2 * SAgentx1);
                 denom = LAgentalpha1 * LAgentx2 + SAgentalpha1 * SAgentx2;
                 delta1 = num / denom;
                 denom = LAgentalpha2 * LAgentx1 + SAgentalpha2 * SAgentx1;
                 delta2 = num / denom;
-                
+
                 SmallerMRSAgent->IncreaseAllocation(Commodity1, delta1);
                 SmallerMRSAgent->IncreaseAllocation(Commodity2, -delta2);
                 LargerMRSAgent->IncreaseAllocation(Commodity1, -delta1);
                 LargerMRSAgent->IncreaseAllocation(Commodity2, delta2);
-                
+
                 ++TotalInteractions;
                 Volume[Commodity1] += delta1;
                 Volume[Commodity2] += delta2;
             }   //  if (MRSratio...
 
-                if (debug)
-                {
-                    if (Agent1->Utility() < Agent1PreTradeUtility)
+                if (debug) {
+                    if (Agent1->Utility() < Agent1PreTradeUtility) {
                         std::cout << "!!!Utility decreasing trade by agent #1!!!  Actual utility change = " << Agent1->Utility() - Agent1PreTradeUtility << std::endl;
-                    if (Agent2->Utility() < Agent2PreTradeUtility)
+                    }
+                    if (Agent2->Utility() < Agent2PreTradeUtility) {
                         std::cout << "!!!Utility decreasing trade by agent #2!!!  Actual utility change = " << Agent2->Utility() - Agent2PreTradeUtility << std::endl;
+                    }
                 }
         }   //  for i...
-        
+
         //  Check for termination...
         //
-        if ((theTime > CheckTerminationThreshhold) && (theTime % CheckTerminationPeriod == 0))
-            switch (termination_criterion)
-        {
-            case -2:
-            if (theTime >= TerminationTime)
-                Converged = true;
-            break;
-            case -1:        //  Termination based on L2 norm of MRS distribution
-            ComputeLnMRSsDistribution();
-            if (LnMRSsData.L2StdDev() < termination_eps)
-                Converged = true;
-            break;
-            case 0:     //  Termination based on L∞ norm of MRS distribution
-            ComputeLnMRSsDistribution();
-            if (LnMRSsData.LinfStdDev() < termination_eps)
-                Converged = true;
-            break;
-            case 1:     //  Termination based on relative increase in V
-            if (ComputeRelativeIncreaseInSumOfUtilities() < termination_eps)
-                Converged = true;
-            break;
-            case 2:     //  Termination based on absolute increase in V
-            if (ComputeIncreaseInSumOfUtilities() < termination_eps)
-                Converged = true;
-            break;
-        }   //  switch...
-        
+        if ((theTime > CheckTerminationThreshhold) && (theTime % CheckTerminationPeriod == 0))  {
+            switch (termination_criterion) {
+                case -2:
+                if (theTime >= TerminationTime)
+                    Converged = true;
+                break;
+                case -1:  //  Termination based on L2 norm of MRS distribution
+                ComputeLnMRSsDistribution();
+                if (LnMRSsData.L2StdDev() < termination_eps)
+                    Converged = true;
+                break;
+                case 0:  //  Termination based on L∞ norm of MRS distribution
+                ComputeLnMRSsDistribution();
+                if (LnMRSsData.LinfStdDev() < termination_eps)
+                    Converged = true;
+                break;
+                case 1:  //  Termination based on relative increase in V
+                if (ComputeRelativeIncreaseInSumOfUtilities() < termination_eps)
+                    Converged = true;
+                break;
+                case 2:  //  Termination based on absolute increase in V
+                if (ComputeIncreaseInSumOfUtilities() < termination_eps)
+                    Converged = true;
+                break;
+            }   //  switch...
+        }
         //  Display stats if the time is right...
         //
-        if (PrintIntermediateOutput)
-            if (theTime % IntermediateOutputPrintPeriod == 0)
-            {
-                //printf("Through time %ld, %ld total exchanges; ", theTime, TotalInteractions);
+        if (PrintIntermediateOutput) {
+            if (theTime % IntermediateOutputPrintPeriod == 0) {
+                //  printf("Through time %ld, %ld total exchanges; ", theTime, TotalInteractions);
                 std::cout << "Through time " << theTime << ", " << TotalInteractions << " total exchanges; ";
-                switch (termination_criterion)
-                {
+                switch (termination_criterion) {
                     case -2:
                     if (!LnMRSsDataUpToDate)
                         ComputeLnMRSsDistribution();
@@ -851,31 +820,30 @@ long    AgentPopulation::Equilibrate (int NumberOfEquilibrationsSoFar)
                     std::cout << ComputeRelativeIncreaseInSumOfUtilities() << std::endl;
                     break;
                     case 2:
-                    std::cout << "increase in ∑U = "; 
+                    std::cout << "increase in ∑U = ";
                     std::cout.width(10);
                     std::cout.precision(10);
                     std::cout << ComputeIncreaseInSumOfUtilities() << std::endl;
                     break;
                 }   // switch...
             }   //  theTime...
+        }
 
         //  Store the sum of utilities if it will be needed next period for either termincation check or printing
-        //
-            if (termination_criterion > 0)
-                if (((theTime > CheckTerminationThreshhold) && ((theTime + 1) % CheckTerminationPeriod == 0)) || ((PrintIntermediateOutput) && ((theTime + 1) % IntermediateOutputPrintPeriod == 0)))
+            if (termination_criterion > 0) {
+                if (((theTime > CheckTerminationThreshhold) && ((theTime + 1) % CheckTerminationPeriod == 0)) || ((PrintIntermediateOutput) && ((theTime + 1) % IntermediateOutputPrintPeriod == 0))) {
                     LastSumOfUtilities = ComputeSumOfUtilities();
-    }   //  do...
-    while (!Converged);
+                }
+            }
+    }  while (!Converged);
+    
     //
     //  Agents are either equilibrated or user has asked for termination; display stats for the former case
     //
-    if (!Converged)
-    {   
+    if (!Converged) {
         std::cout << "Terminated by user!" << std::endl;
         return 0;
-    }
-    else    //  the economy has converged...
-    {
+    } else {    //  the economy has converged...
         std::cout << "Equilibrium achieved at time " << theTime << " via " << TotalInteractions << " interactions" << std::endl;
         std::cout << std::endl;
         sprintf(OutputStr, "Equilibration #%d ended at time: ", NumberOfEquilibrationsSoFar);
@@ -887,20 +855,17 @@ long    AgentPopulation::Equilibrate (int NumberOfEquilibrationsSoFar)
     }
 }   //  AgentPopulation::Equilibrate
 
-void    AgentPopulation::ConvergenceStatistics(CommodityArray VolumeStats)
-{
+void AgentPopulation::ConvergenceStatistics(CommodityArray VolumeStats) {
     Data InitialMarketWealthData, FinalMarketWealthData, DeltaMarketWealthData;
     Data FinalOwnWealthData, DeltaOwnWealthData, DeltaUtility;
     double price, AgentsInitialWealth, AgentsFinalWealth;
-    
-    for (int i = 1; i <= NumberOfAgents; ++i)
-    {
+
+    for (int i = 1; i <= NumberOfAgents; ++i) {
         //  First compute agent wealth one commodity at a time...
         //
         AgentsInitialWealth = 0.0;
         AgentsFinalWealth = 0.0;
-        for (int j = 1; j <= NumberOfCommodities; ++j)
-        {
+        for (int j = 1; j <= NumberOfCommodities; ++j) {
             price = LnMRSsData.GetData(j)->GetExpAverage();
             AgentsInitialWealth += Agents[i]->GetEndowment(j) * price;
             AgentsFinalWealth += Agents[i]->GetAllocation(j) * price;
@@ -908,7 +873,7 @@ void    AgentPopulation::ConvergenceStatistics(CommodityArray VolumeStats)
         InitialMarketWealthData.AddDatuum(AgentsInitialWealth);
         FinalMarketWealthData.AddDatuum(AgentsFinalWealth);
         DeltaMarketWealthData.AddDatuum(AgentsFinalWealth - AgentsInitialWealth);
-        
+
         //  The following line is a minor optimization...variable name should include 'own' to be mnemonic...
         //
         AgentsFinalWealth = Agents[i]->Wealth(Agents[i]->GetCurrentMRSs());
@@ -924,18 +889,16 @@ void    AgentPopulation::ConvergenceStatistics(CommodityArray VolumeStats)
     std::cout << "Minimum increase in utility              = " << DeltaUtility.GetMin() << "; maximum increase = " << DeltaUtility.GetMax() << std::endl;
     std::cout << "Final sum of utilities                   = " << ComputeSumOfUtilities() << std::endl;
     std::cout << std::endl;
-    if (PrintFinalCommodityList)
-        for (int i = 1; i <= NumberOfCommodities; ++i)
-        {
+    if (PrintFinalCommodityList) {
+        for (int i = 1; i <= NumberOfCommodities; ++i) {
             std::cout << "Commodity " << i << ": volume = " << VolumeStats[i];
             std::cout << "; avg. MRS = " << LnMRSsData.GetData(i)->GetExpAverage() << "; s.d. = " << LnMRSsData.GetData(i)->GetStdDev() << std::endl;
         }
+    }
 }   //  AgentPopulation::ConvergenceStatistics()
 
-void    AgentPopulation::CompareTwoAgents(AgentPtr Agent1, AgentPtr Agent2)
-{
-    for (int j = 1; j <= NumberOfCommodities; ++j)
-    {
+void AgentPopulation::CompareTwoAgents(AgentPtr Agent1, AgentPtr Agent2) {
+    for (int j = 1; j <= NumberOfCommodities; ++j) {
         if (Agent1->GetAlpha(j) != Agent2->GetAlpha(j))
             std::cout << "Bad alpha copying!" << std::endl;
         if (Agent1->GetEndowment(j) != Agent2->GetEndowment(j))
@@ -953,27 +916,25 @@ void    AgentPopulation::CompareTwoAgents(AgentPtr Agent1, AgentPtr Agent2)
         std::cout << "Bad InitialWealth copying!" << std::endl;
 }   //  AgentPopulation::CompareTwoAgents()
 
-void AgentPopulation::ShockAgentPreferences()
-{
+void AgentPopulation::ShockAgentPreferences() {
     AgentPtr ActiveAgent;
     double oldPref, newPref, pref;
-    
+
     int CommodityToShock = RNG.IntegerInRange(1, NumberOfCommodities);
-    bool sign = RNG.IntegerInRange(0,1);
+    bool sign = RNG.IntegerInRange(0, 1);
     double shock = RNG.RealInRange(MinShock, MaxShock);
-    
-    for (int AgentIndex = 1; AgentIndex <= NumberOfAgents; ++AgentIndex)
-    {
+
+    for (int AgentIndex = 1; AgentIndex <= NumberOfAgents; ++AgentIndex) {
         ActiveAgent = Agents[AgentIndex];
         oldPref = ActiveAgent->GetAlpha(CommodityToShock);
-        if (sign)
+        if (sign) {
             newPref = oldPref * shock;
-        else
+        } else {
             newPref = oldPref/shock;
+        }
         ActiveAgent->SetAlpha(CommodityToShock, newPref);
-        
-        for (int CommodityIndex = 1; CommodityIndex <= NumberOfCommodities; ++CommodityIndex)
-        {
+
+        for (int CommodityIndex = 1; CommodityIndex <= NumberOfCommodities; ++CommodityIndex) {
             pref = ActiveAgent->GetAlpha(CommodityIndex);
             ActiveAgent->SetAlpha(CommodityIndex, pref/(1.0 - oldPref + newPref));
         }   //  for (CommodityIndex...
@@ -982,32 +943,31 @@ void AgentPopulation::ShockAgentPreferences()
 
 /*================= End of Methods =================*/
 
-void    InitMiscellaneous()
-{
+void    InitMiscellaneous() {
     //  Print some configuration information...
     //
     std::cout << "B I L A T E R A L   E X C H A N G E" << std::endl <<std::endl;
     std::cout << "Robert Axtell" << std::endl;
     std::cout << "Brookings Institution -> George Mason University" << std::endl;
     std::cout << "Version " << Version << std::endl << std::endl;
-    
+
     std::cout << "Number of agents = " << NumberOfAgents << std::endl;
     std::cout << "Number of commodities = " << NumberOfCommodities << std::endl << std::endl;
-    
+
     std::cout << "Agent valuations must differ by more than epsilon = " << trade_eps << std::endl;
     std::cout << "  in order for trade to occur" << std::endl << std::endl;
-    
+
     std::cout << "A time period is defined by " << 2 * PairwiseInteractionsPerPeriod << " agents being active (";
         std::cout << PairwiseInteractionsPerPeriod << " pairings)" << std::endl << std::endl;
 
 std::cout << "Termination is checked each " << CheckTerminationPeriod << " period";
-if (CheckTerminationPeriod > 1)
+if (CheckTerminationPeriod > 1) {
     std::cout << "s";
+}
 std::cout << std::endl;
 std::cout << "  once the first " << CheckTerminationThreshhold << " periods have gone by" << std::endl;
 std::cout << "Termination occurs once the ";
-switch (termination_criterion)
-{
+switch (termination_criterion) {
     case -1:
     std::cout << "L2 norm of the standard deviation" << std::endl;
     std::cout << "  in agent MRSs falls below ";
@@ -1028,64 +988,66 @@ switch (termination_criterion)
 std::cout << termination_eps << std::endl << std::endl;
 
 std::cout << "Agents are being processed ";
-    if (DefaultSerialExecution)                         //  Can't use 'Population.Serial' here because the population has not been initialized
+    if (DefaultSerialExecution) {  //  Can't use 'Population.Serial' here because the population has not been initialized
         std::cout << "serially" << std::endl;
-    else
-    {
+    } else {
         std::cout << "in parallel" << std::endl;
         std::cout << "Number of agents rearranged in the agent list each period: " << AgentsToRandomize << std::endl;
     }
     std::cout << std::endl;
-    
-    if (!UseRandomSeed)
+
+    if (!UseRandomSeed) {
         std::cout << "Seed: " << NonRandomSeed << std::endl;
+    }
     std::cout << std::endl;
-    
+
     std::cout << "Number of equilibrations to be performed: " << RequestedEquilibrations << std::endl;
-    if (RequestedEquilibrations > 1)
-    {
+    if (RequestedEquilibrations > 1) {
         std::cout << "Agents are ";
-        if (SameAgentInitialCondition)
+        if (SameAgentInitialCondition) {
             std::cout << "not ";
+        }
         std::cout << "given new preferences and endowments for each equilibration" << std::endl;
-    }   
+    }
     std::cout << std::endl;
-    
+
     MemoryState.WriteMemoryRequirements();
 }  //   InitMiscellaneous()
 
-int main()
-{
+int main() {
     //  First, initialize variously...
     //
     InitMiscellaneous();
-    
+
     AgentPopulationPtr PopulationPtr = new AgentPopulation;
-    
+
     //  Equilibrate the agent economy once...
     //
     int EquilibrationNumber = 1;
     long sum = PopulationPtr->Equilibrate(EquilibrationNumber);
     long sum2 = sum*sum;
-    
+
     //  Equilibrate again if the user has requested this...
     //
     long interactions;
-    
+
     EquilibrationNumber = 2;
-    while (EquilibrationNumber <= RequestedEquilibrations)
-    {
-        if (SameAgentInitialCondition)
+    while (EquilibrationNumber <= RequestedEquilibrations) {
+        if (SameAgentInitialCondition) {
             PopulationPtr->Reset();
-        else
+        } else {
             PopulationPtr->Init();
+        }
         interactions = PopulationPtr->Equilibrate(EquilibrationNumber);
         sum += interactions;
         sum2 += interactions*interactions;
         ++EquilibrationNumber;
     }
-    double avg = (double) sum/(EquilibrationNumber-1);
+
+    //  double avg = (double) sum/(EquilibrationNumber-1);
+    double avg = static_cast<double>(sum)/(EquilibrationNumber-1);
     std::cout << "Average number of interactions: " << avg;
-    if (EquilibrationNumber > 2)
+    if (EquilibrationNumber > 2) {
         std::cout << "; std. dev.: " << sqrt((sum2 - (EquilibrationNumber - 1) * avg * avg)/(EquilibrationNumber - 2));
+    }
 }
