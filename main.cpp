@@ -21,6 +21,16 @@ Extended by Stefan McCabe
 #include <random>
 #include <algorithm>
 
+
+// addressing the RNG first
+
+const bool UseRandomSeed = true;
+const int NonRandomSeed = 1;
+
+
+std::mt19937 rng(NonRandomSeed);
+// We seed by default; in main we check UseRandomSeed and reseed accordingly.
+
 const double Version = 0.97;
 
 const int NumberOfAgents = 10000000;    // 10^7
@@ -81,8 +91,17 @@ const bool Off = false;
 
 const bool debug = Off;
 
-const bool UseRandomSeed = false;
-const int NonRandomSeed = 1;
+
+// DISTRIBUTIONS
+
+std::uniform_int_distribution<int> randomAgent(1, NumberOfAgents);  //  why are we 1-indexing?
+std::uniform_int_distribution<int> randomCommodity(1, NumberOfCommodities);
+std::uniform_int_distribution<int> randomBinary(0, 1);
+std::uniform_real_distribution<double> randomShock(MinShock, MaxShock);
+std::uniform_real_distribution<double> randomAlpha(alphaMin, alphaMax);
+std::uniform_real_distribution<double> randomWealth(wealthMin, wealthMax);
+//  std::uniform_int_distribution<double> randomDouble(0, 1);
+
 
 const bool PrintEndowments = Off;
 const bool PrintIntermediateOutput = On;
@@ -90,16 +109,16 @@ const int IntermediateOutputPrintPeriod = 10000;  // 20x10^6
 const bool PrintConvergenceStats = true;
 const bool PrintFinalCommodityList = Off;
 
-typedef double  CommodityArray[NumberOfCommodities+1];  
+typedef double CommodityArray[NumberOfCommodities+1];  
 //  Size: NumberOfCommodities * 8 bytes
 
 typedef CommodityArray *CommodityArrayPtr;
 
-double inline   Dot(CommodityArrayPtr vector1, CommodityArrayPtr vector2);
+double inline Dot(CommodityArrayPtr vector1, CommodityArrayPtr vector2);
 
-void    WriteActualTimeAndDate(char DescriptionString[63]);
+void WriteActualTimeAndDate(char DescriptionString[63]);
 
-class   MemoryObject {
+class MemoryObject {
     long start;
 
  public:
@@ -107,10 +126,9 @@ class   MemoryObject {
     void WriteMemoryRequirements();
 } MemoryState;
 
+#if 0
 class RandomNumberGenerator {
       int last;
-    // std::mt19937 random;
-    // std::uniform_int_distribution<int> random_agent(1, NumberOfAgents);
  public:
     RandomNumberGenerator();
 
@@ -129,6 +147,7 @@ class RandomNumberGenerator {
     // int AgentIndex();
     // //  Return int in the range (1, NumberOfAgents)
 } RNG;
+#endif
 
 class Data {        //      Size:
     int N;          //      4 bytes
@@ -329,8 +348,8 @@ void MemoryObject::WriteMemoryRequirements() {
     std::cout << "Size of CommodityData object: " << sizeof(CommodityData) << " bytes" << std::endl;
     std::cout << "Size of Population object: " << sizeof(AgentPopulation) + sizeof(Agent) * NumberOfAgents << " bytes" << std::endl;
     
-    long TotalBytesRequired = (sizeof(RandomNumberGenerator) + sizeof(MemoryObject) + sizeof(CommodityData) + sizeof(AgentPopulation) + sizeof(Agent) * NumberOfAgents);
-    
+    //long TotalBytesRequired = (sizeof(RandomNumberGenerator) + sizeof(MemoryObject) + sizeof(CommodityData) + sizeof(AgentPopulation) + sizeof(Agent) * NumberOfAgents);
+    long TotalBytesRequired = (sizeof(rng) + sizeof(MemoryObject) + sizeof(CommodityData) + sizeof(AgentPopulation) + sizeof(Agent) * NumberOfAgents);
     if (TotalBytesRequired < 1000000)
         std::cout << "Total memory requirements: " << double(TotalBytesRequired/1000.0) << " kilobytes" << std::endl;
     else
@@ -338,16 +357,15 @@ void MemoryObject::WriteMemoryRequirements() {
     std::cout << std::endl;
 }   //  MemoryObject::WriteMemoryRequirements()
 
-// random(std::mt19937(time(0)))
+#if 0
 RandomNumberGenerator::RandomNumberGenerator():
 last(0) {
     if (UseRandomSeed) {
           last = static_cast<int>(time(NULL));
-      //  random = std::mt19937(time(0));
-    } else {
-          last = NonRandomSeed;
-     //   random = std::mt19937(NonRandomSeed);
+    } else { 
+        last = NonRandomSeed;
     }
+    
 }   //  RandomNumberGenerator::Init()
 
 int RandomNumberGenerator::LongInteger() {
@@ -361,7 +379,8 @@ int RandomNumberGenerator::LongInteger() {
      last += INT_MAX;
     return last;
 
-    return random();
+    //  return random();
+    return rng();
 }   //  RandomNumberGenerator::LongInteger()
 
 int RandomNumberGenerator::IntegerInRange(int min, int max) {
@@ -384,6 +403,7 @@ double  RandomNumberGenerator::RealInRange(double min, double max) {
  */
     return min + (max - min) * UnitReal();
 }   //  RandomNumberGenerator::RealInRange()
+#endif
 
 Data::Data():
 N(0), min(1000000.0), max(0.0), sum(0.0), sum2(0.0)
@@ -466,14 +486,16 @@ void Agent::Init() {
     //
     double sum = 0.0;
     for (CommodityIndex = 1; CommodityIndex <= NumberOfCommodities; ++CommodityIndex) {
-        alphas[CommodityIndex] = RNG.RealInRange(alphaMin, alphaMax);
+        // alphas[CommodityIndex] = RNG.RealInRange(alphaMin, alphaMax);
+        alphas[CommodityIndex] = randomAlpha(rng);
         sum += alphas[CommodityIndex];
     }
     //  Next, fill up the rest of the agent fields...
     //
     for (CommodityIndex = 1; CommodityIndex <= NumberOfCommodities; ++CommodityIndex) {
         alphas[CommodityIndex] = alphas[CommodityIndex] / sum;
-        endowment[CommodityIndex] = RNG.RealInRange(wealthMin, wealthMax);
+        //  endowment[CommodityIndex] = RNG.RealInRange(wealthMin, wealthMax);
+        endowment[CommodityIndex] = randomWealth(rng);
         allocation[CommodityIndex] = endowment[CommodityIndex];
         initialMRSs[CommodityIndex] = MRS(CommodityIndex, 1);
         currentMRSs[CommodityIndex] = initialMRSs[CommodityIndex];
@@ -522,7 +544,7 @@ void AgentPopulation::ComputeLnMRSsDistribution() {
     LnMRSsDataUpToDate = true;
 }   //  AgentPopulation::ComputeLnMRSsDistribution()
 
-double  AgentPopulation::ComputeSumOfUtilities() {
+double AgentPopulation::ComputeSumOfUtilities() {
     double sum = 0.0;
 
     for (int i = 1; i <= NumberOfAgents; ++i)
@@ -531,12 +553,13 @@ double  AgentPopulation::ComputeSumOfUtilities() {
 }   //  AgentPopulation::ComputeSumOfUtilities()
 
 void inline AgentPopulation::GetSerialAgentPair(AgentPtr& Agent1, AgentPtr& Agent2) {
-    int access = RNG.IntegerInRange(1, NumberOfAgents);
+    // int access = RNG.IntegerInRange(1, NumberOfAgents);
     // std::cout << access;
-    Agent1 = Agents[access];
-
+    //Agent1 = Agents[access];
+    Agent1 = Agents[randomAgent(rng)];
     do {
-    Agent2 = Agents[RNG.IntegerInRange(1, NumberOfAgents)];
+    //Agent2 = Agents[RNG.IntegerInRange(1, NumberOfAgents)];
+        Agent2 = Agents[randomAgent(rng)];
     } while (Agent2 == Agent1);
 }   //  AgentPopulation::GetSerialAgentPair()
 
@@ -553,9 +576,11 @@ void inline AgentPopulation::RandomizeAgents(int NumberToRandomize) {
     }
 
     for (int i = 1; i <= PairsToRandomize; ++i) {
-        AgentIndex1 = RNG.IntegerInRange(1, NumberOfAgents);
+        //AgentIndex1 = RNG.IntegerInRange(1, NumberOfAgents);
+        AgentIndex1 = randomAgent(rng);
         do {
-        AgentIndex2 = RNG.IntegerInRange(1, NumberOfAgents);
+        //AgentIndex2 = RNG.IntegerInRange(1, NumberOfAgents);
+            AgentIndex2 = randomAgent(rng);
         } while (AgentIndex1 == AgentIndex2);
 
         TempPtr = Agents[AgentIndex1];
@@ -570,14 +595,16 @@ void inline AgentPopulation::RandomizeAgents2(int NumberToRandomize) {
     int AgentIndex1, AgentIndex2;
     AgentPtr TempPtr;
 
-    AgentIndex1 = RNG.IntegerInRange(1, NumberOfAgents);
+    //AgentIndex1 = RNG.IntegerInRange(1, NumberOfAgents);
+    AgentIndex1 = randomAgent(rng);
     TempPtr = Agents[AgentIndex1];
 
     if (NumberToRandomize == 1) {
         NumberToRandomize = 2;
     }
     for (int i = 1; i < NumberToRandomize; ++i) {
-        AgentIndex2 = RNG.IntegerInRange(1, NumberOfAgents);
+        AgentIndex2 = randomAgent(rng);
+        //AgentIndex2 = RNG.IntegerInRange(1, NumberOfAgents);
         Agents[AgentIndex1] = Agents[AgentIndex2];
         AgentIndex1 = AgentIndex2;
     }
@@ -653,8 +680,9 @@ void AgentPopulation::Init() {
 }   //  AgentPopulation::Init()
 
 void AgentPopulation::Reset() {
-    for (int AgentIndex = 1; AgentIndex <= NumberOfAgents; ++AgentIndex)
+    for (int AgentIndex = 1; AgentIndex <= NumberOfAgents; ++AgentIndex) {
         Agents[AgentIndex]->Reset();
+    }
 }   //  AgentPopulation::Reset
 
 long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
@@ -705,9 +733,11 @@ long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
                 Commodity1 = 1;
                 Commodity2 = 2;
             } else {
-                Commodity1 = RNG.IntegerInRange(1, NumberOfCommodities);
+                //Commodity1 = RNG.IntegerInRange(1, NumberOfCommodities);
+                Commodity1 = randomCommodity(rng);
                 do {
-                Commodity2 = RNG.IntegerInRange(1, NumberOfCommodities);
+                //Commodity2 = RNG.IntegerInRange(1, NumberOfCommodities);
+                    Commodity1 = randomCommodity(rng);
                 } while (Commodity2 == Commodity1);
             }
             //  Compare MRSs...
@@ -920,9 +950,12 @@ void AgentPopulation::ShockAgentPreferences() {
     AgentPtr ActiveAgent;
     double oldPref, newPref, pref;
 
-    int CommodityToShock = RNG.IntegerInRange(1, NumberOfCommodities);
-    bool sign = RNG.IntegerInRange(0, 1);
-    double shock = RNG.RealInRange(MinShock, MaxShock);
+    //int CommodityToShock = RNG.IntegerInRange(1, NumberOfCommodities);
+    int CommodityToShock = randomCommodity(rng);
+    //bool sign = RNG.IntegerInRange(0, 1);
+    bool sign = randomBinary(rng);
+    //double shock = RNG.RealInRange(MinShock, MaxShock);
+    double shock = randomShock(rng);
 
     for (int AgentIndex = 1; AgentIndex <= NumberOfAgents; ++AgentIndex) {
         ActiveAgent = Agents[AgentIndex];
@@ -943,7 +976,7 @@ void AgentPopulation::ShockAgentPreferences() {
 
 /*================= End of Methods =================*/
 
-void    InitMiscellaneous() {
+void InitMiscellaneous() {
     //  Print some configuration information...
     //
     std::cout << "B I L A T E R A L   E X C H A N G E" << std::endl <<std::endl;
@@ -1015,6 +1048,10 @@ std::cout << "Agents are being processed ";
 }  //   InitMiscellaneous()
 
 int main() {
+    if (UseRandomSeed) {
+        std::random_device rd;
+        rng.seed(rd());
+    }
     //  First, initialize variously...
     //
     InitMiscellaneous();
