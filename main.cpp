@@ -16,12 +16,14 @@ Extended by Stefan McCabe
 //  D. Generalize to CES preferences?
 //  E. Shrink below 1000 lines?
 
+#include <algorithm>
 #include <cmath>
+#include "easylogging++.h"
 #include <iostream>
 #include <random>
-#include <algorithm>
 
 
+INITIALIZE_EASYLOGGINGPP
 // addressing the RNG first
 
 const bool UseRandomSeed = true;
@@ -1048,6 +1050,7 @@ std::cout << "Agents are being processed ";
 }  //   InitMiscellaneous()
 
 int main() {
+    LOG(INFO) << "Opening log file - testing";
     if (UseRandomSeed) {
         std::random_device rd;
         rng.seed(rd());
