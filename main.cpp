@@ -18,10 +18,9 @@ Extended by Stefan McCabe
 
 #include <algorithm>
 #include <cmath>
-#include "easylogging++.h"
 #include <iostream>
 #include <random>
-
+#include "./easylogging++.h"
 
 INITIALIZE_EASYLOGGINGPP
 // addressing the RNG first
@@ -343,6 +342,7 @@ void WriteActualTimeAndDate(char DescriptionString[63]) {
     start(0)
 {}  //  MemoryObject::MemoryObject()
 
+#if 0
 void MemoryObject::WriteMemoryRequirements() {
     std::cout << "Memory requirements:" << std::endl;
     std::cout << "Size of Agent object: " << sizeof(Agent) << " bytes" << std::endl;
@@ -358,6 +358,16 @@ void MemoryObject::WriteMemoryRequirements() {
         std::cout << "Total memory requirements: " << double(TotalBytesRequired/1000000.0) << " megabytes" << std::endl;
     std::cout << std::endl;
 }   //  MemoryObject::WriteMemoryRequirements()
+#endif
+void MemoryObject::WriteMemoryRequirements() {
+    LOG(DEBUG) << "Size of Agent in memory: " << sizeof(Agent) << " bytes";
+    LOG(DEBUG) << "Size of Data in memory: " << sizeof(Data) << " bytes";
+    LOG(DEBUG) << "Size of CommodityData in memory: " << sizeof(CommodityData) << " bytes";
+    LOG(DEBUG) << "Size of AgentPopulation in memory: " << sizeof(AgentPopulation) << " bytes";
+    LOG(DEBUG) << "Total bytes required (approximate): " << \
+    (sizeof(rng) + sizeof(MemoryObject) + sizeof(CommodityData) \
+        + sizeof(AgentPopulation) + sizeof(Agent) * NumberOfAgents) << " bytes";
+}
 
 #if 0
 RandomNumberGenerator::RandomNumberGenerator():
@@ -695,16 +705,17 @@ long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
     AgentPtr Agent1, Agent2, LargerMRSAgent, SmallerMRSAgent;
     int Commodity1, Commodity2;
     double MRSratio12, MRSratio;
-    register double LAgentalpha1, LAgentalpha2, LAgentx1, LAgentx2, SAgentalpha1, SAgentalpha2, SAgentx1, SAgentx2;
-    register double num, denom, delta1, delta2;
+    double LAgentalpha1, LAgentalpha2, LAgentx1, LAgentx2, SAgentalpha1, SAgentalpha2, SAgentx1, SAgentx2;
+    double num, denom, delta1, delta2;
     double Agent1PreTradeUtility, Agent2PreTradeUtility;
-
+    /*
     std::cout << "******************************" << std::endl;
     std::cout << std::endl;
     sprintf(OutputStr, "Equilibration #%d starting at time: ", NumberOfEquilibrationsSoFar);
     WriteActualTimeAndDate(OutputStr);
     std::cout << std::endl;
-
+    */
+    LOG(INFO) << "Equilibration #" << NumberOfEquilibrationsSoFar << " starting";
     //  Next, initialize some variables...
     //
     for (int i = 1; i <= NumberOfCommodities; ++i){
@@ -977,10 +988,11 @@ void AgentPopulation::ShockAgentPreferences() {
 }   //  AgentPopulation::ShockAgentPreferenes()
 
 /*================= End of Methods =================*/
-
+#if 0
 void InitMiscellaneous() {
     //  Print some configuration information...
     //
+
     std::cout << "B I L A T E R A L   E X C H A N G E" << std::endl <<std::endl;
     std::cout << "Robert Axtell" << std::endl;
     std::cout << "Brookings Institution -> George Mason University" << std::endl;
@@ -993,16 +1005,17 @@ void InitMiscellaneous() {
     std::cout << "  in order for trade to occur" << std::endl << std::endl;
 
     std::cout << "A time period is defined by " << 2 * PairwiseInteractionsPerPeriod << " agents being active (";
-        std::cout << PairwiseInteractionsPerPeriod << " pairings)" << std::endl << std::endl;
-
-std::cout << "Termination is checked each " << CheckTerminationPeriod << " period";
-if (CheckTerminationPeriod > 1) {
-    std::cout << "s";
-}
-std::cout << std::endl;
-std::cout << "  once the first " << CheckTerminationThreshhold << " periods have gone by" << std::endl;
-std::cout << "Termination occurs once the ";
-switch (termination_criterion) {
+    std::cout << PairwiseInteractionsPerPeriod << " pairings)" << std::endl << std::endl;
+    
+    std::cout << "Termination is checked each " << CheckTerminationPeriod << " period";
+    
+    if (CheckTerminationPeriod > 1) {
+        std::cout << "s";
+    }
+    std::cout << std::endl;
+    std::cout << "  once the first " << CheckTerminationThreshhold << " periods have gone by" << std::endl;
+    std::cout << "Termination occurs once the ";
+    switch (termination_criterion) {
     case -1:
     std::cout << "L2 norm of the standard deviation" << std::endl;
     std::cout << "  in agent MRSs falls below ";
@@ -1019,7 +1032,9 @@ switch (termination_criterion) {
     std::cout << "increase in the sum" << std::endl;
     std::cout << "  of utilities is less than ";
     break;
-}
+   }
+
+
 std::cout << termination_eps << std::endl << std::endl;
 
 std::cout << "Agents are being processed ";
@@ -1048,13 +1063,54 @@ std::cout << "Agents are being processed ";
 
     MemoryState.WriteMemoryRequirements();
 }  //   InitMiscellaneous()
+#endif
+
+void InitMiscellaneous() {
+    LOG(INFO) << "Model version: " << Version;
+    LOG(INFO) << "Number of agents: " << NumberOfAgents;
+    LOG(INFO) << "Number of commodities: " << NumberOfCommodities;
+    LOG(INFO) << "Trade epsilon: " << trade_eps;
+    LOG(INFO) << "Time period: " << 2 * PairwiseInteractionsPerPeriod;
+    LOG(INFO) << "Termination period check rate: " << CheckTerminationPeriod;
+    LOG(INFO) << "Termination period check threshold: " << CheckTerminationThreshhold;
+    switch (termination_criterion) {
+        case -1:
+        LOG(INFO) << "Termination criterion: L2 norm of standard deviation of agent MRSes";
+        break;
+        case 0:
+        LOG(INFO) << "Termination criterion: Maximum standard deviation of agent MRSes";
+        break;
+        case 1:
+        LOG(INFO) << "Termination criterion: relative increase in sum of agent utilities";
+        break;
+        case 2:
+        LOG(INFO) << "Termination criterion: increase in the sum of agent utilities";
+        break;
+    }
+    LOG(INFO) << "Termination threshold: " << termination_eps;
+    if (DefaultSerialExecution) {
+        LOG(INFO) << "Parallel activation: FALSE";
+    } else {
+        LOG(INFO) << "Parallel activation: TRUE";
+        LOG(INFO) << "Agent randomization size: " << AgentsToRandomize;
+    }
+    LOG(INFO) << "Number of equilibrations: " << RequestedEquilibrations;
+    LOG(INFO) << "Vary agent initial conditions: " << !SameAgentInitialCondition;
+
+    MemoryState.WriteMemoryRequirements();
+}
 
 int main() {
-    LOG(INFO) << "Opening log file - testing";
+    LOG(INFO) << "Opening log file...";
     if (UseRandomSeed) {
         std::random_device rd;
-        rng.seed(rd());
+        int seed = rd();
+        rng.seed(seed);
+        LOG(INFO) << "Using random seed " << seed;
+    } else {
+        LOG(INFO) << "Using fixed seed " << NonRandomSeed;
     }
+
     //  First, initialize variously...
     //
     InitMiscellaneous();
