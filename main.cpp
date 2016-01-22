@@ -23,60 +23,61 @@ Extended by Stefan McCabe
 #include <gflags/gflags.h>
 #define ELPP_THREAD_SAFE
 #include "./easylogging++.h"
+#include <libconfig.h++>
 
 // Initialize the logger. This should come immediately after the #includes are finished.
 INITIALIZE_EASYLOGGINGPP
 
 // Declare gflags.
 DEFINE_bool(test, true, "Test GFlags");
-DEFINE_uint64(seed, 0, "Set random seed; omit or set to zero to randomly seed");
+DEFINE_string(file, "parameters.cfg", "Specify the configuation file containing the model parameters.");
 
 // addressing the RNG first
 
-// const bool UseRandomSeed = true;
-// const int NonRandomSeed = 1;
+bool UseRandomSeed;
+unsigned int NonRandomSeed;
 
 
 std::mt19937 rng(0);
-// We seed 0 by default; in main we will check flags to seed the RNG properly.
+// We seed 0 by default; in main we will seed the RNG properly.
 
-const double Version = 0.97;
+double Version = 0.97;
 
-//const int NumberOfAgents = 10000000;    // 10^7
-const int NumberOfAgents = 100000; // 10^5
+//int NumberOfAgents = 10000000;    // 10^7
+const int NumberOfAgents  = 100000; // 10^5
 const int NumberOfCommodities = 2;      // 2 x 10^4
 
-// const int PairwiseInteractionsPerPeriod = NumberOfAgents / 2;
-const int PairwiseInteractionsPerPeriod = 50;
+int PairwiseInteractionsPerPeriod;
 
-const double alphaMin = 0.01;
-const double alphaMax = 0.99;
-const int wealthMin = 50;
-const int wealthMax = 150;
+double alphaMin;
+double alphaMax;
+int wealthMin;
+int wealthMax;
 
-const bool DefaultSerialExecution = true;   // FALSE means parallel
-const int AgentsToRandomize = NumberOfAgents / 10;
+bool DefaultSerialExecution;   // FALSE means parallel
+int AgentsToRandomize;
 //  This is done only for parallel interactions
 
-const int RandomizationMethod = 0;  // 0 means swap pairs
+int RandomizationMethod;            // 0 means swap pairs
                                     // 1 means "threaded"
-const int RequestedEquilibrations = 1;
-const bool SameAgentInitialCondition = false;
+int RequestedEquilibrations;
+bool SameAgentInitialCondition;
 
-const double trade_eps = 0.01;
-const double exp_trade_eps = exp(trade_eps);
+double trade_eps;
+double exp_trade_eps;
 
-const int termination_criterion = -1;   // -2 means termination based on time
+int termination_criterion;              // -2 means termination based on time
                                         // -1 means use L2 norm on MRSs
                                         //  0 means use L∞ norm on MRSs
                                         //  1 means use relative increase in V
                                         //  2 means use absolute increase in V
-const long TerminationTime = 20000;
-const double termination_eps = 0.01;    //  10^-1
-const long CheckTerminationThreshhold = 100000; 
+long long TerminationTime;
+
+double termination_eps;    //  10^-1
+long long CheckTerminationThreshold; // was 100000
 //  1.5 x 10^9 periods ~ 60 x 10^9 interactions
 
-const int CheckTerminationPeriod = 10000;
+int CheckTerminationPeriod;
 //  Typical values:
 //  A = 100,        N = 10,     use 1
 //  A = 100,        N = 50,     use 25
@@ -91,19 +92,19 @@ const int CheckTerminationPeriod = 10000;
 //  A = 1,000,000,  N = 2,      use 1000
 //  A = 10,000,000, N = 2,      use 10,000
 
-const bool ShockPreferences = false;
-const int ShockPeriod = 10;
-const double MinShock = 1.0;
-const double MaxShock = 5.0;
+bool ShockPreferences;
+int ShockPeriod;
+double MinShock;
+double MaxShock;
 
-const bool On = true;
-const bool Off = false;
-
-const bool debug = Off;
-
+bool debug;
+bool PrintEndowments;
+bool PrintIntermediateOutput;
+int IntermediateOutputPrintPeriod;  // 20x10^6
+bool PrintConvergenceStats;
+bool PrintFinalCommodityList;
 
 // DISTRIBUTIONS
-
 std::uniform_int_distribution<int> randomAgent(1, NumberOfAgents);  //  why are we 1-indexing?
 std::uniform_int_distribution<int> randomCommodity(1, NumberOfCommodities);
 std::uniform_int_distribution<int> randomBinary(0, 1);
@@ -112,13 +113,10 @@ std::uniform_real_distribution<double> randomAlpha(alphaMin, alphaMax);
 std::uniform_real_distribution<double> randomWealth(wealthMin, wealthMax);
 //  std::uniform_int_distribution<double> randomDouble(0, 1);
 
-
-const bool PrintEndowments = Off;
-const bool PrintIntermediateOutput = On;
-const int IntermediateOutputPrintPeriod = 10000;  // 20x10^6
-const bool PrintConvergenceStats = true;
-const bool PrintFinalCommodityList = Off;
-
+// TODO: A lot of things depend on this typedef but I would like to make 
+// to delay declaring the size of the array so that I can take number 
+// of commodites as a parameter (user input). For now I'm admitting defeat and still
+// hard-coding the number of commodities. 
 typedef double CommodityArray[NumberOfCommodities+1];
 //  Size: NumberOfCommodities * 8 bytes
 
@@ -127,7 +125,7 @@ typedef CommodityArray *CommodityArrayPtr;
 double inline Dot(CommodityArrayPtr vector1, CommodityArrayPtr vector2);
 
 class MemoryObject {
-    long start;
+    long long start;
 
 public:
     MemoryObject();
@@ -145,19 +143,19 @@ public:
     Data();
     void Init();
     void AddDatuum(double Datuum);
-    int GetN() {return N;}
-    double GetMin() {return min;}
-    double GetMax() {return max;}
-    double GetDelta() {return max - min;}
+    int GetN() {return N; }
+    double GetMin() {return min; }
+    double GetMax() {return max; }
+    double GetDelta() {return max - min; }
     double GetAverage() {
         if (N > 0) {
             return sum/N;
         } else {
             return 0.0;
         }}
-        double GetExpAverage() {return exp(GetAverage());}
+        double GetExpAverage() {return exp(GetAverage()); }
         double GetVariance();
-        double GetStdDev() {return sqrt(GetVariance());}
+        double GetStdDev() {return sqrt(GetVariance()); }
 };  //  Total:  36 bytes
 
 typedef Data *DataPtr;
@@ -168,7 +166,7 @@ class CommodityData {   //  Size:
 public:
     CommodityData();
     void Clear();
-    DataPtr GetData(int index) {return &data[index];}
+    DataPtr GetData(int index) {return &data[index]; }
     double L2StdDev();
     double LinfStdDev();
 };                       //  Total:  NumberOfCommodities * 8 bytes
@@ -254,7 +252,7 @@ public:
     AgentPopulation();                              //  Constructor...
     void Init();
     void Reset();
-    long Equilibrate(int NumberOfEquilibrationsSoFar);
+    long long Equilibrate(int NumberOfEquilibrationsSoFar);
     void ConvergenceStatistics(CommodityArray VolumeStats);
     void CompareTwoAgents(AgentPtr Agent1, AgentPtr Agent2);
     void ShockAgentPreferences();
@@ -413,6 +411,7 @@ double Agent::Utility() {
     for (int i = 1; i <= NumberOfCommodities; ++i) {
         product *= pow(allocation[i], alphas[i]);
     }
+
     return product;
 }   //  Agent::Utility()
 
@@ -506,7 +505,7 @@ AlphaData(), EndowmentData(), LnMRSsData(), LnMRSsDataUpToDate(true), LastSumOfU
     if (DefaultSerialExecution) {
         GetAgentPair = &AgentPopulation::GetSerialAgentPair;
     } else
-        GetAgentPair = &AgentPopulation::GetParallelAgentPair;
+    GetAgentPair = &AgentPopulation::GetParallelAgentPair;
 }   // Constructor...
 
 void AgentPopulation::Init() {
@@ -558,11 +557,11 @@ void AgentPopulation::Reset() {
     }
 }   //  AgentPopulation::Reset
 
-long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
+long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
     char OutputStr[63];
     bool Converged = false;
-    long theTime = 0;
-    long TotalInteractions = 0;
+    long long theTime = 0;
+    long long TotalInteractions = 0;
     AgentPtr Agent1, Agent2, LargerMRSAgent, SmallerMRSAgent;
     int Commodity1, Commodity2;
     double MRSratio12, MRSratio;
@@ -583,6 +582,7 @@ long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
         LnMRSsDataUpToDate = false;  //  Since these data are gonna change...
 
         ++theTime;
+
         if ((ShockPreferences) && (theTime % ShockPeriod == 0)) {
             ShockAgentPreferences();
         }
@@ -607,13 +607,14 @@ long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
                 } while (Commodity2 == Commodity1);
             }
             //  Compare MRSs...
-            //
+
             MRSratio12 = Agent1->MRS(Commodity2, Commodity1) / Agent2->MRS(Commodity2, Commodity1);
             if (MRSratio12 > 1.0) {
                 MRSratio = MRSratio12;
             } else {
                 MRSratio = 1.0/MRSratio12;
             }
+            // std::cout << MRSratio << std::endl;
             if (MRSratio >= exp_trade_eps)  {  //  do exchange
                 if (MRSratio12 > 1.0) {
                     LargerMRSAgent = Agent1;
@@ -661,7 +662,7 @@ long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
 
         //  Check for termination...
         //
-        if ((theTime > CheckTerminationThreshhold) && (theTime % CheckTerminationPeriod == 0))  {
+        if ((theTime > CheckTerminationThreshold) && (theTime % CheckTerminationPeriod == 0))  {
             switch (termination_criterion) {
                 case -2:
                 if (theTime >= TerminationTime) {
@@ -728,7 +729,7 @@ long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
 
         //  Store the sum of utilities if it will be needed next period for either termincation check or printing
         if (termination_criterion > 0) {
-            if (((theTime > CheckTerminationThreshhold) && ((theTime + 1) % CheckTerminationPeriod == 0)) || ((PrintIntermediateOutput) && ((theTime + 1) % IntermediateOutputPrintPeriod == 0))) {
+            if (((theTime > CheckTerminationThreshold) && ((theTime + 1) % CheckTerminationPeriod == 0)) || ((PrintIntermediateOutput) && ((theTime + 1) % IntermediateOutputPrintPeriod == 0))) {
                 LastSumOfUtilities = ComputeSumOfUtilities();
             }
         }
@@ -859,7 +860,7 @@ void InitMiscellaneous() {
     LOG(INFO) << "Trade epsilon: " << trade_eps;
     LOG(INFO) << "Time period: " << 2 * PairwiseInteractionsPerPeriod;
     LOG(INFO) << "Termination period check rate: " << CheckTerminationPeriod;
-    LOG(INFO) << "Termination period check threshold: " << CheckTerminationThreshhold;
+    LOG(INFO) << "Termination period check threshold: " << CheckTerminationThreshold;
     switch (termination_criterion) {
         case -1:
         LOG(INFO) << "Termination criterion: L2 norm of standard deviation of agent MRSes";
@@ -885,24 +886,86 @@ void InitMiscellaneous() {
     LOG(INFO) << "Vary agent initial conditions: " << !SameAgentInitialCondition;
 
     MemoryState.WriteMemoryRequirements();
-}
+} // InitMiscellaneous()
 
-int main(int argc, char* argv[]) {
-    gflags::SetUsageMessage("usage: ");
-    gflags::ParseCommandLineFlags(&argc, &argv, true);
-
-
-    LOG(INFO) << "Opening log file...";
-    if (FLAGS_seed == 0) {
+void SeedRNG() {
+//seed the random number generator
+    if (!UseRandomSeed) {
         std::random_device rd;
         unsigned int seed = rd();
         rng.seed(seed);
         LOG(INFO) << "Using random seed " << seed;
     } else {
-        LOG(INFO) << "Using fixed seed " << FLAGS_seed;
-        rng.seed(FLAGS_seed);
+        LOG(INFO) << "Using fixed seed " << NonRandomSeed;
+        rng.seed(NonRandomSeed);
     }
+    // reset the distributions with the proper parameters, very tedious
+    randomAgent = std::uniform_int_distribution<int>(1, NumberOfAgents);  //  why are we 1-indexing?
+    randomCommodity = std::uniform_int_distribution<int>(1, NumberOfCommodities);
+    randomBinary = std::uniform_int_distribution<int>(0, 1);
+    randomShock = std::uniform_real_distribution<double>(MinShock, MaxShock);
+    randomAlpha = std::uniform_real_distribution<double>(alphaMin, alphaMax);
+    randomWealth = std::uniform_real_distribution<double>(wealthMin, wealthMax);
+//  std::uniform_int_distribution<double> randomDouble(0, 1);
+} // SeedRNG()
 
+void ReadConfigFile(std::string file) {
+    //TODO: comments
+    libconfig::Config config;
+    try { 
+        config.readFile(file.c_str());
+        LOG(INFO) << "Loaded configuration from " << file;
+        if (config.lookupValue("debug.enabled", debug) && debug) { LOG(DEBUG) << "debug: " << debug; }
+        if (config.lookupValue ("rand.use_seed", UseRandomSeed) && debug) { LOG(DEBUG) << "UseRandomSeed: " << UseRandomSeed; }
+        if (config.lookupValue("rand.seed", NonRandomSeed) && debug) { LOG(DEBUG) << "NonRandomSeed: " << NonRandomSeed; }
+        if (config.lookupValue("interactions_per_period", PairwiseInteractionsPerPeriod) && debug) {LOG(DEBUG) << "PairwiseInteractionsPerPeriod: " << PairwiseInteractionsPerPeriod; }
+        if (config.lookupValue("alpha.min", alphaMin) && debug) { LOG(DEBUG) << "alphaMin: " << alphaMin; }
+        if (config.lookupValue("alpha.max", alphaMax) && debug) { LOG(DEBUG) << "alphaMax: " << alphaMax; }
+        if (config.lookupValue("wealth.min", wealthMin) && debug) { LOG(DEBUG) << "wealthMin: " << wealthMin; }
+        if (config.lookupValue("wealth.max", wealthMax) && debug) { LOG(DEBUG) << "wealthMax: " << wealthMax; }
+        if (config.lookupValue("parallel.disabled", DefaultSerialExecution) && debug) { LOG(DEBUG) << "DefaultSerialExecution: " << DefaultSerialExecution; }
+        if (config.lookupValue("parallel.agents_to_randomize", AgentsToRandomize) && debug) { LOG(DEBUG) << "AgentsToRandomize: " << AgentsToRandomize; }
+        if (config.lookupValue("parallel.randomization_method", RandomizationMethod) && debug) { LOG(DEBUG) << "RandomizationMethod: " << RandomizationMethod; }
+        if (config.lookupValue("num_equilibrations", RequestedEquilibrations) && debug) { LOG(DEBUG) << "RequestedEquilibrations: " << RequestedEquilibrations; }
+        if (config.lookupValue("same_conditions_each_equilibration", SameAgentInitialCondition) && debug) { LOG(DEBUG) << "SameAgentInitialCondition: " << SameAgentInitialCondition; }
+        if (config.lookupValue("trade.eps", trade_eps) && debug) { LOG(DEBUG) << "trade_eps: " << trade_eps; }
+        if (config.lookupValue("termination.criterion", termination_criterion) && debug) { LOG(DEBUG) << "termination_criterion: " << termination_criterion; }
+        if (config.lookupValue("termination.time", TerminationTime) && debug) { LOG(DEBUG) << "TerminationTime: " << TerminationTime; }
+        if (config.lookupValue("termination.eps", termination_eps) && debug) { LOG(DEBUG) << "termination_eps: " << termination_eps; }
+        if (config.lookupValue("termination.threshold", CheckTerminationThreshold) && debug) { LOG(DEBUG) << "CheckTerminationThreshold: " << CheckTerminationThreshold; }
+        if (config.lookupValue("termination.period", CheckTerminationPeriod) && debug) { LOG(DEBUG) << "CheckTerminationPeriod: " << CheckTerminationPeriod; }
+        if (config.lookupValue("shock.enabled", ShockPreferences) && debug) { LOG(DEBUG) << "ShockPreferences: " << ShockPreferences; }
+        if (config.lookupValue("shock.period", ShockPeriod) && debug) { LOG(DEBUG) << "ShockPeriod: " << ShockPeriod; }
+        if (config.lookupValue("shock.min", MinShock) && debug) { LOG(DEBUG) << "MinShock: " << MinShock; }
+        if (config.lookupValue("shock.max", MaxShock) && debug) { LOG(DEBUG) << "MaxShock: " << MaxShock; }
+        if (config.lookupValue("debug.print_endowments", PrintEndowments) && debug) { LOG(DEBUG) << "PrintEndowments: " << PrintEndowments; }
+        if (config.lookupValue("debug.print_intermediate_output", PrintIntermediateOutput) && debug) { LOG(DEBUG) << "PrintIntermediateOutput: " << PrintIntermediateOutput; }
+        if (config.lookupValue("debug.intermediate_output_print_period", IntermediateOutputPrintPeriod) && debug) { LOG(DEBUG) << "IntermediateOutputPrintPeriod: " << IntermediateOutputPrintPeriod; }
+        if (config.lookupValue("debug.print_convergence_stats", PrintConvergenceStats) && debug) { LOG(DEBUG) << "PrintConvergenceStats: " << PrintConvergenceStats; }
+        if (config.lookupValue("debug.print_final_commodity_list", PrintFinalCommodityList) && debug) { LOG(DEBUG) << "PrintFinalCommodityList: " << PrintFinalCommodityList; }
+        // NumberOfAgents = config.lookup("number.agents");
+        // NumberOfCommodities = config.lookup("number.commodities");
+        exp_trade_eps = exp(trade_eps);
+
+    } catch (...) {
+        LOG(ERROR) << "Error reading config file";
+        std::terminate();
+    }
+} //ReadConfigFile
+
+int main(int argc, char** argv) {
+    //TODO: comments re: config
+    // Preliminaries: Parse flags, etc.
+    std::string usage = "An agent-based model of bilateral exchange. Usage:\n";
+    usage += argv[0];
+    gflags::SetUsageMessage(usage);
+    gflags::ParseCommandLineFlags(&argc, &argv, true);
+    LOG(INFO) << "Opening log file...";
+
+    ReadConfigFile(FLAGS_file);
+
+    SeedRNG();
+// return 9;
     //  First, initialize variously...
     //
     InitMiscellaneous();
@@ -912,12 +975,12 @@ int main(int argc, char* argv[]) {
     //  Equilibrate the agent economy once...
     //
     int EquilibrationNumber = 1;
-    long sum = PopulationPtr->Equilibrate(EquilibrationNumber);
-    long sum2 = sum*sum;
+    long long sum = PopulationPtr->Equilibrate(EquilibrationNumber);
+    long long sum2 = sum*sum;
 
     //  Equilibrate again if the user has requested this...
     //
-    long interactions;
+    long long interactions;
 
     EquilibrationNumber = 2;
     while (EquilibrationNumber <= RequestedEquilibrations) {
@@ -937,4 +1000,4 @@ int main(int argc, char* argv[]) {
     if (EquilibrationNumber > 2) {
         LOG(INFO) << "std. dev.: " << sqrt((sum2 - (EquilibrationNumber - 1) * avg * avg)/(EquilibrationNumber - 2));
     }
-}
+} // main()
