@@ -24,6 +24,7 @@ Extended by Stefan McCabe
 #define ELPP_THREAD_SAFE
 #include "./easylogging++.h"
 #include <libconfig.h++>
+#include <vector>
 
 // Initialize the logger. This should come immediately after the #includes are finished.
 INITIALIZE_EASYLOGGINGPP
@@ -45,14 +46,15 @@ double Version = 1.0;
 
 //int NumberOfAgents = 10000000;    // 10^7
 const int NumberOfAgents  = 100000; // 10^5
-const int NumberOfCommodities = 2;      // 2 x 10^4
+//const int NumberOfCommodities = 2;      // 2 x 10^4
+int NumberOfCommodities;
 
 int PairwiseInteractionsPerPeriod;
 
 double alphaMin;
 double alphaMax;
-int wealthMin;
-int wealthMax;
+unsigned int wealthMin;
+unsigned int wealthMax;
 
 bool DefaultSerialExecution;   // FALSE means parallel
 int AgentsToRandomize;
@@ -105,8 +107,7 @@ bool PrintConvergenceStats;
 bool PrintFinalCommodityList;
 
 // DISTRIBUTIONS
-//  std::uniform_int_distribution<double> randomDouble(0, 1);
-std::uniform_int_distribution<int> randomAgent;  //  why are we 1-indexing?
+std::uniform_int_distribution<int> randomAgent;  
 std::uniform_int_distribution<int> randomCommodity;
 std::uniform_int_distribution<int> randomBinary;
 std::uniform_real_distribution<double> randomShock;
@@ -117,9 +118,10 @@ std::uniform_real_distribution<double> randomWealth;
 // to delay declaring the size of the array so that I can take number 
 // of commodites as a parameter (user input). For now I'm admitting defeat and still
 // hard-coding the number of commodities. 
- typedef double CommodityArray[NumberOfCommodities+1];
+// typedef double CommodityArray[NumberOfCommodities+1];
 //  Size: NumberOfCommodities * 8 bytes
-// typedef double *CommodityArray;
+// New typedef *seems* to work, provided that I resize everything in the constructors.
+ typedef std::vector<double> CommodityArray;
 
 typedef CommodityArray *CommodityArrayPtr;
 
@@ -163,6 +165,7 @@ typedef Data *DataPtr;
 
 class CommodityData {   //  Size:
     Data data[NumberOfCommodities+1];
+    //Data data = new Data[NumberOfCommodities + 1];
                         // NumberOfCommodities * 8 bytes
 public:
     CommodityData();
@@ -179,11 +182,12 @@ class Agent {                       //  Size:
     CommodityArray initialMRSs;     //      NumberOfCommodities * 8 bytes
     CommodityArray allocation;      //      NumberOfCommodities * 8 bytes
     CommodityArray currentMRSs;     //      NumberOfCommodities * 8 bytes
+    Agent();
     double initialUtility;          //      8 bytes
     double initialWealth;           //      8 bytes
 
 public:
-    Agent();
+    Agent(int size);
     void Init();
     void Reset();
     double GetAlpha(int CommodityIndex) {
@@ -250,7 +254,7 @@ class AgentPopulation {                             //  Size:
     void(AgentPopulation::*GetAgentPair) (AgentPtr& Agent1, AgentPtr& Agent2);
 
 public:
-    AgentPopulation();                              //  Constructor...
+    AgentPopulation(int size);                              //  Constructor...
     void Init();
     void Reset();
     long long Equilibrate(int NumberOfEquilibrationsSoFar);
@@ -324,8 +328,9 @@ double Data::GetVariance() {
     }
 }   //  Data::GetVariance()
 
-CommodityData::CommodityData()
-{}
+CommodityData::CommodityData() {
+data.resize(NumberOfCommodities+1);
+}
 
 void CommodityData::Clear() {
     //  Initialize data objects
@@ -360,7 +365,13 @@ double  CommodityData::LinfStdDev() {
     return sqrt(max);
 }   //  CommodityData::LinfStdDev
 
-Agent::Agent(): initialUtility(0.0), initialWealth(0.0) {
+
+Agent::Agent(int size): initialUtility(0.0), initialWealth(0.0) {
+    alphas.resize(static_cast<int>(size+1));
+    endowment.resize(static_cast<int>(size+1));   
+    initialMRSs.resize(static_cast<int>(size+1)); 
+    allocation.resize(static_cast<int>(size+1));  
+    currentMRSs.resize(static_cast<int>(size+1));
     Init();
 }
 
@@ -498,10 +509,11 @@ void inline AgentPopulation::GetParallelAgentPair (AgentPtr& Agent1, AgentPtr& A
     ActiveAgentIndex++;
 }   //  AgentPopulation::GetParallelAgentPair()
 
-AgentPopulation::AgentPopulation():
+AgentPopulation::AgentPopulation(int size):
 AlphaData(), EndowmentData(), LnMRSsData(), LnMRSsDataUpToDate(true), LastSumOfUtilities(0.0), ActiveAgentIndex(0), GetAgentPair(NULL) {
+    Volume.resize(static_cast<int>(size+1));
     for (int i = 1; i <= NumberOfAgents; i++)
-        Agents[i] = new Agent;
+        Agents[i] = new Agent(NumberOfCommodities);
 
     if (DefaultSerialExecution) {
         GetAgentPair = &AgentPopulation::GetSerialAgentPair;
@@ -924,6 +936,7 @@ void ReadConfigFile(std::string file) {
         config.readFile(file.c_str());
         LOG(INFO) << "Loaded configuration from " << file;
         if (config.lookupValue("debug.enabled", debug) && debug) { LOG(DEBUG) << "debug: " << debug; }
+        if (config.lookupValue("number.commodities", NumberOfCommodities) && debug) { LOG(DEBUG) << "NumberOfCommodities: " << NumberOfCommodities; }
         if (config.lookupValue ("rand.use_seed", UseRandomSeed) && debug) { LOG(DEBUG) << "UseRandomSeed: " << UseRandomSeed; }
         if (config.lookupValue("rand.seed", NonRandomSeed) && debug) { LOG(DEBUG) << "NonRandomSeed: " << NonRandomSeed; }
         if (config.lookupValue("interactions_per_period", PairwiseInteractionsPerPeriod) && debug) { LOG(DEBUG) << "PairwiseInteractionsPerPeriod: " << PairwiseInteractionsPerPeriod; }
@@ -977,7 +990,7 @@ int main(int argc, char** argv) {
 
     //  Initialize the model and print preliminaries to the log.
     InitMiscellaneous();
-    AgentPopulationPtr PopulationPtr = new AgentPopulation;
+    AgentPopulationPtr PopulationPtr = new AgentPopulation(NumberOfCommodities);
 
     //  Equilibrate the agent economy once...
     int EquilibrationNumber = 1;
