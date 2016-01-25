@@ -41,7 +41,7 @@ unsigned int NonRandomSeed;
 std::mt19937 rng(0);
 // We seed 0 by default; in main we will seed the RNG properly.
 
-double Version = 0.97;
+double Version = 1.0;
 
 //int NumberOfAgents = 10000000;    // 10^7
 const int NumberOfAgents  = 100000; // 10^5
@@ -105,20 +105,21 @@ bool PrintConvergenceStats;
 bool PrintFinalCommodityList;
 
 // DISTRIBUTIONS
-std::uniform_int_distribution<int> randomAgent(1, NumberOfAgents);  //  why are we 1-indexing?
-std::uniform_int_distribution<int> randomCommodity(1, NumberOfCommodities);
-std::uniform_int_distribution<int> randomBinary(0, 1);
-std::uniform_real_distribution<double> randomShock(MinShock, MaxShock);
-std::uniform_real_distribution<double> randomAlpha(alphaMin, alphaMax);
-std::uniform_real_distribution<double> randomWealth(wealthMin, wealthMax);
 //  std::uniform_int_distribution<double> randomDouble(0, 1);
+std::uniform_int_distribution<int> randomAgent;  //  why are we 1-indexing?
+std::uniform_int_distribution<int> randomCommodity;
+std::uniform_int_distribution<int> randomBinary;
+std::uniform_real_distribution<double> randomShock;
+std::uniform_real_distribution<double> randomAlpha;
+std::uniform_real_distribution<double> randomWealth;
 
 // TODO: A lot of things depend on this typedef but I would like to make 
 // to delay declaring the size of the array so that I can take number 
 // of commodites as a parameter (user input). For now I'm admitting defeat and still
 // hard-coding the number of commodities. 
-typedef double CommodityArray[NumberOfCommodities+1];
+ typedef double CommodityArray[NumberOfCommodities+1];
 //  Size: NumberOfCommodities * 8 bytes
+// typedef double *CommodityArray;
 
 typedef CommodityArray *CommodityArrayPtr;
 
@@ -143,19 +144,19 @@ public:
     Data();
     void Init();
     void AddDatuum(double Datuum);
-    int GetN() {return N; }
-    double GetMin() {return min; }
-    double GetMax() {return max; }
-    double GetDelta() {return max - min; }
+    int GetN() { return N; }
+    double GetMin() { return min; }
+    double GetMax() { return max; }
+    double GetDelta() { return max - min; }
     double GetAverage() {
         if (N > 0) {
             return sum/N;
         } else {
             return 0.0;
         }}
-        double GetExpAverage() {return exp(GetAverage()); }
+        double GetExpAverage() { return exp(GetAverage()); }
         double GetVariance();
-        double GetStdDev() {return sqrt(GetVariance()); }
+        double GetStdDev() { return sqrt(GetVariance()); }
 };  //  Total:  36 bytes
 
 typedef Data *DataPtr;
@@ -166,7 +167,7 @@ class CommodityData {   //  Size:
 public:
     CommodityData();
     void Clear();
-    DataPtr GetData(int index) {return &data[index]; }
+    DataPtr GetData(int index) { return &data[index]; }
     double L2StdDev();
     double LinfStdDev();
 };                       //  Total:  NumberOfCommodities * 8 bytes
@@ -430,7 +431,7 @@ void AgentPopulation::ComputeLnMRSsDistribution() {
 double AgentPopulation::ComputeSumOfUtilities() {
     double sum = 0.0;
 
-    for (int i = 1; i <= NumberOfAgents; ++i){
+    for (int i = 1; i <= NumberOfAgents; ++i) {
         sum += Agents[i]->Utility();
     }
     return sum;
@@ -572,7 +573,7 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
     LOG(INFO) << "Equilibration #" << NumberOfEquilibrationsSoFar << " starting";
     //  Next, initialize some variables...
     //
-    for (int i = 1; i <= NumberOfCommodities; ++i){
+    for (int i = 1; i <= NumberOfCommodities; ++i) {
         Volume[i] = 0.0;
     }
 
@@ -889,7 +890,7 @@ void InitMiscellaneous() {
 } // InitMiscellaneous()
 
 void SeedRNG() {
-//seed the random number generator
+// Seed the random number generator.
     if (!UseRandomSeed) {
         std::random_device rd;
         unsigned int seed = rd();
@@ -899,7 +900,7 @@ void SeedRNG() {
         LOG(INFO) << "Using fixed seed " << NonRandomSeed;
         rng.seed(NonRandomSeed);
     }
-    // reset the distributions with the proper parameters, very tedious
+    // initialize the distributions now that we know the relevant ranges
     randomAgent = std::uniform_int_distribution<int>(1, NumberOfAgents);  //  why are we 1-indexing?
     randomCommodity = std::uniform_int_distribution<int>(1, NumberOfCommodities);
     randomBinary = std::uniform_int_distribution<int>(0, 1);
@@ -910,7 +911,14 @@ void SeedRNG() {
 } // SeedRNG()
 
 void ReadConfigFile(std::string file) {
-    //TODO: comments
+    // This function sets all relevant model parameters by reading from a config file (libconfig). 
+    // If there's some issue with the formatting or reading of the config file, it catches the exception
+    // and terminates the program. The config file *must* be proper for the model to run. See parameters.cfg
+    // in the repository for an example.
+
+    // Current issues: The two most important model parameters, NumberOfAgents and NumberOfCommodities, cannot
+    // be set from the config file.  Additionally, the random number distributions must be recreated after reading
+    // the config file.
     libconfig::Config config;
     try { 
         config.readFile(file.c_str());
@@ -918,7 +926,7 @@ void ReadConfigFile(std::string file) {
         if (config.lookupValue("debug.enabled", debug) && debug) { LOG(DEBUG) << "debug: " << debug; }
         if (config.lookupValue ("rand.use_seed", UseRandomSeed) && debug) { LOG(DEBUG) << "UseRandomSeed: " << UseRandomSeed; }
         if (config.lookupValue("rand.seed", NonRandomSeed) && debug) { LOG(DEBUG) << "NonRandomSeed: " << NonRandomSeed; }
-        if (config.lookupValue("interactions_per_period", PairwiseInteractionsPerPeriod) && debug) {LOG(DEBUG) << "PairwiseInteractionsPerPeriod: " << PairwiseInteractionsPerPeriod; }
+        if (config.lookupValue("interactions_per_period", PairwiseInteractionsPerPeriod) && debug) { LOG(DEBUG) << "PairwiseInteractionsPerPeriod: " << PairwiseInteractionsPerPeriod; }
         if (config.lookupValue("alpha.min", alphaMin) && debug) { LOG(DEBUG) << "alphaMin: " << alphaMin; }
         if (config.lookupValue("alpha.max", alphaMax) && debug) { LOG(DEBUG) << "alphaMax: " << alphaMax; }
         if (config.lookupValue("wealth.min", wealthMin) && debug) { LOG(DEBUG) << "wealthMin: " << wealthMin; }
@@ -954,7 +962,7 @@ void ReadConfigFile(std::string file) {
 } //ReadConfigFile
 
 int main(int argc, char** argv) {
-    //TODO: comments re: config
+
     // Preliminaries: Parse flags, etc.
     std::string usage = "An agent-based model of bilateral exchange. Usage:\n";
     usage += argv[0];
@@ -962,24 +970,21 @@ int main(int argc, char** argv) {
     gflags::ParseCommandLineFlags(&argc, &argv, true);
     LOG(INFO) << "Opening log file...";
 
+    // Read the config file passed through the -file flag, or read the default parameters.cfg.
     ReadConfigFile(FLAGS_file);
 
     SeedRNG();
-// return 9;
-    //  First, initialize variously...
-    //
-    InitMiscellaneous();
 
+    //  Initialize the model and print preliminaries to the log.
+    InitMiscellaneous();
     AgentPopulationPtr PopulationPtr = new AgentPopulation;
 
     //  Equilibrate the agent economy once...
-    //
     int EquilibrationNumber = 1;
     long long sum = PopulationPtr->Equilibrate(EquilibrationNumber);
     long long sum2 = sum*sum;
 
     //  Equilibrate again if the user has requested this...
-    //
     long long interactions;
 
     EquilibrationNumber = 2;
