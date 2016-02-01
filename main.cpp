@@ -16,6 +16,15 @@ Extended by Stefan McCabe
 //  D. Generalize to CES preferences?
 //  E. Shrink below 1000 lines?
 
+// I used this thread-safe random number generator in another project; it will probably be useful later.
+//
+// int IntegerInRange(int min, int max) {
+//     static thread_local mt19937* generator = nullptr;
+//     if (!generator) generator = new mt19937(clock() + hash<thread::id>()(this_thread::get_id()));
+//     uniform_int_distribution<int> distribution(min, max);
+//     return distribution(*generator);
+// }
+
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -25,6 +34,7 @@ Extended by Stefan McCabe
 #include "./easylogging++.h"
 #include <libconfig.h++>
 #include <vector>
+using namespace std;
 
 // Initialize the logger. This should come immediately after the #includes are finished.
 INITIALIZE_EASYLOGGINGPP
@@ -39,7 +49,7 @@ bool UseRandomSeed;
 unsigned int NonRandomSeed;
 
 
-std::mt19937 rng(0);
+mt19937 rng(0);
 // We seed 0 by default; in main we will seed the RNG properly.
 
 double Version = 1.0;
@@ -107,12 +117,12 @@ bool PrintConvergenceStats;
 bool PrintFinalCommodityList;
 
 // DISTRIBUTIONS
-std::uniform_int_distribution<int> randomAgent;  
-std::uniform_int_distribution<int> randomCommodity;
-std::uniform_int_distribution<int> randomBinary;
-std::uniform_real_distribution<double> randomShock;
-std::uniform_real_distribution<double> randomAlpha;
-std::uniform_real_distribution<double> randomWealth;
+uniform_int_distribution<int> randomAgent;  
+uniform_int_distribution<int> randomCommodity;
+uniform_int_distribution<int> randomBinary;
+uniform_real_distribution<double> randomShock;
+uniform_real_distribution<double> randomAlpha;
+uniform_real_distribution<double> randomWealth;
 
 // TODO: A lot of things depend on this typedef but I would like to make 
 // to delay declaring the size of the array so that I can take number 
@@ -121,7 +131,7 @@ std::uniform_real_distribution<double> randomWealth;
 // typedef double CommodityArray[NumberOfCommodities+1];
 //  Size: NumberOfCommodities * 8 bytes
 // New typedef *seems* to work, provided that I resize everything in the constructors.
- typedef std::vector<double> CommodityArray;
+ typedef vector<double> CommodityArray;
 
 typedef CommodityArray *CommodityArrayPtr;
 
@@ -164,7 +174,8 @@ public:
 typedef Data *DataPtr;
 
 class CommodityData {   //  Size:
-    Data data[NumberOfCommodities+1];
+    // Data data[NumberOfCommodities+1];
+    vector<Data> data;
     //Data data = new Data[NumberOfCommodities + 1];
                         // NumberOfCommodities * 8 bytes
 public:
@@ -175,6 +186,7 @@ public:
     double LinfStdDev();
 };                       //  Total:  NumberOfCommodities * 8 bytes
                         //  Example: NumberOfCommodities = 100, size = 800 bytes
+
 
 class Agent {                       //  Size:
     CommodityArray alphas;          //      NumberOfCommodities * 8 bytes
@@ -268,8 +280,9 @@ typedef AgentPopulation *AgentPopulationPtr;
 
 double inline Dot(CommodityArrayPtr vector1, CommodityArrayPtr vector2) {
     double sum = 0.0;
-    for (int i = 1; i <= NumberOfCommodities; ++i)
+    for (int i = 1; i <= NumberOfCommodities; ++i) {
         sum += (*vector1)[i] * (*vector2)[i];
+    }
     return sum;
 }   //  Dot
 
@@ -330,6 +343,7 @@ double Data::GetVariance() {
 
 CommodityData::CommodityData() {
 data.resize(NumberOfCommodities+1);
+//    data = 
 }
 
 void CommodityData::Clear() {
@@ -481,7 +495,6 @@ void inline AgentPopulation::RandomizeAgents(int NumberToRandomize) {
 
 void inline AgentPopulation::RandomizeAgents2(int NumberToRandomize) {
     // Note:  The NumberToRandomize need not be even, just > 1
-    //
     int AgentIndex1, AgentIndex2;
     AgentPtr TempPtr;
 
@@ -627,7 +640,7 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
             } else {
                 MRSratio = 1.0/MRSratio12;
             }
-            // std::cout << MRSratio << std::endl;
+            // cout << MRSratio << endl;
             if (MRSratio >= exp_trade_eps)  {  //  do exchange
                 if (MRSratio12 > 1.0) {
                     LargerMRSAgent = Agent1;
@@ -904,7 +917,7 @@ void InitMiscellaneous() {
 void SeedRNG() {
 // Seed the random number generator.
     if (!UseRandomSeed) {
-        std::random_device rd;
+        random_device rd;
         unsigned int seed = rd();
         rng.seed(seed);
         LOG(INFO) << "Using random seed " << seed;
@@ -913,16 +926,16 @@ void SeedRNG() {
         rng.seed(NonRandomSeed);
     }
     // initialize the distributions now that we know the relevant ranges
-    randomAgent = std::uniform_int_distribution<int>(1, NumberOfAgents);  //  why are we 1-indexing?
-    randomCommodity = std::uniform_int_distribution<int>(1, NumberOfCommodities);
-    randomBinary = std::uniform_int_distribution<int>(0, 1);
-    randomShock = std::uniform_real_distribution<double>(MinShock, MaxShock);
-    randomAlpha = std::uniform_real_distribution<double>(alphaMin, alphaMax);
-    randomWealth = std::uniform_real_distribution<double>(wealthMin, wealthMax);
-//  std::uniform_int_distribution<double> randomDouble(0, 1);
+    randomAgent = uniform_int_distribution<int>(1, NumberOfAgents);  //  why are we 1-indexing?
+    randomCommodity = uniform_int_distribution<int>(1, NumberOfCommodities);
+    randomBinary = uniform_int_distribution<int>(0, 1);
+    randomShock = uniform_real_distribution<double>(MinShock, MaxShock);
+    randomAlpha = uniform_real_distribution<double>(alphaMin, alphaMax);
+    randomWealth = uniform_real_distribution<double>(wealthMin, wealthMax);
+//  uniform_int_distribution<double> randomDouble(0, 1);
 } // SeedRNG()
 
-void ReadConfigFile(std::string file) {
+void ReadConfigFile(string file) {
     // This function sets all relevant model parameters by reading from a config file (libconfig). 
     // If there's some issue with the formatting or reading of the config file, it catches the exception
     // and terminates the program. The config file *must* be proper for the model to run. See parameters.cfg
@@ -970,14 +983,14 @@ void ReadConfigFile(std::string file) {
 
     } catch (...) {
         LOG(ERROR) << "Error reading config file";
-        std::terminate();
+        terminate();
     }
 } //ReadConfigFile
 
 int main(int argc, char** argv) {
 
     // Preliminaries: Parse flags, etc.
-    std::string usage = "An agent-based model of bilateral exchange. Usage:\n";
+    string usage = "An agent-based model of bilateral exchange. Usage:\n";
     usage += argv[0];
     gflags::SetUsageMessage(usage);
     gflags::ParseCommandLineFlags(&argc, &argv, true);
