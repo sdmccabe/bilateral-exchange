@@ -122,15 +122,8 @@ uniform_real_distribution<double> randomShock;
 uniform_real_distribution<double> randomAlpha;
 uniform_real_distribution<double> randomWealth;
 
-// TODO: A lot of things depend on this typedef but I would like to make 
-// to delay declaring the size of the array so that I can take number 
-// of commodites as a parameter (user input). For now I'm admitting defeat and still
-// hard-coding the number of commodities. 
-// typedef double CommodityArray[NumberOfCommodities+1];
-//  Size: NumberOfCommodities * 8 bytes
-// New typedef *seems* to work, provided that I resize everything in the constructors.
- typedef vector<double> CommodityArray;
 
+typedef vector<double> CommodityArray;
 typedef CommodityArray *CommodityArrayPtr;
 
 double inline Dot(CommodityArrayPtr vector1, CommodityArrayPtr vector2);
@@ -1005,9 +998,13 @@ int main(int argc, char** argv) {
 
     //  Equilibrate the agent economy once...
     int EquilibrationNumber = 1;
-    long long sum = PopulationPtr->Equilibrate(EquilibrationNumber);
+    long long sum;
+    if (DefaultSerialExecution) {
+        sum = PopulationPtr->Equilibrate(EquilibrationNumber);
+    } else {
+        //sum = PopulationPtr->ParallelEquilibrate(EquilibrationNumber);
+    }
     long long sum2 = sum*sum;
-
     //  Equilibrate again if the user has requested this...
     long long interactions;
 
