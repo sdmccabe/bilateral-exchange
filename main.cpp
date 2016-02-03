@@ -34,7 +34,8 @@ Extended by Stefan McCabe
 #include "./easylogging++.h"
 #include <libconfig.h++>
 #include <vector>
-using namespace std;
+#include "main.h"
+//using namespace std;
 
 // Initialize the logger. This should come immediately after the #includes are finished.
 INITIALIZE_EASYLOGGINGPP
@@ -43,244 +44,21 @@ INITIALIZE_EASYLOGGINGPP
 DEFINE_bool(test, true, "Test GFlags");
 DEFINE_string(file, "parameters.cfg", "Specify the configuation file containing the model parameters.");
 
-// addressing the RNG first
+// addressing the RNG first. Seeded to 0 for initialization, 
+// will be properly seeded in main().
+std::mt19937 rng(0);
 
-bool UseRandomSeed;
-unsigned int NonRandomSeed;
-
-
-mt19937 rng(0);
-// We seed 0 by default; in main we will seed the RNG properly.
-
-double Version = 1.0;
-
-int NumberOfAgents;
-int NumberOfCommodities;
-
-int PairwiseInteractionsPerPeriod;
-
-double alphaMin;
-double alphaMax;
-unsigned int wealthMin;
-unsigned int wealthMax;
-
-bool DefaultSerialExecution;   // FALSE means parallel
-int AgentsToRandomize;
-//  This is done only for parallel interactions
-
-int RandomizationMethod;            // 0 means swap pairs
-                                    // 1 means "threaded"
-int RequestedEquilibrations;
-bool SameAgentInitialCondition;
-
-double trade_eps;
-double exp_trade_eps;
-
-int termination_criterion;              // -2 means termination based on time
-                                        // -1 means use L2 norm on MRSs
-                                        //  0 means use L∞ norm on MRSs
-                                        //  1 means use relative increase in V
-                                        //  2 means use absolute increase in V
-long long TerminationTime;
-
-double termination_eps;    //  10^-1
-long long CheckTerminationThreshold; // was 100000
-//  1.5 x 10^9 periods ~ 60 x 10^9 interactions
-
-int CheckTerminationPeriod;
-//  Typical values:
-//  A = 100,        N = 10,     use 1
-//  A = 100,        N = 50,     use 25
-//  A = 100,        N = 100,    use 100
-//  A = 100,        N = 500,    use 2500
-//  A = 100,        N = 1000,   use 10,000
-//  A = 100,        N = 5000,   use 250,000
-//  A = 100,        N = 10,000, use 1,000,000
-//  A = 1000,       N = 2,      use 1
-//  A = 10,000,     N = 2,      use 10
-//  A = 100,000,    N = 2,      use 100
-//  A = 1,000,000,  N = 2,      use 1000
-//  A = 10,000,000, N = 2,      use 10,000
-
-bool ShockPreferences;
-int ShockPeriod;
-double MinShock;
-double MaxShock;
-
-bool debug;
-bool PrintEndowments;
-bool PrintIntermediateOutput;
-int IntermediateOutputPrintPeriod;  // 20x10^6
-bool PrintConvergenceStats;
-bool PrintFinalCommodityList;
-
-// DISTRIBUTIONS
-uniform_int_distribution<unsigned long> randomAgent;  
-uniform_int_distribution<unsigned long> randomCommodity;
-uniform_int_distribution<int> randomBinary;
-uniform_real_distribution<double> randomShock;
-uniform_real_distribution<double> randomAlpha;
-uniform_real_distribution<double> randomWealth;
-
-
-typedef vector<double> CommodityArray;
-typedef CommodityArray *CommodityArrayPtr;
-
-double inline Dot(CommodityArrayPtr vector1, CommodityArrayPtr vector2);
-
-class MemoryObject {
-    long long start;
-
-public:
-    MemoryObject();
-    void WriteMemoryRequirements();
-} MemoryState;
-
-
-class Data {        //      Size:
-    int N;          //      4 bytes
-    double min;     //      8 bytes
-    double max;     //      8 bytes
-    double sum;     //      8 bytes
-    double sum2;    //      8 bytes
-public:
-    Data();
-    void Init();
-    void AddDatuum(double Datuum);
-    int GetN() { return N; }
-    double GetMin() { return min; }
-    double GetMax() { return max; }
-    double GetDelta() { return max - min; }
-    double GetAverage() {
-        if (N > 0) {
-            return sum/N;
-        } else {
-            return 0.0;
-        }}
-        double GetExpAverage() { return exp(GetAverage()); }
-        double GetVariance();
-        double GetStdDev() { return sqrt(GetVariance()); }
-};  //  Total:  36 bytes
-
-typedef Data *DataPtr;
-
-class CommodityData {   //  Size:
-    // Data data[NumberOfCommodities+1];
-    vector<Data> data;
-    //Data data = new Data[NumberOfCommodities + 1];
-                        // NumberOfCommodities * 8 bytes
-public:
-    CommodityData();
-    void Clear();
-    DataPtr GetData(size_t index) { return &data[index]; }
-    double L2StdDev();
-    double LinfStdDev();
-};                       //  Total:  NumberOfCommodities * 8 bytes
-                        //  Example: NumberOfCommodities = 100, size = 800 bytes
-
-
-class Agent {                       //  Size:
-    CommodityArray alphas;          //      NumberOfCommodities * 8 bytes
-    CommodityArray endowment;       //      NumberOfCommodities * 8 bytes
-    CommodityArray initialMRSs;     //      NumberOfCommodities * 8 bytes
-    CommodityArray allocation;      //      NumberOfCommodities * 8 bytes
-    CommodityArray currentMRSs;     //      NumberOfCommodities * 8 bytes
-    Agent();
-    double initialUtility;          //      8 bytes
-    double initialWealth;           //      8 bytes
-
-public:
-    Agent(int size);
-    void Init();
-    void Reset();
-    double GetAlpha(size_t CommodityIndex) {
-        return alphas[CommodityIndex];
-    }
-    void SetAlpha(size_t CommodityIndex, double alpha) {
-        alphas[CommodityIndex] = alpha;
-    }
-    double GetEndowment(size_t CommodityIndex) {
-        return endowment[CommodityIndex];
-    }
-    double MRS(size_t CommodityIndex, size_t Numeraire);
-    void ComputeMRSs();
-    double GetInitialMRS(size_t CommodityIndex) {
-        return initialMRSs[CommodityIndex];
-    }
-    double GetAllocation(size_t CommodityIndex) {
-        return allocation[CommodityIndex];
-    }
-    void IncreaseAllocation(size_t CommodityIndex, double amount) {
-        allocation[CommodityIndex] += amount;
-    }
-    double GetCurrentMRS(size_t CommodityIndex) {
-        return currentMRSs[CommodityIndex];
-    }
-    CommodityArrayPtr GetCurrentMRSs() {
-        return &currentMRSs;
-    }
-    double Utility();
-    double GetInitialUtility() {
-        return initialUtility;
-    }
-    double Wealth(CommodityArrayPtr prices) {
-        return Dot(&allocation, prices);
-    }
-    double GetInitialWealth() {
-        return initialWealth;
-    }
-};
-                //  Total: 20 + NumberOfCommodities * 40 bytes
-                //  Example: NumberOfCommodities = 2, size = 20 + 80 = 100
-                //  Example: NumberOfCommodities = 100, size = 20 + 4000 = 4020
-typedef Agent *AgentPtr;
-
-class AgentPopulation {                             //  Size:
-    //AgentPtr Agents[NumberOfAgents + 1];            //  NumberOfAgents * 4 bytes
-    vector<AgentPtr> Agents;
-    CommodityArray Volume;
-    CommodityData AlphaData, EndowmentData, LnMRSsData;
-    bool LnMRSsDataUpToDate;
-    void ComputeLnMRSsDistribution();
-    double LastSumOfUtilities;
-    double ComputeSumOfUtilities();
-    double ComputeIncreaseInSumOfUtilities() {
-        return ComputeSumOfUtilities() - LastSumOfUtilities;
-    }
-    double ComputeRelativeIncreaseInSumOfUtilities() {
-        return ComputeIncreaseInSumOfUtilities() / LastSumOfUtilities;
-    }
-    void GetSerialAgentPair(AgentPtr& Agent1, AgentPtr& Agent2);
-    size_t ActiveAgentIndex;
-    void RandomizeAgents(int NumberToRandomize);
-    void RandomizeAgents2(int NumberToRandomize);
-    void GetParallelAgentPair(AgentPtr& Agent1, AgentPtr& Agent2);
-    void(AgentPopulation::*GetAgentPair) (AgentPtr& Agent1, AgentPtr& Agent2);
-
-public:
-    AgentPopulation(int size);                              //  Constructor...
-    void Init();
-    void Reset();
-    long long Equilibrate(int NumberOfEquilibrationsSoFar);
-    void ConvergenceStatistics(CommodityArray VolumeStats);
-    void CompareTwoAgents(AgentPtr Agent1, AgentPtr Agent2);
-    void ShockAgentPreferences();
-};
-//  Example:    NumberOfAgents = 100, size = 400 bytes
-
-typedef AgentPopulation *AgentPopulationPtr;
-
+/*===========
+    ==Methods==
+    ===========*/
 double inline Dot(CommodityArrayPtr vector1, CommodityArrayPtr vector2) {
     double sum = 0.0;
     for (size_t i = 1; i <= static_cast<size_t>(NumberOfCommodities); ++i) {
         sum += (*vector1)[i] * (*vector2)[i];
     }
     return sum;
-}   //  Dot
+}
 
-/*===========
-    ==Methods==
-    ===========*/
 
     MemoryObject::MemoryObject():
     start(0)
@@ -911,7 +689,7 @@ void InitMiscellaneous() {
 void SeedRNG() {
 // Seed the random number generator.
     if (!UseRandomSeed) {
-        random_device rd;
+        std::random_device rd;
         unsigned int seed = rd();
         rng.seed(seed);
         LOG(INFO) << "Using random seed " << seed;
@@ -920,16 +698,16 @@ void SeedRNG() {
         rng.seed(NonRandomSeed);
     }
     // initialize the distributions now that we know the relevant ranges
-    randomAgent = uniform_int_distribution<unsigned long>(1, static_cast<size_t>(NumberOfAgents));  //  why are we 1-indexing?
-    randomCommodity = uniform_int_distribution<unsigned long>(1, static_cast<size_t>(NumberOfCommodities));
-    randomBinary = uniform_int_distribution<int>(0, 1);
-    randomShock = uniform_real_distribution<double>(MinShock, MaxShock);
-    randomAlpha = uniform_real_distribution<double>(alphaMin, alphaMax);
-    randomWealth = uniform_real_distribution<double>(wealthMin, wealthMax);
+    randomAgent = std::uniform_int_distribution<unsigned long>(1, static_cast<size_t>(NumberOfAgents));  //  why are we 1-indexing?
+    randomCommodity = std::uniform_int_distribution<unsigned long>(1, static_cast<size_t>(NumberOfCommodities));
+    randomBinary = std::uniform_int_distribution<int>(0, 1);
+    randomShock = std::uniform_real_distribution<double>(MinShock, MaxShock);
+    randomAlpha = std::uniform_real_distribution<double>(alphaMin, alphaMax);
+    randomWealth = std::uniform_real_distribution<double>(wealthMin, wealthMax);
 //  uniform_int_distribution<double> randomDouble(0, 1);
 } // SeedRNG()
 
-void ReadConfigFile(string file) {
+void ReadConfigFile(std::string file) {
     // This function sets all relevant model parameters by reading from a config file (libconfig). 
     // If there's some issue with the formatting or reading of the config file, it catches the exception
     // and terminates the program. The config file *must* be proper for the model to run. See parameters.cfg
@@ -975,13 +753,13 @@ void ReadConfigFile(string file) {
 
     } catch (...) {
         LOG(ERROR) << "Error reading config file";
-        terminate();
+        std::terminate();
     }
 } //ReadConfigFile
 
 int main(int argc, char** argv) {
     // Preliminaries: Parse flags, etc.
-    string usage = "An agent-based model of bilateral exchange. Usage:\n";
+    std::string usage = "An agent-based model of bilateral exchange. Usage:\n";
     usage += argv[0];
     gflags::SetUsageMessage(usage);
     gflags::ParseCommandLineFlags(&argc, &argv, true);
