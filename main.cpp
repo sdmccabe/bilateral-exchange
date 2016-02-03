@@ -31,7 +31,14 @@ Extended by Stefan McCabe
 #include <random>
 #include <gflags/gflags.h>
 #define ELPP_THREAD_SAFE
-#include "./easylogging++.h"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wundef"
+#pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wctor-dtor-privacy"
+#include "easylogging++.h"
+#pragma GCC diagnostic pop
 #include <libconfig.h++>
 #include <vector>
 #include "main.h"
@@ -59,7 +66,6 @@ double inline Dot(CommodityArrayPtr vector1, CommodityArrayPtr vector2) {
     return sum;
 }
 
-
     MemoryObject::MemoryObject():
     start(0)
 {}  //  MemoryObject::MemoryObject()
@@ -72,7 +78,7 @@ void MemoryObject::WriteMemoryRequirements() {
     LOG(DEBUG) << "Size of AgentPopulation in memory: " << sizeof(AgentPopulation) << " bytes";
     LOG(DEBUG) << "Total bytes required (approximate): " << \
     (sizeof(rng) + sizeof(MemoryObject) + sizeof(CommodityData) \
-        + sizeof(AgentPopulation) + sizeof(Agent) * static_cast<size_t>(NumberOfAgents)) << " bytes";
+        + sizeof(AgentPopulation) + sizeof(Agent) * NumberOfAgents) << " bytes";
 }
 
 Data::Data():
@@ -489,6 +495,10 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
                     Converged = true;
                 }
                 break;
+                default:
+                    LOG(ERROR) << "Invalid termination criterion";
+                    std::terminate();
+                    break;
             }   //  switch...
         }
         //  Display stats if the time is right...
@@ -521,6 +531,10 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
                     case 2:
                     LOG(INFO) << "increase in ∑U = " << ComputeIncreaseInSumOfUtilities();
                     break;
+                    default:
+                        LOG(ERROR) << "Invalid termination criterion";
+                        std::terminate();
+                        break;
                 }   // switch...
             }   //  theTime...
         }
@@ -619,18 +633,19 @@ void AgentPopulation::CompareTwoAgents(AgentPtr Agent1, AgentPtr Agent2) {
 }   //  AgentPopulation::CompareTwoAgents()
 
 void AgentPopulation::ShockAgentPreferences() {
-    LOG(DEBUG) << "Shocking agent preferences...";
+    if (debug) { LOG(DEBUG) << "Shocking agent preferences..."; }
     AgentPtr ActiveAgent;
     double oldPref, newPref, pref;
 
     size_t CommodityToShock = randomCommodity(rng);
     bool sign = randomBinary(rng);
     double shock = randomShock(rng);
-
-    if (sign) {
-        LOG(DEBUG) << "Shocking commodity " << CommodityToShock << " * " << shock;
-    } else {
-        LOG(DEBUG) << "Shocking commodity " << CommodityToShock << " * 1/" << shock;
+    if (debug) {
+        if (sign) {
+            LOG(DEBUG) << "Shocking commodity " << CommodityToShock << " * " << shock;
+        } else {
+            LOG(DEBUG) << "Shocking commodity " << CommodityToShock << " * 1/" << shock;
+        }
     }
     for (size_t AgentIndex = 1; AgentIndex <= static_cast<size_t>(NumberOfAgents); ++AgentIndex) {
         ActiveAgent = Agents[AgentIndex];
@@ -671,6 +686,10 @@ void InitMiscellaneous() {
         break;
         case 2:
         LOG(INFO) << "Termination criterion: increase in the sum of agent utilities";
+        break;
+        default:
+        LOG(ERROR) << "Invalid termination criterion";
+        std::terminate();
         break;
     }
     LOG(INFO) << "Termination threshold: " << termination_eps;
@@ -804,4 +823,4 @@ int main(int argc, char** argv) {
     if (EquilibrationNumber > 2) {
         LOG(INFO) << "std. dev.: " << sqrt((sum2 - (EquilibrationNumber - 1) * avg * avg)/(EquilibrationNumber - 2));
     }
-} // main()
+}  // main()
