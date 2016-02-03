@@ -10,18 +10,6 @@ Extended by Stefan McCabe
 #define MAIN_H_
 #endif
 
-#include <gflags/gflags.h>
-#include <algorithm>
-#include <cmath>
-#include <iostream>
-#include <random>
-#include <vector>
-#include "./easylogging++.h"
-#define ELPP_THREAD_SAFE
-#include <libconfig.h++>
-
-//using namespace std;
-
 // Global variables specifying model parameters. See parameters.cfg for documentation.
 bool UseRandomSeed;
 unsigned int NonRandomSeed;
@@ -70,8 +58,13 @@ std::uniform_real_distribution<double> randomWealth;
 typedef std::vector<double> CommodityArray;
 typedef CommodityArray *CommodityArrayPtr;
 
+// Functions
 double inline Dot(CommodityArrayPtr vector1, CommodityArrayPtr vector2);
+void ReadConfigFile(std::string file);
+void InitMiscellaneous();
+void SeedRNG();
 
+// Classes and methods
 class MemoryObject {
     long long start;
 
