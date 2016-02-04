@@ -29,7 +29,6 @@ Extended by Stefan McCabe
 #include <cmath>
 #include <iostream>
 #include <random>
-#include <atomic>
 #include <gflags/gflags.h>
 #define ELPP_THREAD_SAFE
 #pragma GCC diagnostic push
@@ -59,13 +58,13 @@ std::mt19937 rng(0);
 /*===========
     ==Methods==
     ===========*/
-double inline Dot(CommodityArrayPtr vector1, CommodityArrayPtr vector2) {
-    double sum = 0.0;
-    for (size_t i = 1; i <= static_cast<size_t>(NumberOfCommodities); ++i) {
-        sum += (*vector1)[i] * (*vector2)[i];
+    double inline Dot(CommodityArrayPtr vector1, CommodityArrayPtr vector2) {
+        double sum = 0.0;
+        for (size_t i = 1; i <= static_cast<size_t>(NumberOfCommodities); ++i) {
+            sum += (*vector1)[i] * (*vector2)[i];
+        }
+        return sum;
     }
-    return sum;
-}
 
     MemoryObject::MemoryObject():
     start(0)
@@ -119,9 +118,7 @@ double Data::GetVariance() {
 }   //  Data::GetVariance()
 
 CommodityData::CommodityData() {
-data.resize(static_cast<size_t>(NumberOfCommodities+1));
-data.shrink_to_fit();
-//    data = 
+    data.resize(static_cast<size_t>(NumberOfCommodities+1));
 }
 
 void CommodityData::Clear() {
@@ -222,10 +219,10 @@ double Agent::Utility() {
 void AgentPopulation::ComputeLnMRSsDistribution() {
     LnMRSsData.Clear();
 
-    for (size_t i = 1; i <= static_cast<size_t>(NumberOfAgents); ++i) {
-        Agents[i]->ComputeMRSs();
+    for (auto& agent: Agents) {
+        agent->ComputeMRSs();
         for (size_t j = 1; j <= static_cast<size_t>(NumberOfCommodities); ++j) {
-            LnMRSsData.GetData(j)->AddDatuum(log(Agents[i]->GetCurrentMRS(j)));
+            LnMRSsData.GetData(j)->AddDatuum(log(agent->GetCurrentMRS(j)));
         }
     }       //  for i...
     LnMRSsDataUpToDate = true;
@@ -234,8 +231,9 @@ void AgentPopulation::ComputeLnMRSsDistribution() {
 double AgentPopulation::ComputeSumOfUtilities() {
     double sum = 0.0;
 
-    for (size_t i = 1; i <= static_cast<size_t>(NumberOfAgents); ++i) {
-        sum += Agents[i]->Utility();
+    // for (size_t i = 1; i <= static_cast<size_t>(NumberOfAgents); ++i) {
+    for (auto& agent: Agents) {
+        sum += agent->Utility();
     }
     return sum;
 }   //  AgentPopulation::ComputeSumOfUtilities()
@@ -303,24 +301,19 @@ void inline AgentPopulation::GetParallelAgentPair (AgentPtr& Agent1, AgentPtr& A
 AgentPopulation::AgentPopulation(int size):
 AlphaData(), EndowmentData(), LnMRSsData(), LnMRSsDataUpToDate(true), LastSumOfUtilities(0.0), ActiveAgentIndex(0), GetAgentPair(NULL) {
     Volume.resize(static_cast<size_t>(size+1));
-    Agents.reserve(static_cast<size_t>(NumberOfAgents+1));
-    //LOG(DEBUG) << "(REMOVE) Agents size " << sizeof(Agents);
-    // TODO: This appears to be a woefully inefficient approach to allocation; fix ASAP.
-    for (size_t i = 1; i <= static_cast<size_t>(NumberOfAgents); i++) {
-        //Agents.push_back(std::make_shared<Agent>(NumberOfCommodities));
-        //Agents.push_back(new Agent(NumberOfCommodities));
-        Agents[i] = new Agent(NumberOfCommodities);
+    Agents.resize(static_cast<size_t>(NumberOfAgents));
+
+    for(auto& agent : Agents) {
+        agent = new Agent(NumberOfCommodities);
     }
-    //LOG(DEBUG) << "(REMOVE) Agents size " << sizeof(Agents);
+
     if (DefaultSerialExecution) {
         GetAgentPair = &AgentPopulation::GetSerialAgentPair;
-    } else {
-       GetAgentPair = &AgentPopulation::GetParallelAgentPair;
-    }
+    } else
+    GetAgentPair = &AgentPopulation::GetParallelAgentPair;
 }   // Constructor...
 
 void AgentPopulation::Init() {
-    AgentPtr ActiveAgent;
     size_t CommodityIndex;
     Data InitialOwnWealthData;
 
@@ -331,8 +324,7 @@ void AgentPopulation::Init() {
 
     //  Cycle through the agents...
     //
-    for (size_t AgentIndex = 1; AgentIndex <= static_cast<size_t>(NumberOfAgents); ++AgentIndex) {
-        ActiveAgent = Agents[AgentIndex];
+    for (auto& ActiveAgent : Agents) { 
         ActiveAgent->Init();
 
         //  Next, fill up the rest of the agent fields...
@@ -363,13 +355,12 @@ void AgentPopulation::Init() {
 }   //  AgentPopulation::Init()
 
 void AgentPopulation::Reset() {
-    for (size_t AgentIndex = 1; AgentIndex <= static_cast<size_t>(NumberOfAgents); ++AgentIndex) {
-        Agents[AgentIndex]->Reset();
+    for (auto& agent : Agents) {
+        agent->Reset();
     }
 }   //  AgentPopulation::Reset
 
 long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
-    char OutputStr[63];
     bool Converged = false;
     long long theTime = 0;
     long long TotalInteractions = 0;
@@ -414,7 +405,7 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
             } else {
                 Commodity1 = randomCommodity(rng);
                 do {
-                    Commodity2 = randomCommodity(rng);
+                    Commodity1 = randomCommodity(rng);
                 } while (Commodity2 == Commodity1);
             }
             //  Compare MRSs...
@@ -503,9 +494,9 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
                 }
                 break;
                 default:
-                    LOG(ERROR) << "Invalid termination criterion";
-                    std::terminate();
-                    break;
+                LOG(ERROR) << "Invalid termination criterion";
+                std::terminate();
+                break;
             }   //  switch...
         }
         //  Display stats if the time is right...
@@ -539,9 +530,9 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
                     LOG(INFO) << "increase in ∑U = " << ComputeIncreaseInSumOfUtilities();
                     break;
                     default:
-                        LOG(ERROR) << "Invalid termination criterion";
-                        std::terminate();
-                        break;
+                    LOG(ERROR) << "Invalid termination criterion";
+                    std::terminate();
+                    break;
                 }   // switch...
             }   //  theTime...
         }
@@ -576,15 +567,15 @@ void AgentPopulation::ConvergenceStatistics(CommodityArray VolumeStats) {
     Data FinalOwnWealthData, DeltaOwnWealthData, DeltaUtility;
     double price, AgentsInitialWealth, AgentsFinalWealth;
 
-    for (size_t i = 1; i <= static_cast<size_t>(NumberOfAgents); ++i) {
+    for (auto& agent : Agents) {
         //  First compute agent wealth one commodity at a time...
         //
         AgentsInitialWealth = 0.0;
         AgentsFinalWealth = 0.0;
         for (size_t j = 1; j <= static_cast<size_t>(NumberOfCommodities); ++j) {
             price = LnMRSsData.GetData(j)->GetExpAverage();
-            AgentsInitialWealth += Agents[i]->GetEndowment(j) * price;
-            AgentsFinalWealth += Agents[i]->GetAllocation(j) * price;
+            AgentsInitialWealth += agent->GetEndowment(j) * price;
+            AgentsFinalWealth += agent->GetAllocation(j) * price;
         }
         InitialMarketWealthData.AddDatuum(AgentsInitialWealth);
         FinalMarketWealthData.AddDatuum(AgentsFinalWealth);
@@ -592,10 +583,10 @@ void AgentPopulation::ConvergenceStatistics(CommodityArray VolumeStats) {
 
         //  The following line is a minor optimization...variable name should include 'own' to be mnemonic...
         //
-        AgentsFinalWealth = Agents[i]->Wealth(Agents[i]->GetCurrentMRSs());
+        AgentsFinalWealth = agent->Wealth(agent->GetCurrentMRSs());
         FinalOwnWealthData.AddDatuum(AgentsFinalWealth);
-        DeltaOwnWealthData.AddDatuum(AgentsFinalWealth - Agents[i]->GetInitialWealth());
-        DeltaUtility.AddDatuum(Agents[i]->Utility() - Agents[i]->GetInitialUtility());
+        DeltaOwnWealthData.AddDatuum(AgentsFinalWealth - agent->GetInitialWealth());
+        DeltaUtility.AddDatuum(agent->Utility() - agent->GetInitialUtility());
     }   //  for i...
 
     LOG(INFO) << "Average initial wealth (@ market prices) = " << InitialMarketWealthData.GetAverage() << "; standard deviation = " << InitialMarketWealthData.GetStdDev();
@@ -641,7 +632,6 @@ void AgentPopulation::CompareTwoAgents(AgentPtr Agent1, AgentPtr Agent2) {
 
 void AgentPopulation::ShockAgentPreferences() {
     if (debug) { LOG(DEBUG) << "Shocking agent preferences..."; }
-    AgentPtr ActiveAgent;
     double oldPref, newPref, pref;
 
     size_t CommodityToShock = randomCommodity(rng);
@@ -654,8 +644,8 @@ void AgentPopulation::ShockAgentPreferences() {
             LOG(DEBUG) << "Shocking commodity " << CommodityToShock << " * 1/" << shock;
         }
     }
-    for (size_t AgentIndex = 1; AgentIndex <= static_cast<size_t>(NumberOfAgents); ++AgentIndex) {
-        ActiveAgent = Agents[AgentIndex];
+    for (auto& ActiveAgent : Agents) {
+        //ActiveAgent = Agents[AgentIndex];
         oldPref = ActiveAgent->GetAlpha(CommodityToShock);
         if (sign) {
             newPref = oldPref * shock;
@@ -714,7 +704,6 @@ void InitMiscellaneous() {
 
 void SeedRNG() {
 // Seed the random number generator.
-    LOG(INFO) << "Seeding random number generator...";
     if (!UseRandomSeed) {
         std::random_device rd;
         unsigned int seed = rd();
@@ -725,7 +714,7 @@ void SeedRNG() {
         rng.seed(NonRandomSeed);
     }
     // initialize the distributions now that we know the relevant ranges
-    randomAgent = std::uniform_int_distribution<unsigned long>(1, static_cast<size_t>(NumberOfAgents));  //  why are we 1-indexing?
+    randomAgent = std::uniform_int_distribution<unsigned long>(0, static_cast<size_t>(NumberOfAgents-1));  //  why are we 1-indexing?
     randomCommodity = std::uniform_int_distribution<unsigned long>(1, static_cast<size_t>(NumberOfCommodities));
     randomBinary = std::uniform_int_distribution<int>(0, 1);
     randomShock = std::uniform_real_distribution<double>(MinShock, MaxShock);
@@ -774,8 +763,6 @@ void ReadConfigFile(std::string file) {
         if (config.lookupValue("debug.intermediate_output_print_period", IntermediateOutputPrintPeriod) && debug) { LOG(DEBUG) << "IntermediateOutputPrintPeriod: " << IntermediateOutputPrintPeriod; }
         if (config.lookupValue("debug.print_convergence_stats", PrintConvergenceStats) && debug) { LOG(DEBUG) << "PrintConvergenceStats: " << PrintConvergenceStats; }
         if (config.lookupValue("debug.print_final_commodity_list", PrintFinalCommodityList) && debug) { LOG(DEBUG) << "PrintFinalCommodityList: " << PrintFinalCommodityList; }
-        // NumberOfAgents = config.lookup("number.agents");
-        // NumberOfCommodities = config.lookup("number.commodities");
         exp_trade_eps = exp(trade_eps);
 
     } catch (...) {
@@ -792,7 +779,6 @@ int main(int argc, char** argv) {
     gflags::ParseCommandLineFlags(&argc, &argv, true);
     LOG(INFO) << "Opening log file...";
 
-
     // Read the config file passed through the -file flag, or read the default parameters.cfg.
     ReadConfigFile(FLAGS_file);
 
@@ -800,7 +786,6 @@ int main(int argc, char** argv) {
 
     //  Initialize the model and print preliminaries to the log.
     InitMiscellaneous();
-    LOG(DEBUG) << "Initializing agent population...";
     AgentPopulationPtr PopulationPtr = new AgentPopulation(NumberOfCommodities);
 
     //  Equilibrate the agent economy once...
