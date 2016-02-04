@@ -29,6 +29,7 @@ Extended by Stefan McCabe
 #include <cmath>
 #include <iostream>
 #include <random>
+#include <atomic>
 #include <gflags/gflags.h>
 #define ELPP_THREAD_SAFE
 #pragma GCC diagnostic push
@@ -78,7 +79,7 @@ void MemoryObject::WriteMemoryRequirements() {
     LOG(DEBUG) << "Size of AgentPopulation in memory: " << sizeof(AgentPopulation) << " bytes";
     LOG(DEBUG) << "Total bytes required (approximate): " << \
     (sizeof(rng) + sizeof(MemoryObject) + sizeof(CommodityData) \
-        + sizeof(AgentPopulation) + sizeof(Agent) * NumberOfAgents) << " bytes";
+        + sizeof(AgentPopulation) + sizeof(Agent) * static_cast<unsigned long>(NumberOfAgents)) << " bytes";
 }
 
 Data::Data():
@@ -119,6 +120,7 @@ double Data::GetVariance() {
 
 CommodityData::CommodityData() {
 data.resize(static_cast<size_t>(NumberOfCommodities+1));
+data.shrink_to_fit();
 //    data = 
 }
 
@@ -301,15 +303,20 @@ void inline AgentPopulation::GetParallelAgentPair (AgentPtr& Agent1, AgentPtr& A
 AgentPopulation::AgentPopulation(int size):
 AlphaData(), EndowmentData(), LnMRSsData(), LnMRSsDataUpToDate(true), LastSumOfUtilities(0.0), ActiveAgentIndex(0), GetAgentPair(NULL) {
     Volume.resize(static_cast<size_t>(size+1));
-    Agents.resize(static_cast<size_t>(NumberOfAgents+1));
+    Agents.reserve(static_cast<size_t>(NumberOfAgents+1));
+    //LOG(DEBUG) << "(REMOVE) Agents size " << sizeof(Agents);
+    // TODO: This appears to be a woefully inefficient approach to allocation; fix ASAP.
     for (size_t i = 1; i <= static_cast<size_t>(NumberOfAgents); i++) {
+        //Agents.push_back(std::make_shared<Agent>(NumberOfCommodities));
+        //Agents.push_back(new Agent(NumberOfCommodities));
         Agents[i] = new Agent(NumberOfCommodities);
     }
-
+    //LOG(DEBUG) << "(REMOVE) Agents size " << sizeof(Agents);
     if (DefaultSerialExecution) {
         GetAgentPair = &AgentPopulation::GetSerialAgentPair;
-    } else
-    GetAgentPair = &AgentPopulation::GetParallelAgentPair;
+    } else {
+       GetAgentPair = &AgentPopulation::GetParallelAgentPair;
+    }
 }   // Constructor...
 
 void AgentPopulation::Init() {
@@ -407,7 +414,7 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
             } else {
                 Commodity1 = randomCommodity(rng);
                 do {
-                    Commodity1 = randomCommodity(rng);
+                    Commodity2 = randomCommodity(rng);
                 } while (Commodity2 == Commodity1);
             }
             //  Compare MRSs...
@@ -707,6 +714,7 @@ void InitMiscellaneous() {
 
 void SeedRNG() {
 // Seed the random number generator.
+    LOG(INFO) << "Seeding random number generator...";
     if (!UseRandomSeed) {
         std::random_device rd;
         unsigned int seed = rd();
@@ -784,6 +792,7 @@ int main(int argc, char** argv) {
     gflags::ParseCommandLineFlags(&argc, &argv, true);
     LOG(INFO) << "Opening log file...";
 
+
     // Read the config file passed through the -file flag, or read the default parameters.cfg.
     ReadConfigFile(FLAGS_file);
 
@@ -791,6 +800,7 @@ int main(int argc, char** argv) {
 
     //  Initialize the model and print preliminaries to the log.
     InitMiscellaneous();
+    LOG(DEBUG) << "Initializing agent population...";
     AgentPopulationPtr PopulationPtr = new AgentPopulation(NumberOfCommodities);
 
     //  Equilibrate the agent economy once...
