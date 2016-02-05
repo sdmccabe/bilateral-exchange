@@ -182,7 +182,7 @@ void Agent::Init() {
     //
 //    for (CommodityIndex = 1; CommodityIndex <= static_cast<size_t>(NumberOfCommodities); ++CommodityIndex) {
     for (auto& alpha: alphas) { 
-        size_t i = &alpha - &alphas[0];
+        auto i = static_cast<size_t>(&alpha - &alphas[0]);
         try {
                 alpha = alpha / sum;
                 endowment.at(i) = randomWealth(rng);
@@ -201,7 +201,7 @@ void Agent::Init() {
 void Agent::Reset() {
     //for (size_t CommodityIndex = 1; CommodityIndex <= static_cast<size_t>(NumberOfCommodities); ++CommodityIndex) {
     for (auto& currentAgentMRS: currentMRSs) { 
-        size_t i = &currentAgentMRS - &currentMRSs[0];
+        auto i = static_cast<size_t>(&currentAgentMRS - &currentMRSs[0]);
         try {
             allocation.at(i) = endowment.at(i);
                 currentAgentMRS = initialMRSs.at(i);
@@ -228,7 +228,7 @@ void Agent::ComputeMRSs() {
     //     currentMRSs[i] = MRS(i, 1);
     // }
     for (auto& currentAgentMRS : currentMRSs) {
-        size_t i = &currentAgentMRS - &currentMRSs[0];
+        auto i = static_cast<size_t>(&currentAgentMRS - &currentMRSs[0]);
         //std::cout << i << " ";
         if (i == 0 ) {
             currentAgentMRS = 1.0;
