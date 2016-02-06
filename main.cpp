@@ -424,7 +424,7 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
             } else {
                 Commodity1 = randomCommodity(rng);
                 do {
-                    Commodity1 = randomCommodity(rng);
+                    Commodity2 = randomCommodity(rng);
                 } while (Commodity2 == Commodity1);
             }
             //  Compare MRSs...
