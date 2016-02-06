@@ -53,7 +53,8 @@ DEFINE_string(file, "parameters.cfg", "Specify the configuation file containing 
 
 // addressing the RNG first. Seeded to 0 for initialization, 
 // will be properly seeded in main().
-std::mt19937 rng(0);
+//std::mt19937 rng(0);
+std::knuth_b rng(0);
 
 /*===========
     ==Methods==
@@ -183,16 +184,11 @@ void Agent::Init() {
 //    for (CommodityIndex = 1; CommodityIndex <= static_cast<size_t>(NumberOfCommodities); ++CommodityIndex) {
     for (auto& alpha: alphas) { 
         auto i = static_cast<size_t>(&alpha - &alphas[0]);
-        try {
-                alpha = alpha / sum;
-                endowment.at(i) = randomWealth(rng);
-                allocation.at(i) = endowment.at(i);
-                initialMRSs.at(i) = MRS(i, 1);
-                currentMRSs.at(i) = initialMRSs.at(i);
-            } catch (std::exception& e) {
-                LOG(ERROR) << "Out-of-bounds error in Init(), i = " << i;
-                std::terminate();
-            }
+        alpha = alpha / sum;
+        endowment[i] = randomWealth(rng);
+        allocation[i] = endowment[i];
+        initialMRSs[i] = MRS(i, 1);
+        currentMRSs[i] = initialMRSs[i];        
     }
     initialUtility = Utility();
     initialWealth = Wealth(&initialMRSs);
@@ -202,23 +198,13 @@ void Agent::Reset() {
     //for (size_t CommodityIndex = 1; CommodityIndex <= static_cast<size_t>(NumberOfCommodities); ++CommodityIndex) {
     for (auto& currentAgentMRS: currentMRSs) { 
         auto i = static_cast<size_t>(&currentAgentMRS - &currentMRSs[0]);
-        try {
-            allocation.at(i) = endowment.at(i);
-                currentAgentMRS = initialMRSs.at(i);
-            } catch (std::exception& e) {
-                LOG(ERROR) << "Out-of-bounds error in Rest(), i = " << i;
-                std::terminate();
-            }
+        allocation[i] = endowment[i];
+        currentAgentMRS = initialMRSs[i];
     }
 }   //  Agent::Reset
 
 double Agent::MRS (size_t CommodityIndex, size_t Numeraire) {
-    try {
-        return (alphas.at(CommodityIndex) * allocation.at(Numeraire)) / (alphas.at(Numeraire) * allocation.at(CommodityIndex));
-    } catch (std::exception &e) {
-        LOG(ERROR) << "Out-of-bounds error in MRS(), i = " << CommodityIndex << ", Numeraire = " << Numeraire;
-        std::terminate();
-    }
+        return (alphas[CommodityIndex] * allocation[Numeraire]) / (alphas[Numeraire] * allocation[CommodityIndex]);
 }   //  Agent::MRS()
 
 void Agent::ComputeMRSs() {
@@ -233,7 +219,7 @@ void Agent::ComputeMRSs() {
         if (i == 0 ) {
             currentAgentMRS = 1.0;
         } else {
-            currentMRSs.at(i) = MRS(i, 0);
+            currentMRSs[i] = MRS(i, 0);
         }
     }
 }   //      Agent::ComputeMRSs()
@@ -242,7 +228,7 @@ double Agent::Utility() {
     double product = 1.0;
 
     for (size_t i = 0; i < allocation.size(); ++i) {
-        product *= pow(allocation.at(i), alphas.at(i));
+        product *= pow(allocation[i], alphas[i]);
     }
 
     return product;
@@ -678,7 +664,6 @@ void AgentPopulation::ShockAgentPreferences() {
         }
     }
     for (auto& ActiveAgent : Agents) {
-        //ActiveAgent = Agents[AgentIndex];
         oldPref = ActiveAgent->GetAlpha(CommodityToShock);
         if (sign) {
             newPref = oldPref * shock;
@@ -747,7 +732,7 @@ void SeedRNG() {
         rng.seed(NonRandomSeed);
     }
     // initialize the distributions now that we know the relevant ranges
-    randomAgent = std::uniform_int_distribution<unsigned long>(0, static_cast<size_t>(NumberOfAgents-1));  //  why are we 1-indexing?
+    randomAgent = std::uniform_int_distribution<unsigned long>(0, static_cast<size_t>(NumberOfAgents-1));
     randomCommodity = std::uniform_int_distribution<unsigned long>(0, static_cast<size_t>(NumberOfCommodities-1));
     randomBinary = std::uniform_int_distribution<int>(0, 1);
     randomShock = std::uniform_real_distribution<double>(MinShock, MaxShock);
