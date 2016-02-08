@@ -203,6 +203,7 @@ void Agent::Reset() {
     }
 }   //  Agent::Reset
 
+// MRS = marginal rate of substitution
 double Agent::MRS (size_t CommodityIndex, size_t Numeraire) {
         return (alphas[CommodityIndex] * allocation[Numeraire]) / (alphas[Numeraire] * allocation[CommodityIndex]);
 }   //  Agent::MRS()
