@@ -119,13 +119,14 @@ double Data::GetVariance() {
 }   //  Data::GetVariance()
 
 CommodityData::CommodityData() {
+    // Constructor resizes the data vector to the appropriate size.
+    // It is initially zero-initialized, which is obviously problematic.
     data.resize(static_cast<size_t>(NumberOfCommodities));
 }
 
 void CommodityData::Clear() {
     //  Initialize data objects
     //
-    //for (size_t i = 1; i <= static_cast<size_t>(NumberOfCommodities); ++i) {
     for (auto& commodity : data) {
         commodity.Init();
     }
@@ -136,7 +137,6 @@ double CommodityData::L2StdDev() {
 
     // Instead of computing the standard deviation for each commodity (and calling sqrt() N times),
     // find the largest variance and from it get the std dev
-    //for (size_t i = 1; i <= static_cast<size_t>(NumberOfCommodities); ++i) {
     for (auto& commodity : data) {
         sum += commodity.GetVariance();
     }
@@ -148,7 +148,6 @@ double  CommodityData::LinfStdDev() {
 
     // Instead of computing the standard deviation for each commodity (and calling sqrt() N times),
     // find the largest variance and from it get the std dev
-    //for (size_t i = 1; i <= static_cast<size_t>(NumberOfCommodities); ++i) {
     for (auto& commodity : data) {
         var = commodity.GetVariance();
         if (var > max) {
@@ -160,6 +159,10 @@ double  CommodityData::LinfStdDev() {
 
 
 Agent::Agent(int size): initialUtility(0.0), initialWealth(0.0) {
+    // Constructor resizes the data vector to the appropriate size.
+    // It is initially zero-initialized, which is obviously problematic.
+    // This allows me to replace arrays with vectors.
+
     alphas.resize(static_cast<size_t>(size));
     endowment.resize(static_cast<size_t>(size));   
     initialMRSs.resize(static_cast<size_t>(size)); 
@@ -174,29 +177,26 @@ void Agent::Init() {
     //  First generate and normalize the exponents...
     //
     double sum = 0.0;
-    //for (CommodityIndex = 1; CommodityIndex <= static_cast<size_t>(NumberOfCommodities); ++CommodityIndex) {
-    for (auto& alpha: alphas) {        
+    for (auto& alpha : alphas) {
         alpha = randomAlpha(rng);
         sum += alpha;
     }
     //  Next, fill up the rest of the agent fields...
     //
-//    for (CommodityIndex = 1; CommodityIndex <= static_cast<size_t>(NumberOfCommodities); ++CommodityIndex) {
-    for (auto& alpha: alphas) { 
+    for (auto& alpha : alphas) {
         auto i = static_cast<size_t>(&alpha - &alphas[0]);
         alpha = alpha / sum;
         endowment[i] = randomWealth(rng);
         allocation[i] = endowment[i];
         initialMRSs[i] = MRS(i, 1);
-        currentMRSs[i] = initialMRSs[i];        
+        currentMRSs[i] = initialMRSs[i];
     }
     initialUtility = Utility();
     initialWealth = Wealth(&initialMRSs);
 }   //  Agent:Init()
 
 void Agent::Reset() {
-    //for (size_t CommodityIndex = 1; CommodityIndex <= static_cast<size_t>(NumberOfCommodities); ++CommodityIndex) {
-    for (auto& currentAgentMRS: currentMRSs) { 
+    for (auto& currentAgentMRS : currentMRSs) {
         auto i = static_cast<size_t>(&currentAgentMRS - &currentMRSs[0]);
         allocation[i] = endowment[i];
         currentAgentMRS = initialMRSs[i];
@@ -204,20 +204,14 @@ void Agent::Reset() {
 }   //  Agent::Reset
 
 // MRS = marginal rate of substitution
-double Agent::MRS (size_t CommodityIndex, size_t Numeraire) {
+double Agent::MRS(size_t CommodityIndex, size_t Numeraire) {
         return (alphas[CommodityIndex] * allocation[Numeraire]) / (alphas[Numeraire] * allocation[CommodityIndex]);
 }   //  Agent::MRS()
 
 void Agent::ComputeMRSs() {
-    // size_t i;
-    // currentMRSs[1] = 1.0;
-    // for (i = 2; i <= static_cast<size_t>(NumberOfCommodities); ++i) {
-    //     currentMRSs[i] = MRS(i, 1);
-    // }
     for (auto& currentAgentMRS : currentMRSs) {
         auto i = static_cast<size_t>(&currentAgentMRS - &currentMRSs[0]);
-        //std::cout << i << " ";
-        if (i == 0 ) {
+        if (i == 0) {
             currentAgentMRS = 1.0;
         } else {
             currentMRSs[i] = MRS(i, 0);
@@ -238,7 +232,7 @@ double Agent::Utility() {
 void AgentPopulation::ComputeLnMRSsDistribution() {
     LnMRSsData.Clear();
 
-    for (auto& agent: Agents) {
+    for (auto& agent : Agents) {
         agent->ComputeMRSs();
         for (size_t j = 0; j < static_cast<size_t>(NumberOfCommodities); ++j) {
             LnMRSsData.GetData(j)->AddDatuum(log(agent->GetCurrentMRS(j)));
@@ -250,8 +244,7 @@ void AgentPopulation::ComputeLnMRSsDistribution() {
 double AgentPopulation::ComputeSumOfUtilities() {
     double sum = 0.0;
 
-    // for (size_t i = 1; i <= static_cast<size_t>(NumberOfAgents); ++i) {
-    for (auto& agent: Agents) {
+    for (auto& agent : Agents) {
         sum += agent->Utility();
     }
     return sum;
@@ -322,14 +315,15 @@ AlphaData(), EndowmentData(), LnMRSsData(), LnMRSsDataUpToDate(true), LastSumOfU
     Volume.resize(static_cast<size_t>(size));
     Agents.resize(static_cast<size_t>(NumberOfAgents));
 
-    for(auto& agent : Agents) {
+    for (auto& agent : Agents) {
         agent = new Agent(NumberOfCommodities);
     }
 
     if (DefaultSerialExecution) {
         GetAgentPair = &AgentPopulation::GetSerialAgentPair;
-    } else
+    } else {
     GetAgentPair = &AgentPopulation::GetParallelAgentPair;
+    }
 }   // Constructor...
 
 void AgentPopulation::Init() {
@@ -343,7 +337,7 @@ void AgentPopulation::Init() {
 
     //  Cycle through the agents...
     //
-    for (auto& ActiveAgent : Agents) { 
+    for (auto& ActiveAgent : Agents) {
         ActiveAgent->Init();
 
         //  Next, fill up the rest of the agent fields...
@@ -365,7 +359,7 @@ void AgentPopulation::Init() {
             LOG(INFO) << "Initial endowments:";
             for (CommodityIndex = 0; CommodityIndex < static_cast<size_t>(NumberOfCommodities); ++CommodityIndex) {
                 LOG(INFO) << "Commodity " << CommodityIndex << ": <exp.> = " << AlphaData.GetData(CommodityIndex)->GetAverage() << "; s.d. = " << AlphaData.GetData(CommodityIndex)->GetStdDev() <<
-                "; <endow.> = " << EndowmentData.GetData(CommodityIndex)->GetAverage() << "; s.d. = " << EndowmentData.GetData(CommodityIndex)->GetStdDev() << "; <MRS> = " << 
+                "; <endow.> = " << EndowmentData.GetData(CommodityIndex)->GetAverage() << "; s.d. = " << EndowmentData.GetData(CommodityIndex)->GetStdDev() << "; <MRS> = " <<
                 LnMRSsData.GetData(CommodityIndex)->GetExpAverage() << "; s.d. = " << LnMRSsData.GetData(CommodityIndex)->GetStdDev();
             }
         }
@@ -393,7 +387,6 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
     LOG(INFO) << "Equilibration #" << NumberOfEquilibrationsSoFar << " starting";
     //  Next, initialize some variables...
     //
-    //for (size_t i = 1; i <= static_cast<size_t>(NumberOfCommodities); ++i) {
     for (auto& vol : Volume) {
         vol = 0.0;
     }
@@ -573,7 +566,6 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
         return 0;
     } else {    //  the economy has converged...
         LOG(INFO) << "Equilibrium achieved at time " << theTime << " via " << TotalInteractions << " interactions";
-        //LOG(INFO) << sprintf(OutputStr, "Equilibration #%d ended", NumberOfEquilibrationsSoFar);
         LOG(INFO) << "Equilibration #" << NumberOfEquilibrationsSoFar << " ended";
         if (PrintConvergenceStats) {
             ConvergenceStatistics(Volume);
@@ -618,7 +610,7 @@ void AgentPopulation::ConvergenceStatistics(CommodityArray VolumeStats) {
     LOG(INFO) << "Final sum of utilities                   = " << ComputeSumOfUtilities();
     if (PrintFinalCommodityList) {
         for (size_t i = 0; i < static_cast<size_t>(NumberOfCommodities); ++i) {
-            LOG(INFO) << "Commodity " << i << ": volume = " << VolumeStats[i] << "; avg. MRS = " << LnMRSsData.GetData(i)->GetExpAverage() << 
+            LOG(INFO) << "Commodity " << i << ": volume = " << VolumeStats[i] << "; avg. MRS = " << LnMRSsData.GetData(i)->GetExpAverage() <<
             "; s.d. = " << LnMRSsData.GetData(i)->GetStdDev();
         }
     }
@@ -750,12 +742,13 @@ void ReadConfigFile(std::string file) {
 
     libconfig::Config config;
     try { 
+        LOG(INFO) << "Loading configuration from" << file << "...";
         config.readFile(file.c_str());
         LOG(INFO) << "Loaded configuration from " << file;
         if (config.lookupValue("debug.enabled", debug) && debug) { LOG(DEBUG) << "debug: " << debug; }
         if (config.lookupValue("number.commodities", NumberOfCommodities) && debug) { LOG(DEBUG) << "NumberOfCommodities: " << NumberOfCommodities; }
         if (config.lookupValue("number.agents", NumberOfAgents) && debug) { LOG(DEBUG) << "NumberOfAgents: " << NumberOfAgents; }
-        if (config.lookupValue ("rand.use_seed", UseRandomSeed) && debug) { LOG(DEBUG) << "UseRandomSeed: " << UseRandomSeed; }
+        if (config.lookupValue("rand.use_seed", UseRandomSeed) && debug) { LOG(DEBUG) << "UseRandomSeed: " << UseRandomSeed; }
         if (config.lookupValue("rand.seed", NonRandomSeed) && debug) { LOG(DEBUG) << "NonRandomSeed: " << NonRandomSeed; }
         if (config.lookupValue("interactions_per_period", PairwiseInteractionsPerPeriod) && debug) { LOG(DEBUG) << "PairwiseInteractionsPerPeriod: " << PairwiseInteractionsPerPeriod; }
         if (config.lookupValue("alpha.min", alphaMin) && debug) { LOG(DEBUG) << "alphaMin: " << alphaMin; }
