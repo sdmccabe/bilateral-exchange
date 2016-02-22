@@ -48,7 +48,6 @@ Extended by Stefan McCabe
 INITIALIZE_EASYLOGGINGPP
 
 // Declare gflags.
-DEFINE_bool(test, true, "Test GFlags");
 DEFINE_string(file, "parameters.cfg", "Specify the configuation file containing the model parameters.");
 
 // addressing the RNG first. Seeded to 0 for initialization, 
@@ -250,12 +249,25 @@ double AgentPopulation::ComputeSumOfUtilities() {
     return sum;
 }   //  AgentPopulation::ComputeSumOfUtilities()
 
-void inline AgentPopulation::GetSerialAgentPair(AgentPtr& Agent1, AgentPtr& Agent2) {
+void inline AgentPopulation::GetRandomAgentPair(AgentPtr& Agent1, AgentPtr& Agent2) {
     Agent1 = Agents[randomAgent(rng)];
     do {
         Agent2 = Agents[randomAgent(rng)];
     } while (Agent2 == Agent1);
-}   //  AgentPopulation::GetSerialAgentPair()
+}   //  AgentPopulation::GetRandomAgentPair()
+
+void inline AgentPopulation::GetUniformAgentPair(AgentPtr& Agent1, AgentPtr& Agent2) {
+    if (NumberOfAgents % 2 > 0 && UniformIndex == 0) {
+        LOG(DEBUG) << "Warning: Uniform activation requires an even number of agents.";
+    }
+    Agent1 = Agents[AgentIndices[UniformIndex++]];
+    Agent2 = Agents[AgentIndices[UniformIndex++]];
+    if (UniformIndex >= static_cast<size_t>(NumberOfAgents)) {
+        //LOG(DEBUG) << "Rolling over uniform indices...";
+        UniformIndex = 0;
+        std::shuffle(AgentIndices.begin(), AgentIndices.end(), rng);
+    }
+}
 
 void inline AgentPopulation::RandomizeAgents(int NumberToRandomize) {
     // Note:  If NumberToRandomize < 2 then it is increased to 2, so that 1 pair is swapped each period
@@ -314,15 +326,33 @@ AgentPopulation::AgentPopulation(int size):
 AlphaData(), EndowmentData(), LnMRSsData(), LnMRSsDataUpToDate(true), LastSumOfUtilities(0.0), ActiveAgentIndex(0), GetAgentPair(NULL) {
     Volume.resize(static_cast<size_t>(size));
     Agents.resize(static_cast<size_t>(NumberOfAgents));
+    AgentIndices.resize(static_cast<size_t>(NumberOfAgents));
 
+    for (size_t i = 0; i < AgentIndices.size(); ++i) {
+        AgentIndices[i] = i;
+    }
+    std::shuffle(AgentIndices.begin(), AgentIndices.end(), rng);
+    UniformIndex = 0;
     for (auto& agent : Agents) {
         agent = new Agent(NumberOfCommodities);
     }
 
-    if (DefaultSerialExecution) {
-        GetAgentPair = &AgentPopulation::GetSerialAgentPair;
-    } else {
-    GetAgentPair = &AgentPopulation::GetParallelAgentPair;
+    switch (activationMethod) {
+        case -1:
+        // implement fixed activation
+        break;
+        case 0:
+        GetAgentPair = &AgentPopulation::GetRandomAgentPair;
+        LOG(INFO) << "Using random activation";
+        break;
+        case 1:
+        GetAgentPair = &AgentPopulation::GetUniformAgentPair;
+        LOG(INFO) << "Using uniform activation";
+        break;
+        default:
+        LOG(ERROR) << "Invalid activation method (or NYI)";
+        std::terminate();
+        break;
     }
 }   // Constructor...
 
@@ -775,6 +805,7 @@ void ReadConfigFile(std::string file) {
         if (config.lookupValue("debug.intermediate_output_print_period", IntermediateOutputPrintPeriod) && debug) { LOG(DEBUG) << "IntermediateOutputPrintPeriod: " << IntermediateOutputPrintPeriod; }
         if (config.lookupValue("debug.print_convergence_stats", PrintConvergenceStats) && debug) { LOG(DEBUG) << "PrintConvergenceStats: " << PrintConvergenceStats; }
         if (config.lookupValue("debug.print_final_commodity_list", PrintFinalCommodityList) && debug) { LOG(DEBUG) << "PrintFinalCommodityList: " << PrintFinalCommodityList; }
+        if (config.lookupValue("activation.method", activationMethod) && debug) { LOG(DEBUG) << "Activation Method: " << activationMethod; } // TODO: make this an enum
         exp_trade_eps = exp(trade_eps);
 
     } catch (...) {

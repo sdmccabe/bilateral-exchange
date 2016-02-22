@@ -43,7 +43,7 @@ bool PrintIntermediateOutput;
 int IntermediateOutputPrintPeriod;
 bool PrintConvergenceStats;
 bool PrintFinalCommodityList;
-
+int activationMethod;
 
 // Random number distributions. This will probably be replaced with some sort
 // of thread-safe random-number generator.
@@ -168,6 +168,8 @@ typedef Agent *AgentPtr;
 
 class AgentPopulation {
     std::vector<AgentPtr> Agents;
+    std::vector<size_t> AgentIndices;
+    size_t UniformIndex = 0;
     CommodityArray Volume;
     CommodityData AlphaData, EndowmentData, LnMRSsData;
     bool LnMRSsDataUpToDate;
@@ -181,7 +183,8 @@ class AgentPopulation {
         return ComputeIncreaseInSumOfUtilities() / LastSumOfUtilities;
     }
 
-    void GetSerialAgentPair(AgentPtr& Agent1, AgentPtr& Agent2);
+    void GetRandomAgentPair(AgentPtr& Agent1, AgentPtr& Agent2);
+    void GetUniformAgentPair(AgentPtr& Agent1, AgentPtr& Agent2);
     size_t ActiveAgentIndex;
     void RandomizeAgents(int NumberToRandomize);
     void RandomizeAgents2(int NumberToRandomize);
