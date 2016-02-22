@@ -269,6 +269,18 @@ void inline AgentPopulation::GetUniformAgentPair(AgentPtr& Agent1, AgentPtr& Age
     }
 }
 
+void inline AgentPopulation::GetFixedAgentPair(AgentPtr& Agent1, AgentPtr& Agent2) {
+    if (NumberOfAgents % 2 > 0 && UniformIndex == 0) {
+        LOG(DEBUG) << "Warning: Fixed activation requires an even number of agents.";
+    }
+    Agent1 = Agents[AgentIndices[UniformIndex++]];
+    Agent2 = Agents[AgentIndices[UniformIndex++]];
+        if (UniformIndex >= static_cast<size_t>(NumberOfAgents)) {
+        //LOG(DEBUG) << "Rolling over uniform indices...";
+        UniformIndex = 0;
+    }
+}
+
 void inline AgentPopulation::RandomizeAgents(int NumberToRandomize) {
     // Note:  If NumberToRandomize < 2 then it is increased to 2, so that 1 pair is swapped each period
     //
@@ -331,7 +343,9 @@ AlphaData(), EndowmentData(), LnMRSsData(), LnMRSsDataUpToDate(true), LastSumOfU
     for (size_t i = 0; i < AgentIndices.size(); ++i) {
         AgentIndices[i] = i;
     }
-    std::shuffle(AgentIndices.begin(), AgentIndices.end(), rng);
+    
+    if (activationMethod == 1) {std::shuffle(AgentIndices.begin(), AgentIndices.end(), rng);}
+    
     UniformIndex = 0;
     for (auto& agent : Agents) {
         agent = new Agent(NumberOfCommodities);
@@ -340,6 +354,9 @@ AlphaData(), EndowmentData(), LnMRSsData(), LnMRSsDataUpToDate(true), LastSumOfU
     switch (activationMethod) {
         case -1:
         // implement fixed activation
+        GetAgentPair = &AgentPopulation::GetFixedAgentPair;
+        LOG(INFO) << "Using fixed activation";
+        LOG(INFO) << "WARNING: Do not use fixed activation.";
         break;
         case 0:
         GetAgentPair = &AgentPopulation::GetRandomAgentPair;

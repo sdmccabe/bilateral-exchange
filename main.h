@@ -185,6 +185,7 @@ class AgentPopulation {
 
     void GetRandomAgentPair(AgentPtr& Agent1, AgentPtr& Agent2);
     void GetUniformAgentPair(AgentPtr& Agent1, AgentPtr& Agent2);
+    void GetFixedAgentPair(AgentPtr& Agent1, AgentPtr& Agent2);
     size_t ActiveAgentIndex;
     void RandomizeAgents(int NumberToRandomize);
     void RandomizeAgents2(int NumberToRandomize);
