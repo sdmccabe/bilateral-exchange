@@ -6,9 +6,15 @@ Extended by Stefan McCabe
 
 12/11/2015
 */
+
 #ifndef MAIN_H_
 #define MAIN_H_
-#endif
+#endif  // MAIN_H_
+
+#include <memory>
+#include <random>
+#include <string>
+#include <vector>
 
 // Global variables specifying model parameters. See parameters.cfg for documentation.
 bool UseRandomSeed;
@@ -53,6 +59,7 @@ std::uniform_int_distribution<int> randomBinary;
 std::uniform_real_distribution<double> randomShock;
 std::uniform_real_distribution<double> randomAlpha;
 std::uniform_real_distribution<double> randomWealth;
+std::uniform_real_distribution<double> randomDouble;
 
 
 typedef std::vector<double> CommodityArray;
@@ -121,6 +128,8 @@ class Agent {
     Agent();
     double initialUtility;
     double initialWealth;
+    double lambda; // for Poisson activation
+    double nextTime; // for Poisson activation
 
 public:
     Agent(int size);
@@ -131,6 +140,18 @@ public:
     }
     void SetAlpha(size_t CommodityIndex, double alpha) {
         alphas[CommodityIndex] = alpha;
+    }
+    void SetLambda(double lam) {
+        lambda = lam;
+    }
+    double GetLambda() {
+        return lambda;
+    }
+    void SetNextTime(double nextT) {
+        nextTime = nextT;
+    }
+    double GetNextTime() {
+        return nextTime;
     }
     double GetEndowment(size_t CommodityIndex) {
         return endowment[CommodityIndex];
@@ -164,12 +185,18 @@ public:
     }
 };
 
-typedef Agent *AgentPtr;
+
+
+
+//typedef Agent *AgentPtr;
+typedef std::shared_ptr<Agent> AgentPtr;
 
 class AgentPopulation {
     std::vector<AgentPtr> Agents;
     std::vector<size_t> AgentIndices;
-    size_t UniformIndex = 0;
+    std::vector<std::pair<double,AgentPtr>> PoissonActivations;
+    size_t AgentIndex = 0;
+    bool PoissonUpToDate;
     CommodityArray Volume;
     CommodityData AlphaData, EndowmentData, LnMRSsData;
     bool LnMRSsDataUpToDate;
@@ -186,10 +213,11 @@ class AgentPopulation {
     void GetRandomAgentPair(AgentPtr& Agent1, AgentPtr& Agent2);
     void GetUniformAgentPair(AgentPtr& Agent1, AgentPtr& Agent2);
     void GetFixedAgentPair(AgentPtr& Agent1, AgentPtr& Agent2);
-    size_t ActiveAgentIndex;
-    void RandomizeAgents(int NumberToRandomize);
-    void RandomizeAgents2(int NumberToRandomize);
-    void GetParallelAgentPair(AgentPtr& Agent1, AgentPtr& Agent2);
+    void GetPoissonAgentPair(AgentPtr& Agent1, AgentPtr& Agent2);
+
+    void SetPoissonAgentDistribution();
+    
+
     void(AgentPopulation::*GetAgentPair) (AgentPtr& Agent1, AgentPtr& Agent2);
 
 public:
@@ -203,4 +231,3 @@ public:
 };
 
 typedef AgentPopulation *AgentPopulationPtr;
-

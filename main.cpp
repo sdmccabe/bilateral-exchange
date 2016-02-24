@@ -25,11 +25,16 @@ Extended by Stefan McCabe
 //     return distribution(*generator);
 // }
 
+#include "./main.h"
+#include <assert.h>
+#include <gflags/gflags.h>
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <libconfig.h++>
 #include <random>
-#include <gflags/gflags.h>
+#include <string>
+#include <vector>
 #define ELPP_THREAD_SAFE
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wundef"
@@ -37,11 +42,10 @@ Extended by Stefan McCabe
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wctor-dtor-privacy"
-#include "easylogging++.h"
+#include "./easylogging++.h"
 #pragma GCC diagnostic pop
-#include <libconfig.h++>
-#include <vector>
-#include "main.h"
+
+
 //using namespace std;
 
 // Initialize the logger. This should come immediately after the #includes are finished.
@@ -204,7 +208,7 @@ void Agent::Reset() {
 
 // MRS = marginal rate of substitution
 double Agent::MRS(size_t CommodityIndex, size_t Numeraire) {
-        return (alphas[CommodityIndex] * allocation[Numeraire]) / (alphas[Numeraire] * allocation[CommodityIndex]);
+    return (alphas[CommodityIndex] * allocation[Numeraire]) / (alphas[Numeraire] * allocation[CommodityIndex]);
 }   //  Agent::MRS()
 
 void Agent::ComputeMRSs() {
@@ -249,111 +253,172 @@ double AgentPopulation::ComputeSumOfUtilities() {
     return sum;
 }   //  AgentPopulation::ComputeSumOfUtilities()
 
-void inline AgentPopulation::GetRandomAgentPair(AgentPtr& Agent1, AgentPtr& Agent2) {
+void AgentPopulation::GetRandomAgentPair(AgentPtr& Agent1, AgentPtr& Agent2) {
     Agent1 = Agents[randomAgent(rng)];
     do {
         Agent2 = Agents[randomAgent(rng)];
     } while (Agent2 == Agent1);
 }   //  AgentPopulation::GetRandomAgentPair()
 
-void inline AgentPopulation::GetUniformAgentPair(AgentPtr& Agent1, AgentPtr& Agent2) {
-    if (NumberOfAgents % 2 > 0 && UniformIndex == 0) {
+void AgentPopulation::GetUniformAgentPair(AgentPtr& Agent1, AgentPtr& Agent2) {
+    if (NumberOfAgents % 2 > 0 && AgentIndex == 0) {
         LOG(DEBUG) << "Warning: Uniform activation requires an even number of agents.";
     }
-    Agent1 = Agents[AgentIndices[UniformIndex++]];
-    Agent2 = Agents[AgentIndices[UniformIndex++]];
-    if (UniformIndex >= static_cast<size_t>(NumberOfAgents)) {
+    Agent1 = Agents[AgentIndices[AgentIndex++]];
+    Agent2 = Agents[AgentIndices[AgentIndex++]];
+    if (AgentIndex >= static_cast<size_t>(NumberOfAgents)) {
         //LOG(DEBUG) << "Rolling over uniform indices...";
-        UniformIndex = 0;
+        AgentIndex = 0;
         std::shuffle(AgentIndices.begin(), AgentIndices.end(), rng);
     }
 }
 
-void inline AgentPopulation::GetFixedAgentPair(AgentPtr& Agent1, AgentPtr& Agent2) {
-    if (NumberOfAgents % 2 > 0 && UniformIndex == 0) {
+void AgentPopulation::GetFixedAgentPair(AgentPtr& Agent1, AgentPtr& Agent2) {
+    if (NumberOfAgents % 2 > 0 && AgentIndex == 0) {
         LOG(DEBUG) << "Warning: Fixed activation requires an even number of agents.";
     }
-    Agent1 = Agents[AgentIndices[UniformIndex++]];
-    Agent2 = Agents[AgentIndices[UniformIndex++]];
-        if (UniformIndex >= static_cast<size_t>(NumberOfAgents)) {
+    Agent1 = Agents[AgentIndices[AgentIndex++]];
+    Agent2 = Agents[AgentIndices[AgentIndex++]];
+    if (AgentIndex >= static_cast<size_t>(NumberOfAgents)) {
         //LOG(DEBUG) << "Rolling over uniform indices...";
-        UniformIndex = 0;
+        AgentIndex = 0;
     }
 }
 
-void inline AgentPopulation::RandomizeAgents(int NumberToRandomize) {
-    // Note:  If NumberToRandomize < 2 then it is increased to 2, so that 1 pair is swapped each period
-    //
-    size_t AgentIndex1, AgentIndex2;
-    int PairsToRandomize;
-    AgentPtr TempPtr;
+void AgentPopulation::GetPoissonAgentPair(AgentPtr& Agent1, AgentPtr& Agent2) {
+    if (!PoissonUpToDate) {
+        SetPoissonAgentDistribution();
+    }
+    size_t AgentIndex1 = AgentIndex++;
+    size_t AgentIndex2 = AgentIndex;
 
-    PairsToRandomize = NumberToRandomize / 2;
-    if (PairsToRandomize < 1) {
-        PairsToRandomize = 1;
+    Agent1 = PoissonActivations[AgentIndex1].second;
+    Agent2 = PoissonActivations[AgentIndex2].second;
+
+    size_t swap = 1;
+    while (Agent1 == Agent2) {
+        std::swap(PoissonActivations[AgentIndex2], PoissonActivations[AgentIndex2+swap]);
+        ++swap;
+        Agent2 = PoissonActivations[AgentIndex2].second;
+    }
+    
+    ++AgentIndex;
+    if (AgentIndex >= static_cast<size_t>(NumberOfAgents)) {
+        PoissonUpToDate = false;
+    }
+}
+
+//TODO: Verify all of this.
+void AgentPopulation::SetPoissonAgentDistribution() {
+    // reset data structures
+    PoissonActivations.clear();
+    PoissonActivations.shrink_to_fit(); // memory leaks are bad
+    std::vector<std::pair<double,AgentPtr>>().swap(PoissonActivations); 
+    // more ritual to stave off memory leaks
+    AgentIndex = 0;
+
+    double totalWealth = 0.0;
+    double totalDistanceFromMean = 0.0;
+    double denom;
+    double totalLambda = 0.0;
+
+    //determine mean wealth
+    for (auto &a : Agents) {
+        totalWealth += a->Wealth(a->GetCurrentMRSs());
+    }
+    double meanWealth = totalWealth / static_cast<double>(NumberOfAgents);
+
+    //determine total distance from the mean
+    for (auto &a : Agents) {
+        double distFromMean = std::abs(a->Wealth(a->GetCurrentMRSs()) - meanWealth);
+        totalDistanceFromMean += distFromMean;
     }
 
-    for (int i = 1; i <= PairsToRandomize; ++i) {
-        AgentIndex1 = randomAgent(rng);
-        do {
-            AgentIndex2 = randomAgent(rng);
-        } while (AgentIndex1 == AgentIndex2);
-
-        TempPtr = Agents[AgentIndex1];
-        Agents[AgentIndex1] = Agents[AgentIndex2];
-        Agents[AgentIndex2] = TempPtr;
+    //update lambdas based on distance from the mean
+    //this is where the Poisson activation methods are differentiated
+    //TODO: "regular Poisson" - inverse distance from mean - don't really care about it
+    for (auto &a : Agents) {
+            if (activationMethod == 2) { // furthest from mean activate faster
+                denom = std::abs(a->Wealth(a->GetCurrentMRSs()) - meanWealth);
+                if (denom == 0) {
+                    denom = 0.0001;
+                }
+                double lam = totalDistanceFromMean / denom;
+                a->SetLambda(lam);
+                totalLambda += lam;
+            } else if (activationMethod == 3) { // poor activate faster
+                denom = a->Wealth(a->GetCurrentMRSs());
+                if (denom == 0) {
+                    denom = 0.0001;
+                }
+                double lam = 1 / denom;
+                a->SetLambda(lam);
+                totalLambda += lam;
+        } else if (activationMethod == 4) { // rich activate faster
+            denom = a->Wealth(a->GetCurrentMRSs());
+            if (denom == 0) {
+                denom = 0.0001;
+            }
+            double lam = denom;
+                //std::cout << lam << " ";
+            a->SetLambda(lam);
+            totalLambda += lam;
+        } else if (activationMethod == 5) { // closest to mean activate faster
+            double lam = std::abs(a->Wealth(a->GetCurrentMRSs()) - meanWealth);
+            a->SetLambda(lam);
+            totalLambda += lam;
+        } 
     }
-}   //  AgentPopulation::RandomizeAgents()
 
-void inline AgentPopulation::RandomizeAgents2(int NumberToRandomize) {
-    // Note:  The NumberToRandomize need not be even, just > 1
-    size_t AgentIndex1, AgentIndex2;
-    AgentPtr TempPtr;
+    //normalize lambdas
+    for (auto &a : Agents) {
+        auto i = static_cast<size_t>(&a - &Agents[0]);
+        double lam = a->GetLambda() * static_cast<double>(NumberOfAgents) * 1.1/totalLambda;
+        if (lam == 0) {
+            lam = 1.0 / static_cast<double>(NumberOfAgents);
+        }
+        //done normalizing lambdas
 
-    AgentIndex1 = randomAgent(rng);
-    TempPtr = Agents[AgentIndex1];
-
-    if (NumberToRandomize == 1) {
-        NumberToRandomize = 2;
+        //schedule agents based on lambda
+        a->SetLambda(lam);
+        a->SetNextTime(-1 * log(randomDouble(rng)) / a->GetLambda());
+        
+        while (a->GetNextTime() < 1 ) { //no agent is more than 20% of activations
+            PoissonActivations.push_back(std::make_pair(a->GetNextTime(), a));
+            a->SetNextTime(a->GetNextTime() + -1 * log(randomDouble(rng)) / a->GetLambda());
+        }     
     }
-    for (int i = 1; i < NumberToRandomize; ++i) {
-        AgentIndex2 = randomAgent(rng);
-        Agents[AgentIndex1] = Agents[AgentIndex2];
-        AgentIndex1 = AgentIndex2;
-    }
-    Agents[AgentIndex2] = TempPtr;
-}   //  AgentPopulation::RandomizeAgents2()
 
-void inline AgentPopulation::GetParallelAgentPair (AgentPtr& Agent1, AgentPtr& Agent2) {
-    if (ActiveAgentIndex > static_cast<size_t>(NumberOfAgents)) {
-        ActiveAgentIndex = 1;
-        RandomizeAgents(AgentsToRandomize);
-    }
-    Agent1 = Agents[ActiveAgentIndex];
-    Agent2 = Agents[++ActiveAgentIndex];
-    ActiveAgentIndex++;
-}   //  AgentPopulation::GetParallelAgentPair()
+    //sort the activations vector
+    std::sort(PoissonActivations.begin(), PoissonActivations.end(), [](const std::pair<double, AgentPtr> &left, const std::pair<double, AgentPtr> &right) {
+        return left.first < right.first;
+    });
+
+    PoissonUpToDate = true;
+}
 
 AgentPopulation::AgentPopulation(int size):
-AlphaData(), EndowmentData(), LnMRSsData(), LnMRSsDataUpToDate(true), LastSumOfUtilities(0.0), ActiveAgentIndex(0), GetAgentPair(NULL) {
+AlphaData(), EndowmentData(), LnMRSsData(), LnMRSsDataUpToDate(true), LastSumOfUtilities(0.0), GetAgentPair(NULL) {
     Volume.resize(static_cast<size_t>(size));
-    Agents.resize(static_cast<size_t>(NumberOfAgents));
+    //Agents.resize(static_cast<size_t>(NumberOfAgents));
     AgentIndices.resize(static_cast<size_t>(NumberOfAgents));
-
     for (size_t i = 0; i < AgentIndices.size(); ++i) {
         AgentIndices[i] = i;
     }
     
-    if (activationMethod == 1) {std::shuffle(AgentIndices.begin(), AgentIndices.end(), rng);}
+    if (activationMethod == 1) { std::shuffle(AgentIndices.begin(), AgentIndices.end(), rng); }
     
-    UniformIndex = 0;
-    for (auto& agent : Agents) {
-        agent = new Agent(NumberOfCommodities);
+    AgentIndex = 0;
+    // for (auto& agent : Agents) {
+    //     agent = new Agent(NumberOfCommodities);
+    // }
+    for (size_t i = 0; i < static_cast<size_t>(NumberOfAgents); ++i) {
+        Agents.emplace_back(new Agent{NumberOfCommodities});
     }
 
+    PoissonUpToDate = false;
     switch (activationMethod) {
         case -1:
-        // implement fixed activation
         GetAgentPair = &AgentPopulation::GetFixedAgentPair;
         LOG(INFO) << "Using fixed activation";
         LOG(INFO) << "WARNING: Do not use fixed activation.";
@@ -366,6 +431,22 @@ AlphaData(), EndowmentData(), LnMRSsData(), LnMRSsDataUpToDate(true), LastSumOfU
         GetAgentPair = &AgentPopulation::GetUniformAgentPair;
         LOG(INFO) << "Using uniform activation";
         break;
+        case 2:
+        GetAgentPair = &AgentPopulation::GetPoissonAgentPair;
+        LOG(INFO) << "Using Poisson activation (λ = 1/|wealth - mean(wealth)|)";
+        break;
+        case 3:
+        GetAgentPair = &AgentPopulation::GetPoissonAgentPair;
+        LOG(INFO) << "Using Poisson activation (λ = 1/wealth)";
+        break;
+        case 4:
+        GetAgentPair = &AgentPopulation::GetPoissonAgentPair;
+        LOG(INFO) << "Using Poisson activation (λ = wealth)";
+        break;
+        case 5:
+        GetAgentPair = &AgentPopulation::GetPoissonAgentPair;
+        LOG(INFO) << "Using Poisson activation (λ = |wealth - mean(wealth)|)";
+        break;
         default:
         LOG(ERROR) << "Invalid activation method (or NYI)";
         std::terminate();
@@ -377,7 +458,7 @@ void AgentPopulation::Init() {
     size_t CommodityIndex;
     Data InitialOwnWealthData;
 
-    ActiveAgentIndex = 1;
+    
     AlphaData.Clear();
     EndowmentData.Clear();
     LnMRSsData.Clear();
@@ -394,24 +475,24 @@ void AgentPopulation::Init() {
             EndowmentData.GetData(CommodityIndex)->AddDatuum(ActiveAgent->GetEndowment(CommodityIndex));
             LnMRSsData.GetData(CommodityIndex)->AddDatuum(log(ActiveAgent->GetInitialMRS(CommodityIndex)));
         }   //  for (CommodityIndex...
-            InitialOwnWealthData.AddDatuum(ActiveAgent->GetInitialWealth());
+        InitialOwnWealthData.AddDatuum(ActiveAgent->GetInitialWealth());
     }   //  for (AgentIndex...
 
-        LnMRSsDataUpToDate = true;
-        LastSumOfUtilities = ComputeSumOfUtilities();
+    LnMRSsDataUpToDate = true;
+    LastSumOfUtilities = ComputeSumOfUtilities();
 
     //  Finally, display stats on the instantiated population...
     //
-        if (PrintEndowments) {
-            LOG(INFO) << "Initial endowments:";
-            for (CommodityIndex = 0; CommodityIndex < static_cast<size_t>(NumberOfCommodities); ++CommodityIndex) {
-                LOG(INFO) << "Commodity " << CommodityIndex << ": <exp.> = " << AlphaData.GetData(CommodityIndex)->GetAverage() << "; s.d. = " << AlphaData.GetData(CommodityIndex)->GetStdDev() <<
-                "; <endow.> = " << EndowmentData.GetData(CommodityIndex)->GetAverage() << "; s.d. = " << EndowmentData.GetData(CommodityIndex)->GetStdDev() << "; <MRS> = " <<
-                LnMRSsData.GetData(CommodityIndex)->GetExpAverage() << "; s.d. = " << LnMRSsData.GetData(CommodityIndex)->GetStdDev();
-            }
+    if (PrintEndowments) {
+        LOG(INFO) << "Initial endowments:";
+        for (CommodityIndex = 0; CommodityIndex < static_cast<size_t>(NumberOfCommodities); ++CommodityIndex) {
+            LOG(INFO) << "Commodity " << CommodityIndex << ": <exp.> = " << AlphaData.GetData(CommodityIndex)->GetAverage() << "; s.d. = " << AlphaData.GetData(CommodityIndex)->GetStdDev() <<
+            "; <endow.> = " << EndowmentData.GetData(CommodityIndex)->GetAverage() << "; s.d. = " << EndowmentData.GetData(CommodityIndex)->GetStdDev() << "; <MRS> = " <<
+            LnMRSsData.GetData(CommodityIndex)->GetExpAverage() << "; s.d. = " << LnMRSsData.GetData(CommodityIndex)->GetStdDev();
         }
-        LOG(INFO) << "Average initial wealth (@ own prices) = " << InitialOwnWealthData.GetAverage() << "; standard deviation = " << InitialOwnWealthData.GetStdDev();
-        LOG(INFO) << "Initial sum of utilities = " << LastSumOfUtilities;
+    }
+    LOG(INFO) << "Average initial wealth (@ own prices) = " << InitialOwnWealthData.GetAverage() << "; standard deviation = " << InitialOwnWealthData.GetStdDev();
+    LOG(INFO) << "Initial sum of utilities = " << LastSumOfUtilities;
 }   //  AgentPopulation::Init()
 
 void AgentPopulation::Reset() {
@@ -512,14 +593,14 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
                 Volume[Commodity2] += delta2;
             }   //  if (MRSratio...
 
-                if (debug) {
-                    if (Agent1->Utility() < Agent1PreTradeUtility) {
-                        LOG(WARNING) << "!!!Utility decreasing trade by agent #1!!!  Actual utility change = " << Agent1->Utility() - Agent1PreTradeUtility;
-                    }
-                    if (Agent2->Utility() < Agent2PreTradeUtility) {
-                        LOG(WARNING) << "!!!Utility decreasing trade by agent #2!!!  Actual utility change = " << Agent2->Utility() - Agent2PreTradeUtility;
-                    }
+            if (debug) {
+                if (Agent1->Utility() < Agent1PreTradeUtility) {
+                    LOG(WARNING) << "!!!Utility decreasing trade by agent #1!!!  Actual utility change = " << Agent1->Utility() - Agent1PreTradeUtility;
                 }
+                if (Agent2->Utility() < Agent2PreTradeUtility) {
+                    LOG(WARNING) << "!!!Utility decreasing trade by agent #2!!!  Actual utility change = " << Agent2->Utility() - Agent2PreTradeUtility;
+                }
+            }
         }   //  for i...
 
         //  Check for termination...
@@ -719,6 +800,7 @@ void AgentPopulation::ShockAgentPreferences() {
     }   //  for (AgentIndex...
 }   //  AgentPopulation::ShockAgentPreferenes()
 
+
 /*================= End of Methods =================*/
 
 void InitMiscellaneous() {
@@ -730,6 +812,9 @@ void InitMiscellaneous() {
     LOG(INFO) << "Termination period check rate: " << CheckTerminationPeriod;
     LOG(INFO) << "Termination period check threshold: " << CheckTerminationThreshold;
     switch (termination_criterion) {
+        case -2:
+        LOG(INFO) << "Termination criterion: After " << TerminationTime << " time steps";
+        break;
         case -1:
         LOG(INFO) << "Termination criterion: L2 norm of standard deviation of agent MRSes";
         break;
@@ -778,7 +863,7 @@ void SeedRNG() {
     randomShock = std::uniform_real_distribution<double>(MinShock, MaxShock);
     randomAlpha = std::uniform_real_distribution<double>(alphaMin, alphaMax);
     randomWealth = std::uniform_real_distribution<double>(wealthMin, wealthMax);
-//  uniform_int_distribution<double> randomDouble(0, 1);
+    randomDouble = std::uniform_real_distribution<double>(0, 1);
 } // SeedRNG()
 
 void ReadConfigFile(std::string file) {
@@ -789,7 +874,7 @@ void ReadConfigFile(std::string file) {
 
     libconfig::Config config;
     try { 
-        LOG(INFO) << "Loading configuration from" << file << "...";
+        LOG(INFO) << "Loading configuration from " << file << "...";
         config.readFile(file.c_str());
         LOG(INFO) << "Loaded configuration from " << file;
         if (config.lookupValue("debug.enabled", debug) && debug) { LOG(DEBUG) << "debug: " << debug; }
@@ -847,6 +932,7 @@ int main(int argc, char** argv) {
     //  Initialize the model and print preliminaries to the log.
     InitMiscellaneous();
     AgentPopulationPtr PopulationPtr = new AgentPopulation(NumberOfCommodities);
+
 
     //  Equilibrate the agent economy once...
     int EquilibrationNumber = 1;
