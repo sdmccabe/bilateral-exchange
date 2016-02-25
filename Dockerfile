@@ -8,7 +8,7 @@ RUN apt-get update
 RUN apt-get install -yqq time git curl build-essential checkinstall autotools-dev wget cmake software-properties-common
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-RUN mkdir model
+RUN mkdir -p model/serial-activation-suite
 
 
 
@@ -19,7 +19,7 @@ COPY main.h model/
 COPY parameters.cfg model/
 COPY easylogging++.h model/
 COPY Makefile model/
-
+COPY serial-activation-suite/ model/serial-activation-suite
 WORKDIR /model/
 
 RUN wget http://www.hyperrealm.com/libconfig/libconfig-1.5.tar.gz
@@ -32,7 +32,7 @@ WORKDIR /model/gflags-2.1.2/build
 RUN cmake .. && make && make install
 RUN ldconfig
 
-WORKDIR /model/
+WORKDIR /model/serial-activation-suite
 CMD ["bash"]
 
 #CMD /

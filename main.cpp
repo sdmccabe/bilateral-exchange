@@ -511,7 +511,6 @@ void AgentPopulation::Init() {
             EndowmentData.GetData(CommodityIndex)->AddDatum(ActiveAgent->GetEndowment(CommodityIndex));
             LnMRSsData.GetData(CommodityIndex)->AddDatum(log(ActiveAgent->GetInitialMRS(CommodityIndex)));
         }   //  for (CommodityIndex...
-        std::cout << ActiveAgent->GetInitialWealth() << std::endl;
         InitialOwnWealthData.AddDatum(ActiveAgent->GetInitialWealth());
     }   //  for (AgentIndex...
 
