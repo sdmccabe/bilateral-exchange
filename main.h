@@ -11,10 +11,12 @@ Extended by Stefan McCabe
 #define MAIN_H_
 #endif  // MAIN_H_
 
+#include "./RNG.h"
 #include <memory>
 #include <random>
 #include <string>
 #include <vector>
+#include <fstream>
 
 // Global variables specifying model parameters. See parameters.cfg for documentation.
 bool UseRandomSeed;
@@ -50,16 +52,12 @@ int IntermediateOutputPrintPeriod;
 bool PrintConvergenceStats;
 bool PrintFinalCommodityList;
 int activationMethod;
+const char* outputFilename = NULL;
+bool fileAppend;
+bool writeToFile;
+std::ofstream outfile;
 
-// Random number distributions. This will probably be replaced with some sort
-// of thread-safe random-number generator.
-std::uniform_int_distribution<unsigned long> randomAgent;  
-std::uniform_int_distribution<unsigned long> randomCommodity;
-std::uniform_int_distribution<int> randomBinary;
-std::uniform_real_distribution<double> randomShock;
-std::uniform_real_distribution<double> randomAlpha;
-std::uniform_real_distribution<double> randomWealth;
-std::uniform_real_distribution<double> randomDouble;
+RNGptr Rand;
 
 
 typedef std::vector<double> CommodityArray;
@@ -69,7 +67,10 @@ typedef CommodityArray *CommodityArrayPtr;
 double inline Dot(CommodityArrayPtr vector1, CommodityArrayPtr vector2);
 void ReadConfigFile(std::string file);
 void InitMiscellaneous();
-void SeedRNG();
+//void SeedRNG();
+void OpenFile(const char * filename);
+void WriteHeader();
+void WriteLine();
 
 // Classes and methods
 class MemoryObject {
@@ -90,7 +91,7 @@ class Data {
 public:
     Data();
     void Init();
-    void AddDatuum(double Datuum);
+    void AddDatum(double Datum);
     int GetN() { return N; }
     double GetMin() { return min; }
     double GetMax() { return max; }
@@ -197,6 +198,7 @@ class AgentPopulation {
     std::vector<std::pair<double,AgentPtr>> PoissonActivations;
     size_t AgentIndex = 0;
     bool PoissonUpToDate;
+    Data InitialOwnWealthData;
     CommodityArray Volume;
     CommodityData AlphaData, EndowmentData, LnMRSsData;
     bool LnMRSsDataUpToDate;
@@ -214,7 +216,6 @@ class AgentPopulation {
     void GetUniformAgentPair(AgentPtr& Agent1, AgentPtr& Agent2);
     void GetFixedAgentPair(AgentPtr& Agent1, AgentPtr& Agent2);
     void GetPoissonAgentPair(AgentPtr& Agent1, AgentPtr& Agent2);
-
     void SetPoissonAgentDistribution();
     
 
@@ -222,12 +223,19 @@ class AgentPopulation {
 
 public:
     AgentPopulation(int size); 
+    bool Converged;
+    long long theTime; 
+    long long TotalInteractions;
+
     void Init();
     void Reset();
     long long Equilibrate(int NumberOfEquilibrationsSoFar);
     void ConvergenceStatistics(CommodityArray VolumeStats);
     void CompareTwoAgents(AgentPtr Agent1, AgentPtr Agent2);
     void ShockAgentPreferences();
+    std::string WriteWealthInfo();
+    std::string WriteUtilityInfo();
+    void WriteLine();
 };
 
 typedef AgentPopulation *AgentPopulationPtr;

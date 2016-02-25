@@ -17,23 +17,21 @@ Extended by Stefan McCabe
 //  E. Shrink below 1000 lines?
 
 // I used this thread-safe random number generator in another project; it will probably be useful later.
-//
-// int IntegerInRange(int min, int max) {
-//     static thread_local mt19937* generator = nullptr;
-//     if (!generator) generator = new mt19937(clock() + hash<thread::id>()(this_thread::get_id()));
-//     uniform_int_distribution<int> distribution(min, max);
-//     return distribution(*generator);
-// }
+
+
 
 #include "./main.h"
 #include <assert.h>
 #include <gflags/gflags.h>
 #include <algorithm>
 #include <cmath>
+#include <fstream>
 #include <iostream>
 #include <libconfig.h++>
+#include <memory>
 #include <random>
 #include <string>
+#include <thread>
 #include <vector>
 #define ELPP_THREAD_SAFE
 #pragma GCC diagnostic push
@@ -45,19 +43,12 @@ Extended by Stefan McCabe
 #include "./easylogging++.h"
 #pragma GCC diagnostic pop
 
-
-//using namespace std;
-
 // Initialize the logger. This should come immediately after the #includes are finished.
 INITIALIZE_EASYLOGGINGPP
 
 // Declare gflags.
 DEFINE_string(file, "parameters.cfg", "Specify the configuation file containing the model parameters.");
 
-// addressing the RNG first. Seeded to 0 for initialization, 
-// will be properly seeded in main().
-//std::mt19937 rng(0);
-std::knuth_b rng(0);
 
 /*===========
     ==Methods==
@@ -76,13 +67,15 @@ std::knuth_b rng(0);
 
 
 void MemoryObject::WriteMemoryRequirements() {
-    LOG(DEBUG) << "Size of Agent in memory: " << sizeof(Agent) << " bytes";
-    LOG(DEBUG) << "Size of Data in memory: " << sizeof(Data) << " bytes";
-    LOG(DEBUG) << "Size of CommodityData in memory: " << sizeof(CommodityData) << " bytes";
-    LOG(DEBUG) << "Size of AgentPopulation in memory: " << sizeof(AgentPopulation) << " bytes";
-    LOG(DEBUG) << "Total bytes required (approximate): " << \
-    (sizeof(rng) + sizeof(MemoryObject) + sizeof(CommodityData) \
-        + sizeof(AgentPopulation) + sizeof(Agent) * static_cast<unsigned long>(NumberOfAgents)) << " bytes";
+    if (debug) {
+        LOG(DEBUG) << "Size of Agent in memory: " << sizeof(Agent) << " bytes";
+        LOG(DEBUG) << "Size of Data in memory: " << sizeof(Data) << " bytes";
+        LOG(DEBUG) << "Size of CommodityData in memory: " << sizeof(CommodityData) << " bytes";
+        LOG(DEBUG) << "Size of AgentPopulation in memory: " << sizeof(AgentPopulation) << " bytes";
+        LOG(DEBUG) << "Total bytes required (approximate): " << \
+        (sizeof(Rand) + sizeof(MemoryObject) + sizeof(CommodityData) \
+            + sizeof(AgentPopulation) + sizeof(Agent) * static_cast<unsigned long>(NumberOfAgents)) << " bytes";
+    }
 }
 
 Data::Data():
@@ -97,17 +90,17 @@ void Data::Init() {
     sum2 = 0.0;
 }   //  Data::Data()
 
-void Data::AddDatuum(double Datuum) {
+void Data::AddDatum(double Datum) {
     N = N + 1;
-    if (Datuum < min) {
-        min = Datuum;
+    if (Datum < min) {
+        min = Datum;
     }
-    if (Datuum > max) {
-        max = Datuum;
+    if (Datum > max) {
+        max = Datum;
     }
-    sum += Datuum;
-    sum2 += Datuum * Datuum;
-}   //  Data::AddDatuum()
+    sum += Datum;
+    sum2 += Datum * Datum;
+}   //  Data::AddDatum()
 
 double Data::GetVariance() {
     double avg, arg;
@@ -178,24 +171,21 @@ void Agent::Init() {
     size_t CommodityIndex;
 
     //  First generate and normalize the exponents...
-    //
     double sum = 0.0;
     for (auto& alpha : alphas) {
-        alpha = randomAlpha(rng);
+        alpha = Rand->RandomAlpha();
         sum += alpha;
     }
     //  Next, fill up the rest of the agent fields...
-    //
     for (auto& alpha : alphas) {
         auto i = static_cast<size_t>(&alpha - &alphas[0]);
-        alpha = alpha / sum;
-        endowment[i] = randomWealth(rng);
+        endowment[i] = Rand->RandomWealth();
         allocation[i] = endowment[i];
         initialMRSs[i] = MRS(i, 1);
         currentMRSs[i] = initialMRSs[i];
     }
     initialUtility = Utility();
-    initialWealth = Wealth(&initialMRSs);
+    initialWealth = Wealth(&initialMRSs); //TODO: Is this wealth or utility?
 }   //  Agent:Init()
 
 void Agent::Reset() {
@@ -238,11 +228,65 @@ void AgentPopulation::ComputeLnMRSsDistribution() {
     for (auto& agent : Agents) {
         agent->ComputeMRSs();
         for (size_t j = 0; j < static_cast<size_t>(NumberOfCommodities); ++j) {
-            LnMRSsData.GetData(j)->AddDatuum(log(agent->GetCurrentMRS(j)));
+            LnMRSsData.GetData(j)->AddDatum(log(agent->GetCurrentMRS(j)));
         }
     }       //  for i...
     LnMRSsDataUpToDate = true;
 }   //  AgentPopulation::ComputeLnMRSsDistribution()
+
+std::string AgentPopulation::WriteUtilityInfo() { //TODO: This is basically a Data()
+    double sum = 0.0;
+    double min = 100000.0;
+    double max = 0;
+    double avg = 0.0;
+    double x = 0.0;
+    std::stringstream s;
+
+    for (auto& agent : Agents) {
+        double utility = agent->Utility();
+        sum += utility;
+        min = (utility < min) ? utility : min;
+        max = (utility > max) ? utility : max;  
+    }
+    avg = sum / static_cast<double>(NumberOfAgents);
+    
+    
+    for (auto& agent : Agents) {
+        x += (avg - agent->Utility()) * (avg - agent->Utility());
+    }
+
+    double sd = std::sqrt(x/static_cast<double>(NumberOfAgents));
+
+    
+    s << min << "," << max << "," << avg << "," << sd << ",";
+    return s.str();
+}
+
+std::string AgentPopulation::WriteWealthInfo() { //TODO: This is basically a Data()
+    double sum = 0.0;
+    double min = 100000.0;
+    double max = 0;
+    double avg = 0.0;
+    double x = 0.0;
+    std::stringstream s;
+
+    for (auto& agent : Agents) {
+        double w = agent->Wealth(agent->GetCurrentMRSs());
+        sum += w;
+        min = (w < min) ? w : min;
+        max = (w > max) ? w : max; 
+    }
+    avg = sum / static_cast<double>(NumberOfAgents);
+
+    for(auto& agent : Agents) {
+        x += (avg - agent->Wealth(agent->GetCurrentMRSs())) * (avg - agent->Wealth(agent->GetCurrentMRSs()));
+    }
+
+    double sd = std::sqrt(x/static_cast<double>(NumberOfAgents));
+
+    s << min << "," << max << "," << avg << "," << sd << ",";
+    return s.str();
+}
 
 double AgentPopulation::ComputeSumOfUtilities() {
     double sum = 0.0;
@@ -254,33 +298,33 @@ double AgentPopulation::ComputeSumOfUtilities() {
 }   //  AgentPopulation::ComputeSumOfUtilities()
 
 void AgentPopulation::GetRandomAgentPair(AgentPtr& Agent1, AgentPtr& Agent2) {
-    Agent1 = Agents[randomAgent(rng)];
+    Agent1 = Agents[Rand->RandomAgent()];
     do {
-        Agent2 = Agents[randomAgent(rng)];
+        Agent2 = Agents[Rand->RandomAgent()];
     } while (Agent2 == Agent1);
 }   //  AgentPopulation::GetRandomAgentPair()
 
 void AgentPopulation::GetUniformAgentPair(AgentPtr& Agent1, AgentPtr& Agent2) {
     if (NumberOfAgents % 2 > 0 && AgentIndex == 0) {
-        LOG(DEBUG) << "Warning: Uniform activation requires an even number of agents.";
+        LOG(WARNING) << "Warning: Uniform activation requires an even number of agents.";
     }
     Agent1 = Agents[AgentIndices[AgentIndex++]];
     Agent2 = Agents[AgentIndices[AgentIndex++]];
     if (AgentIndex >= static_cast<size_t>(NumberOfAgents)) {
-        //LOG(DEBUG) << "Rolling over uniform indices...";
+        // if (debug) { LOG(DEBUG) << "Rolling over uniform indices..."; }
         AgentIndex = 0;
-        std::shuffle(AgentIndices.begin(), AgentIndices.end(), rng);
+        std::shuffle(AgentIndices.begin(), AgentIndices.end(), Rand->GetGenerator());
     }
 }
 
 void AgentPopulation::GetFixedAgentPair(AgentPtr& Agent1, AgentPtr& Agent2) {
     if (NumberOfAgents % 2 > 0 && AgentIndex == 0) {
-        LOG(DEBUG) << "Warning: Fixed activation requires an even number of agents.";
+        LOG(WARNING) << "Warning: Fixed activation requires an even number of agents.";
     }
     Agent1 = Agents[AgentIndices[AgentIndex++]];
     Agent2 = Agents[AgentIndices[AgentIndex++]];
     if (AgentIndex >= static_cast<size_t>(NumberOfAgents)) {
-        //LOG(DEBUG) << "Rolling over uniform indices...";
+        // if (debug) { LOG(DEBUG) << "Rolling over uniform indices..."; }
         AgentIndex = 0;
     }
 }
@@ -360,7 +404,6 @@ void AgentPopulation::SetPoissonAgentDistribution() {
                 denom = 0.0001;
             }
             double lam = denom;
-                //std::cout << lam << " ";
             a->SetLambda(lam);
             totalLambda += lam;
         } else if (activationMethod == 5) { // closest to mean activate faster
@@ -381,11 +424,11 @@ void AgentPopulation::SetPoissonAgentDistribution() {
 
         //schedule agents based on lambda
         a->SetLambda(lam);
-        a->SetNextTime(-1 * log(randomDouble(rng)) / a->GetLambda());
+        a->SetNextTime(-1 * log(Rand->RandomDouble()) / a->GetLambda());
         
         while (a->GetNextTime() < 1 ) { //no agent is more than 20% of activations
             PoissonActivations.push_back(std::make_pair(a->GetNextTime(), a));
-            a->SetNextTime(a->GetNextTime() + -1 * log(randomDouble(rng)) / a->GetLambda());
+            a->SetNextTime(a->GetNextTime() + -1 * log(Rand->RandomDouble()) / a->GetLambda());
         }     
     }
 
@@ -400,18 +443,14 @@ void AgentPopulation::SetPoissonAgentDistribution() {
 AgentPopulation::AgentPopulation(int size):
 AlphaData(), EndowmentData(), LnMRSsData(), LnMRSsDataUpToDate(true), LastSumOfUtilities(0.0), GetAgentPair(NULL) {
     Volume.resize(static_cast<size_t>(size));
-    //Agents.resize(static_cast<size_t>(NumberOfAgents));
     AgentIndices.resize(static_cast<size_t>(NumberOfAgents));
     for (size_t i = 0; i < AgentIndices.size(); ++i) {
         AgentIndices[i] = i;
     }
     
-    if (activationMethod == 1) { std::shuffle(AgentIndices.begin(), AgentIndices.end(), rng); }
+    if (activationMethod == 1) { std::shuffle(AgentIndices.begin(), AgentIndices.end(), Rand->GetGenerator()); }
     
     AgentIndex = 0;
-    // for (auto& agent : Agents) {
-    //     agent = new Agent(NumberOfCommodities);
-    // }
     for (size_t i = 0; i < static_cast<size_t>(NumberOfAgents); ++i) {
         Agents.emplace_back(new Agent{NumberOfCommodities});
     }
@@ -456,7 +495,6 @@ AlphaData(), EndowmentData(), LnMRSsData(), LnMRSsDataUpToDate(true), LastSumOfU
 
 void AgentPopulation::Init() {
     size_t CommodityIndex;
-    Data InitialOwnWealthData;
 
     
     AlphaData.Clear();
@@ -464,25 +502,23 @@ void AgentPopulation::Init() {
     LnMRSsData.Clear();
 
     //  Cycle through the agents...
-    //
     for (auto& ActiveAgent : Agents) {
         ActiveAgent->Init();
 
         //  Next, fill up the rest of the agent fields...
-        //
         for (CommodityIndex = 0; CommodityIndex < static_cast<size_t>(NumberOfCommodities); ++CommodityIndex) {
-            AlphaData.GetData(CommodityIndex)->AddDatuum(ActiveAgent->GetAlpha(CommodityIndex));
-            EndowmentData.GetData(CommodityIndex)->AddDatuum(ActiveAgent->GetEndowment(CommodityIndex));
-            LnMRSsData.GetData(CommodityIndex)->AddDatuum(log(ActiveAgent->GetInitialMRS(CommodityIndex)));
+            AlphaData.GetData(CommodityIndex)->AddDatum(ActiveAgent->GetAlpha(CommodityIndex));
+            EndowmentData.GetData(CommodityIndex)->AddDatum(ActiveAgent->GetEndowment(CommodityIndex));
+            LnMRSsData.GetData(CommodityIndex)->AddDatum(log(ActiveAgent->GetInitialMRS(CommodityIndex)));
         }   //  for (CommodityIndex...
-        InitialOwnWealthData.AddDatuum(ActiveAgent->GetInitialWealth());
+        std::cout << ActiveAgent->GetInitialWealth() << std::endl;
+        InitialOwnWealthData.AddDatum(ActiveAgent->GetInitialWealth());
     }   //  for (AgentIndex...
 
     LnMRSsDataUpToDate = true;
     LastSumOfUtilities = ComputeSumOfUtilities();
 
     //  Finally, display stats on the instantiated population...
-    //
     if (PrintEndowments) {
         LOG(INFO) << "Initial endowments:";
         for (CommodityIndex = 0; CommodityIndex < static_cast<size_t>(NumberOfCommodities); ++CommodityIndex) {
@@ -502,9 +538,9 @@ void AgentPopulation::Reset() {
 }   //  AgentPopulation::Reset
 
 long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
-    bool Converged = false;
-    long long theTime = 0;
-    long long TotalInteractions = 0;
+    Converged = false;
+    theTime = 0; 
+    TotalInteractions = 0;
     AgentPtr Agent1, Agent2, LargerMRSAgent, SmallerMRSAgent;
     size_t Commodity1, Commodity2;
     double MRSratio12, MRSratio;
@@ -514,13 +550,11 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
 
     LOG(INFO) << "Equilibration #" << NumberOfEquilibrationsSoFar << " starting";
     //  Next, initialize some variables...
-    //
     for (auto& vol : Volume) {
         vol = 0.0;
     }
 
     //  Start up the exchange process here...
-    //
     do {
         LnMRSsDataUpToDate = false;  //  Since these data are gonna change...
 
@@ -531,7 +565,6 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
         }
         for (int i = 1; i <= PairwiseInteractionsPerPeriod; ++i) {
             //  First, select the agents to be active...
-            //
             (this->*GetAgentPair) (Agent1, Agent2);
 
             if (debug) {
@@ -539,14 +572,13 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
                 Agent2PreTradeUtility = Agent2->Utility();
             }
             //  Next, select the commodities to trade...
-            //
             if (NumberOfCommodities == 2) {
                 Commodity1 = 0;
                 Commodity2 = 1;
             } else {
-                Commodity1 = randomCommodity(rng);
+                Commodity1 = Rand->RandomCommodity();
                 do {
-                    Commodity2 = randomCommodity(rng);
+                    Commodity2 = Rand->RandomCommodity();
                 } while (Commodity2 == Commodity1);
             }
             //  Compare MRSs...
@@ -567,7 +599,6 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
                     SmallerMRSAgent = Agent1;
                 }
                 //  Here are the guts of bilateral Walrasian exchange
-                //
                 SAgentalpha1 = SmallerMRSAgent->GetAlpha(Commodity1);
                 SAgentalpha2 = SmallerMRSAgent->GetAlpha(Commodity2);
                 SAgentx1 = SmallerMRSAgent->GetAllocation(Commodity1);
@@ -604,7 +635,6 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
         }   //  for i...
 
         //  Check for termination...
-        //
         if ((theTime > CheckTerminationThreshold) && (theTime % CheckTerminationPeriod == 0))  {
             switch (termination_criterion) {
                 case -2:
@@ -641,7 +671,6 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
             }   //  switch...
         }
         //  Display stats if the time is right...
-        //
         if (PrintIntermediateOutput) {
             if (theTime % IntermediateOutputPrintPeriod == 0) {
                 LOG(INFO) << "Through time " << theTime << ", " << TotalInteractions << " total exchanges; ";
@@ -684,11 +713,11 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
                 LastSumOfUtilities = ComputeSumOfUtilities();
             }
         }
+        if (writeToFile) { WriteLine(); }
+
     }  while (!Converged);
     
-    //
     //  Agents are either equilibrated or user has asked for termination; display stats for the former case
-    //
     if (!Converged) {
         LOG(INFO) << "Terminated by user!";
         return 0;
@@ -709,7 +738,6 @@ void AgentPopulation::ConvergenceStatistics(CommodityArray VolumeStats) {
 
     for (auto& agent : Agents) {
         //  First compute agent wealth one commodity at a time...
-        //
         AgentsInitialWealth = 0.0;
         AgentsFinalWealth = 0.0;
         for (size_t j = 0; j < static_cast<size_t>(NumberOfCommodities); ++j) {
@@ -717,16 +745,15 @@ void AgentPopulation::ConvergenceStatistics(CommodityArray VolumeStats) {
             AgentsInitialWealth += agent->GetEndowment(j) * price;
             AgentsFinalWealth += agent->GetAllocation(j) * price;
         }
-        InitialMarketWealthData.AddDatuum(AgentsInitialWealth);
-        FinalMarketWealthData.AddDatuum(AgentsFinalWealth);
-        DeltaMarketWealthData.AddDatuum(AgentsFinalWealth - AgentsInitialWealth);
+        InitialMarketWealthData.AddDatum(AgentsInitialWealth);
+        FinalMarketWealthData.AddDatum(AgentsFinalWealth);
+        DeltaMarketWealthData.AddDatum(AgentsFinalWealth - AgentsInitialWealth);
 
         //  The following line is a minor optimization...variable name should include 'own' to be mnemonic...
-        //
         AgentsFinalWealth = agent->Wealth(agent->GetCurrentMRSs());
-        FinalOwnWealthData.AddDatuum(AgentsFinalWealth);
-        DeltaOwnWealthData.AddDatuum(AgentsFinalWealth - agent->GetInitialWealth());
-        DeltaUtility.AddDatuum(agent->Utility() - agent->GetInitialUtility());
+        FinalOwnWealthData.AddDatum(AgentsFinalWealth);
+        DeltaOwnWealthData.AddDatum(AgentsFinalWealth - agent->GetInitialWealth());
+        DeltaUtility.AddDatum(agent->Utility() - agent->GetInitialUtility());
     }   //  for i...
 
     LOG(INFO) << "Average initial wealth (@ market prices) = " << InitialMarketWealthData.GetAverage() << "; standard deviation = " << InitialMarketWealthData.GetStdDev();
@@ -774,9 +801,9 @@ void AgentPopulation::ShockAgentPreferences() {
     if (debug) { LOG(DEBUG) << "Shocking agent preferences..."; }
     double oldPref, newPref, pref;
 
-    size_t CommodityToShock = randomCommodity(rng);
-    bool sign = randomBinary(rng);
-    double shock = randomShock(rng);
+    size_t CommodityToShock = Rand->RandomCommodity();
+    bool sign = Rand->RandomBinary();
+    double shock = Rand->RandomShock();
     if (debug) {
         if (sign) {
             LOG(DEBUG) << "Shocking commodity " << CommodityToShock << " * " << shock;
@@ -802,6 +829,48 @@ void AgentPopulation::ShockAgentPreferences() {
 
 
 /*================= End of Methods =================*/
+void OpenFile(const char * filename) {
+    bool fileExists = false;
+    
+    std::ifstream file_to_check (filename);
+    if(file_to_check.is_open()) {
+      fileExists = true;
+    }
+    file_to_check.close();
+
+    if(debug) {
+        LOG(DEBUG) << "Opening file " << filename;
+    }
+    if (fileAppend) {
+        outfile.open(filename, std::ios::app);
+        if (!fileExists) {
+            WriteHeader();
+        }
+    } else {
+        outfile.open(filename, std::ios::trunc);
+        WriteHeader();
+    }
+}
+
+void AgentPopulation::WriteLine() {
+    // This can obviously be made more elegant.
+    outfile << theTime <<"," << TotalInteractions << "," << WriteWealthInfo() << WriteUtilityInfo();
+    outfile << LnMRSsData.L2StdDev() << "," << LnMRSsData.LinfStdDev() << "," << InitialOwnWealthData.GetMin() << "," << InitialOwnWealthData.GetMax() << "," ;
+    outfile << alphaMin << "," << alphaMax << "," << activationMethod << ",";
+    outfile << NumberOfAgents << "," << NumberOfCommodities << "," << trade_eps << ",";
+    outfile << termination_criterion << "," << termination_eps << "," << TerminationTime << "," << CheckTerminationThreshold;
+
+    outfile << std::endl;
+}
+
+void WriteHeader() {
+    outfile << "time,interactions,currentwealth.min,currentwealth.max,currentwealth.avg,currentwealth.sd,";
+    outfile << "utility.min,utility.max,utility.avg,utility.sd,";
+    outfile << "L2.sd.MRS,max.sd.MRS,initialwealth.min,initialwealth.max,";
+    outfile << "alpha.min,alpha.max,activation.method,num.agents,num.commodities,";
+    outfile << "trade.eps,termination_criterion,termination.eps,termination.time,termination.threshold";
+    outfile << std::endl;
+}
 
 void InitMiscellaneous() {
     LOG(INFO) << "Model version: " << Version;
@@ -845,27 +914,6 @@ void InitMiscellaneous() {
     MemoryState.WriteMemoryRequirements();
 } // InitMiscellaneous()
 
-void SeedRNG() {
-// Seed the random number generator.
-    if (!UseRandomSeed) {
-        std::random_device rd;
-        unsigned int seed = rd();
-        rng.seed(seed);
-        LOG(INFO) << "Using random seed " << seed;
-    } else {
-        LOG(INFO) << "Using fixed seed " << NonRandomSeed;
-        rng.seed(NonRandomSeed);
-    }
-    // initialize the distributions now that we know the relevant ranges
-    randomAgent = std::uniform_int_distribution<unsigned long>(0, static_cast<size_t>(NumberOfAgents-1));
-    randomCommodity = std::uniform_int_distribution<unsigned long>(0, static_cast<size_t>(NumberOfCommodities-1));
-    randomBinary = std::uniform_int_distribution<int>(0, 1);
-    randomShock = std::uniform_real_distribution<double>(MinShock, MaxShock);
-    randomAlpha = std::uniform_real_distribution<double>(alphaMin, alphaMax);
-    randomWealth = std::uniform_real_distribution<double>(wealthMin, wealthMax);
-    randomDouble = std::uniform_real_distribution<double>(0, 1);
-} // SeedRNG()
-
 void ReadConfigFile(std::string file) {
     // This function sets all relevant model parameters by reading from a config file (libconfig). 
     // If there's some issue with the formatting or reading of the config file, it catches the exception
@@ -908,6 +956,9 @@ void ReadConfigFile(std::string file) {
         if (config.lookupValue("debug.print_convergence_stats", PrintConvergenceStats) && debug) { LOG(DEBUG) << "PrintConvergenceStats: " << PrintConvergenceStats; }
         if (config.lookupValue("debug.print_final_commodity_list", PrintFinalCommodityList) && debug) { LOG(DEBUG) << "PrintFinalCommodityList: " << PrintFinalCommodityList; }
         if (config.lookupValue("activation.method", activationMethod) && debug) { LOG(DEBUG) << "Activation Method: " << activationMethod; } // TODO: make this an enum
+        if (config.lookupValue("file.filename", outputFilename) && debug) { LOG(DEBUG) << "Output filename: " << outputFilename; }
+        if (config.lookupValue("file.write_to_file", writeToFile) && debug) { LOG(DEBUG) << "Write to file?: " << writeToFile; }
+        if (config.lookupValue("file.append", fileAppend) && debug) { LOG(DEBUG) << "Append to file?: " << fileAppend; }
         exp_trade_eps = exp(trade_eps);
 
     } catch (...) {
@@ -927,11 +978,19 @@ int main(int argc, char** argv) {
     // Read the config file passed through the -file flag, or read the default parameters.cfg.
     ReadConfigFile(FLAGS_file);
 
-    SeedRNG();
+    outputFilename = "data.csv"; // workaround for libconfig++ issue, TODO: correct
+
+    if (writeToFile) { OpenFile(outputFilename); }
+
+    Rand = new RNG(UseRandomSeed, NonRandomSeed, NumberOfAgents, NumberOfCommodities, MinShock, MaxShock, alphaMin, alphaMax, wealthMin, wealthMax);
 
     //  Initialize the model and print preliminaries to the log.
     InitMiscellaneous();
     AgentPopulationPtr PopulationPtr = new AgentPopulation(NumberOfCommodities);
+
+    #if 1
+    PopulationPtr->Init();
+    #endif
 
 
     //  Equilibrate the agent economy once...
@@ -964,4 +1023,6 @@ int main(int argc, char** argv) {
     if (EquilibrationNumber > 2) {
         LOG(INFO) << "std. dev.: " << sqrt((sum2 - (EquilibrationNumber - 1) * avg * avg)/(EquilibrationNumber - 2));
     }
+
+    if (outfile.is_open()) { outfile.close(); }
 }  // main()
