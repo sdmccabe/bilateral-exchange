@@ -56,6 +56,7 @@ const char* outputFilename = NULL;
 bool fileAppend;
 bool writeToFile;
 std::ofstream outfile;
+int NumberOfThreads;
 
 RNGptr Rand;
 
@@ -217,6 +218,7 @@ class AgentPopulation {
     void GetFixedAgentPair(AgentPtr& Agent1, AgentPtr& Agent2);
     void GetPoissonAgentPair(AgentPtr& Agent1, AgentPtr& Agent2);
     void SetPoissonAgentDistribution();
+    void TradeInParallel(AgentPtr a1, AgentPtr a2);
     
 
     void(AgentPopulation::*GetAgentPair) (AgentPtr& Agent1, AgentPtr& Agent2);
@@ -227,9 +229,13 @@ public:
     long long theTime; 
     long long TotalInteractions;
 
+    void IncreaseTotalInteractions(long long x) { 
+        TotalInteractions += x; 
+    }
     void Init();
     void Reset();
     long long Equilibrate(int NumberOfEquilibrationsSoFar);
+    long long ParallelEquilibrate(int NumberOfEquilibrationsSoFar);
     void ConvergenceStatistics(CommodityArray VolumeStats);
     void CompareTwoAgents(AgentPtr Agent1, AgentPtr Agent2);
     void ShockAgentPreferences();

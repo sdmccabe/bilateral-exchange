@@ -29,6 +29,7 @@ Extended by Stefan McCabe
 #include <iostream>
 #include <libconfig.h++>
 #include <memory>
+#include <mutex>
 #include <random>
 #include <string>
 #include <thread>
@@ -41,7 +42,9 @@ Extended by Stefan McCabe
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wctor-dtor-privacy"
 #include "./easylogging++.h"
+#include "./ctpl_stl.h"
 #pragma GCC diagnostic pop
+
 
 // Initialize the logger. This should come immediately after the #includes are finished.
 INITIALIZE_EASYLOGGINGPP
@@ -536,6 +539,232 @@ void AgentPopulation::Reset() {
     }
 }   //  AgentPopulation::Reset
 
+void AgentPopulation::TradeInParallel (AgentPtr a1, AgentPtr a2) {
+    AgentPtr LargerMRSAgent, SmallerMRSAgent;
+    size_t Commodity1, Commodity2;
+    double MRSratio12, MRSratio;
+    double LAgentalpha1, LAgentalpha2, LAgentx1, LAgentx2, SAgentalpha1, SAgentalpha2, SAgentx1, SAgentx2;
+    double num, denom, delta1, delta2;
+    double Agent1PreTradeUtility, Agent2PreTradeUtility;
+
+    if (debug) {
+        Agent1PreTradeUtility = a1->Utility();
+        Agent2PreTradeUtility = a1->Utility();
+    }
+            //  Next, select the commodities to trade...
+    if (NumberOfCommodities == 2) {
+        Commodity1 = 0;
+        Commodity2 = 1;
+    } else {
+        Commodity1 = Rand->RandomCommodity();
+        do {
+            Commodity2 = Rand->RandomCommodity();
+        } while (Commodity2 == Commodity1);
+    }
+            //  Compare MRSs...
+
+    MRSratio12 = a1->MRS(Commodity2, Commodity1) / a2->MRS(Commodity2, Commodity1);
+    if (MRSratio12 > 1.0) {
+        MRSratio = MRSratio12;
+    } else {
+        MRSratio = 1.0/MRSratio12;
+    }
+
+    
+    if (MRSratio >= exp_trade_eps)  {  //  do exchange
+        if (MRSratio12 > 1.0) {
+            LargerMRSAgent= a1;
+            SmallerMRSAgent= a2;
+        } else {
+            LargerMRSAgent= a2;
+            SmallerMRSAgent= a1;
+        }
+        //  Here are the guts of bilateral Walrasian exchange
+        SAgentalpha1 = SmallerMRSAgent->GetAlpha(Commodity1);
+        SAgentalpha2 = SmallerMRSAgent->GetAlpha(Commodity2);
+        SAgentx1 = SmallerMRSAgent->GetAllocation(Commodity1);
+        SAgentx2 = SmallerMRSAgent->GetAllocation(Commodity2);
+        LAgentalpha1 = LargerMRSAgent->GetAlpha(Commodity1);
+        LAgentalpha2 = LargerMRSAgent->GetAlpha(Commodity2);
+        LAgentx1 = LargerMRSAgent->GetAllocation(Commodity1);
+        LAgentx2 = LargerMRSAgent->GetAllocation(Commodity2);
+
+        num = (SAgentalpha1 * LAgentalpha2 * LAgentx1 * SAgentx2) - (LAgentalpha1 * SAgentalpha2 * LAgentx2 * SAgentx1);
+        denom = LAgentalpha1 * LAgentx2 + SAgentalpha1 * SAgentx2;
+        delta1 = num / denom;
+        denom = LAgentalpha2 * LAgentx1 + SAgentalpha2 * SAgentx1;
+        delta2 = num / denom;
+
+        SmallerMRSAgent->IncreaseAllocation(Commodity1, delta1);
+        SmallerMRSAgent->IncreaseAllocation(Commodity2, -delta2);
+        LargerMRSAgent->IncreaseAllocation(Commodity1, -delta1);
+        LargerMRSAgent->IncreaseAllocation(Commodity2, delta2);
+
+        ++TotalInteractions;
+        Volume[Commodity1] += delta1;
+        Volume[Commodity2] += delta2;
+    }   //  if (MRSratio...
+
+    if (debug) {
+        if (a1->Utility() < Agent1PreTradeUtility) {
+            LOG(WARNING) << "!!!Utility decreasing trade by agent #1!!!  Actual utility change = " << a1->Utility() - Agent1PreTradeUtility;
+        }
+        if (a2->Utility() < Agent2PreTradeUtility) {
+            LOG(WARNING) << "!!!Utility decreasing trade by agent #2!!!  Actual utility change = " << a2->Utility() - Agent2PreTradeUtility;
+        }
+    }
+}
+
+
+
+long long AgentPopulation::ParallelEquilibrate(int NumberOfEquilibrationsSoFar) {
+    Converged = false;
+    theTime = 0; 
+    TotalInteractions = 0;
+    AgentPtr Agent1, Agent2;
+
+    LOG(INFO) << "Equilibration #" << NumberOfEquilibrationsSoFar << " starting";
+
+    //  Next, initialize some variables...
+    for (auto& vol : Volume) {
+        vol = 0.0;
+    }
+
+    // Start up the exchange process here...
+    do {
+        LnMRSsDataUpToDate = false;  //  Since these data are gonna change...
+
+        ++theTime;
+
+        if ((ShockPreferences) && (theTime % ShockPeriod == 0)) {
+            ShockAgentPreferences();
+        }
+
+        // first attempt : no fork-and-join
+
+        std::cout << std::thread::hardware_concurrency() << std::endl;
+        ctpl::thread_pool p(std::thread::hardware_concurrency());
+        //ctpl::thread_pool p(1);
+        // for (int i=0; i<100; ++i)
+        // p.push( [i] (int i){ LOG(INFO) << "hello from " << i << '\n'; });
+        // p.stop(true);
+        // std::terminate();
+        //auto trade = [] (AgentPtr a1, AgentPtr a2) { LOG(INFO) << "Utility for Agent1: " << a1->Utility() << " Utility for Agent2: " << a2->Utility(); };
+        for (int i = 0; i < PairwiseInteractionsPerPeriod; ++i) { 
+            (this->*GetAgentPair) (Agent1, Agent2);
+            //p.push(TradeInParallel, Agent1, Agent2);
+            //p.push([&AgentPopulation] (int id, Agent1, Agent2) {AgentPopulation.TradeInParallel(Agent1, Agent2)});
+            //p.push([](int id, Hello* hello){ hello->print(id);}, &hello); 
+            p.push([](int id, AgentPopulation* p, AgentPtr a1, AgentPtr a2){p->TradeInParallel(a1,a2);}, this, Agent1, Agent2);
+        }
+
+        //std::terminate();
+        // for (int i = 1; i <= PairwiseInteractionsPerPeriod; ++i) {
+        //     //  First, select the agents to be active...
+        //     (this->*GetAgentPair) (Agent1, Agent2);
+
+        // }   //  for i...
+
+        //  Check for termination...
+        if ((theTime > CheckTerminationThreshold) && (theTime % CheckTerminationPeriod == 0))  {
+            switch (termination_criterion) {
+                case -2:
+                if (theTime >= TerminationTime) {
+                    Converged = true;
+                }
+                break;
+                case -1:  //  Termination based on L2 norm of MRS distribution
+                ComputeLnMRSsDistribution();
+                if (LnMRSsData.L2StdDev() < termination_eps) {
+                    Converged = true;
+                }
+                break;
+                case 0:  //  Termination based on L∞ norm of MRS distribution
+                ComputeLnMRSsDistribution();
+                if (LnMRSsData.LinfStdDev() < termination_eps) {
+                    Converged = true;
+                }
+                break;
+                case 1:  //  Termination based on relative increase in V
+                if (ComputeRelativeIncreaseInSumOfUtilities() < termination_eps) {
+                    Converged = true;
+                }
+                break;
+                case 2:  //  Termination based on absolute increase in V
+                if (ComputeIncreaseInSumOfUtilities() < termination_eps) {
+                    Converged = true;
+                }
+                break;
+                default:
+                LOG(ERROR) << "Invalid termination criterion";
+                std::terminate();
+                break;
+            }   //  switch...
+        }
+        //  Display stats if the time is right...
+        if (PrintIntermediateOutput) {
+            if (theTime % IntermediateOutputPrintPeriod == 0) {
+                LOG(INFO) << "Through time " << theTime << ", " << TotalInteractions << " total exchanges; ";
+                switch (termination_criterion) {
+                    case -2:
+                    if (!LnMRSsDataUpToDate) {
+                        ComputeLnMRSsDistribution();
+                    }
+                    LOG(INFO) << "current L2 s.d. in MRS = " << LnMRSsData.L2StdDev();
+                    break;
+                    case -1:
+                    if (!LnMRSsDataUpToDate) {
+                        ComputeLnMRSsDistribution();
+                    }
+                    LOG(INFO) << "current L2 s.d. in MRS = " << LnMRSsData.L2StdDev();
+                    break;
+                    case 0:
+                    if (!LnMRSsDataUpToDate) {
+                        ComputeLnMRSsDistribution();
+                    }
+                    LOG(INFO) << "current max s.d. in MRS = " << LnMRSsData.LinfStdDev();
+                    break;
+                    case 1:
+                    LOG(INFO) << "relative increase in ∑U = " << ComputeRelativeIncreaseInSumOfUtilities();
+                    break;
+                    case 2:
+                    LOG(INFO) << "increase in ∑U = " << ComputeIncreaseInSumOfUtilities();
+                    break;
+                    default:
+                    LOG(ERROR) << "Invalid termination criterion";
+                    std::terminate();
+                    break;
+                }   // switch...
+            }   //  theTime...
+        }
+
+        //  Store the sum of utilities if it will be needed next period for either termincation check or printing
+        if (termination_criterion > 0) {
+            if (((theTime > CheckTerminationThreshold) && ((theTime + 1) % CheckTerminationPeriod == 0)) || ((PrintIntermediateOutput) && ((theTime + 1) % IntermediateOutputPrintPeriod == 0))) {
+                LastSumOfUtilities = ComputeSumOfUtilities();
+            }
+        }
+
+        if (writeToFile) { WriteLine(); }
+
+    }  while (!Converged);
+
+    //  Agents are either equilibrated or user has asked for termination; display stats for the former case
+    if (!Converged) {
+        LOG(INFO) << "Terminated by user!";
+        return 0;
+    } else {    //  the economy has converged...
+        LOG(INFO) << "Equilibrium achieved at time " << theTime << " via " << TotalInteractions << " interactions";
+        LOG(INFO) << "Equilibration #" << NumberOfEquilibrationsSoFar << " ended";
+        if (PrintConvergenceStats) {
+            ConvergenceStatistics(Volume);
+        }
+        return TotalInteractions;
+    }
+}
+
+
+
 long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
     Converged = false;
     theTime = 0; 
@@ -834,21 +1063,21 @@ void OpenFile(const char * filename) {
     std::ifstream file_to_check (filename);
     if(file_to_check.is_open()) {
       fileExists = true;
-    }
-    file_to_check.close();
+  }
+  file_to_check.close();
 
-    if(debug) {
-        LOG(DEBUG) << "Opening file " << filename;
-    }
-    if (fileAppend) {
-        outfile.open(filename, std::ios::app);
-        if (!fileExists) {
-            WriteHeader();
-        }
-    } else {
-        outfile.open(filename, std::ios::trunc);
+  if(debug) {
+    LOG(DEBUG) << "Opening file " << filename;
+}
+if (fileAppend) {
+    outfile.open(filename, std::ios::app);
+    if (!fileExists) {
         WriteHeader();
     }
+} else {
+    outfile.open(filename, std::ios::trunc);
+    WriteHeader();
+}
 }
 
 void AgentPopulation::WriteLine() {
@@ -935,8 +1164,7 @@ void ReadConfigFile(std::string file) {
         if (config.lookupValue("wealth.min", wealthMin) && debug) { LOG(DEBUG) << "wealthMin: " << wealthMin; }
         if (config.lookupValue("wealth.max", wealthMax) && debug) { LOG(DEBUG) << "wealthMax: " << wealthMax; }
         if (config.lookupValue("parallel.disabled", DefaultSerialExecution) && debug) { LOG(DEBUG) << "DefaultSerialExecution: " << DefaultSerialExecution; }
-        if (config.lookupValue("parallel.agents_to_randomize", AgentsToRandomize) && debug) { LOG(DEBUG) << "AgentsToRandomize: " << AgentsToRandomize; }
-        if (config.lookupValue("parallel.randomization_method", RandomizationMethod) && debug) { LOG(DEBUG) << "RandomizationMethod: " << RandomizationMethod; }
+        if (config.lookupValue("parallel.number_of_threads", NumberOfThreads) && debug) { LOG(DEBUG) << "NumberOfThreads: " << NumberOfThreads; }
         if (config.lookupValue("num_equilibrations", RequestedEquilibrations) && debug) { LOG(DEBUG) << "RequestedEquilibrations: " << RequestedEquilibrations; }
         if (config.lookupValue("same_conditions_each_equilibration", SameAgentInitialCondition) && debug) { LOG(DEBUG) << "SameAgentInitialCondition: " << SameAgentInitialCondition; }
         if (config.lookupValue("trade.eps", trade_eps) && debug) { LOG(DEBUG) << "trade_eps: " << trade_eps; }
@@ -998,7 +1226,7 @@ int main(int argc, char** argv) {
     if (DefaultSerialExecution) {
         sum = PopulationPtr->Equilibrate(EquilibrationNumber);
     } else {
-        //sum = PopulationPtr->ParallelEquilibrate(EquilibrationNumber);
+        sum = PopulationPtr->ParallelEquilibrate(EquilibrationNumber);
     }
     long long sum2 = sum*sum;
     //  Equilibrate again if the user has requested this...
