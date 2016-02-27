@@ -632,7 +632,7 @@ long long AgentPopulation::ParallelEquilibrate(int NumberOfEquilibrationsSoFar) 
 
     // Start up the exchange process here...
     do {
-        LnMRSsDataUpToDate = false;  //  Since these data are gonna change...
+        LnMRSsDataUpToDate = false;  // Since these data are gonna change...
 
         ++theTime;
 
@@ -641,29 +641,13 @@ long long AgentPopulation::ParallelEquilibrate(int NumberOfEquilibrationsSoFar) 
         }
 
         // first attempt : no fork-and-join
-
         std::cout << std::thread::hardware_concurrency() << std::endl;
         ctpl::thread_pool p(std::thread::hardware_concurrency());
-        //ctpl::thread_pool p(1);
-        // for (int i=0; i<100; ++i)
-        // p.push( [i] (int i){ LOG(INFO) << "hello from " << i << '\n'; });
-        // p.stop(true);
-        // std::terminate();
-        //auto trade = [] (AgentPtr a1, AgentPtr a2) { LOG(INFO) << "Utility for Agent1: " << a1->Utility() << " Utility for Agent2: " << a2->Utility(); };
+
         for (int i = 0; i < PairwiseInteractionsPerPeriod; ++i) { 
             (this->*GetAgentPair) (Agent1, Agent2);
-            //p.push(TradeInParallel, Agent1, Agent2);
-            //p.push([&AgentPopulation] (int id, Agent1, Agent2) {AgentPopulation.TradeInParallel(Agent1, Agent2)});
-            //p.push([](int id, Hello* hello){ hello->print(id);}, &hello); 
             p.push([](int id, AgentPopulation* p, AgentPtr a1, AgentPtr a2){p->TradeInParallel(a1,a2);}, this, Agent1, Agent2);
         }
-
-        //std::terminate();
-        // for (int i = 1; i <= PairwiseInteractionsPerPeriod; ++i) {
-        //     //  First, select the agents to be active...
-        //     (this->*GetAgentPair) (Agent1, Agent2);
-
-        // }   //  for i...
 
         //  Check for termination...
         if ((theTime > CheckTerminationThreshold) && (theTime % CheckTerminationPeriod == 0))  {
@@ -701,6 +685,7 @@ long long AgentPopulation::ParallelEquilibrate(int NumberOfEquilibrationsSoFar) 
                 break;
             }   //  switch...
         }
+        
         //  Display stats if the time is right...
         if (PrintIntermediateOutput) {
             if (theTime % IntermediateOutputPrintPeriod == 0) {
