@@ -28,6 +28,7 @@ Extended by Stefan McCabe
 #include <fstream>
 #include <iostream>
 #include <libconfig.h++>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <random>
@@ -157,11 +158,11 @@ double  CommodityData::LinfStdDev() {
 }   //  CommodityData::LinfStdDev
 
 
-Agent::Agent(int size): initialUtility(0.0), initialWealth(0.0) {
+Agent::Agent(int size, size_t x): initialUtility(0.0), initialWealth(0.0) {
     // Constructor resizes the data vector to the appropriate size.
     // It is initially zero-initialized, which is obviously problematic.
     // This allows me to replace arrays with vectors.
-
+    id = x;
     alphas.resize(static_cast<size_t>(size));
     endowment.resize(static_cast<size_t>(size));   
     initialMRSs.resize(static_cast<size_t>(size)); 
@@ -171,6 +172,7 @@ Agent::Agent(int size): initialUtility(0.0), initialWealth(0.0) {
 }
 
 void Agent::Init() {
+    //std::lock_guard<std::mutex> lock(m);
     size_t CommodityIndex;
 
     //  First generate and normalize the exponents...
@@ -192,6 +194,7 @@ void Agent::Init() {
 }   //  Agent:Init()
 
 void Agent::Reset() {
+    //std::lock_guard<std::mutex> lock(m);
     for (auto& currentAgentMRS : currentMRSs) {
         auto i = static_cast<size_t>(&currentAgentMRS - &currentMRSs[0]);
         allocation[i] = endowment[i];
@@ -201,10 +204,12 @@ void Agent::Reset() {
 
 // MRS = marginal rate of substitution
 double Agent::MRS(size_t CommodityIndex, size_t Numeraire) {
+    //std::lock_guard<std::mutex> lock(m);
     return (alphas[CommodityIndex] * allocation[Numeraire]) / (alphas[Numeraire] * allocation[CommodityIndex]);
 }   //  Agent::MRS()
 
 void Agent::ComputeMRSs() {
+    //std::lock_guard<std::mutex> lock(m);
     for (auto& currentAgentMRS : currentMRSs) {
         auto i = static_cast<size_t>(&currentAgentMRS - &currentMRSs[0]);
         if (i == 0) {
@@ -216,6 +221,7 @@ void Agent::ComputeMRSs() {
 }   //      Agent::ComputeMRSs()
 
 double Agent::Utility() {
+    //std::lock_guard<std::mutex> lock(m);
     double product = 1.0;
 
     for (size_t i = 0; i < allocation.size(); ++i) {
@@ -343,15 +349,29 @@ void AgentPopulation::GetPoissonAgentPair(AgentPtr& Agent1, AgentPtr& Agent2) {
     Agent2 = PoissonActivations[AgentIndex2].second;
 
     size_t swap = 1;
-    while (Agent1 == Agent2) {
-        std::swap(PoissonActivations[AgentIndex2], PoissonActivations[AgentIndex2+swap]);
-        ++swap;
-        Agent2 = PoissonActivations[AgentIndex2].second;
+    while (Agent1 == Agent2 || Agent2 == nullptr) {
+        ++swap; // get some value close to the "correct" one
+        Agent2 = PoissonActivations[Rand->ValueInRange(static_cast<int>(AgentIndex2-swap),static_cast<int>(AgentIndex2+swap))].second;
     }
-    
     ++AgentIndex;
     if (AgentIndex >= static_cast<size_t>(NumberOfAgents)) {
         PoissonUpToDate = false;
+    }
+    if (Agent1 == nullptr) {
+        std::cout << "null pointer in Agent1" << std::endl;
+        std::terminate();
+    }
+    if (Agent2 == nullptr) {
+        std::cout << "null pointer in Agent2" << std::endl;
+        std::terminate();
+    }
+    if (Agent1 == NULL) {
+        std::cout << "null pointer in Agent1" << std::endl;
+        std::terminate();
+    }
+    if (Agent2 == NULL) {
+        std::cout << "null pointer in Agent2" << std::endl;
+        std::terminate();
     }
 }
 
@@ -385,41 +405,51 @@ void AgentPopulation::SetPoissonAgentDistribution() {
     //this is where the Poisson activation methods are differentiated
     //TODO: "regular Poisson" - inverse distance from mean - don't really care about it
     for (auto &a : Agents) {
-            if (activationMethod == 2) { // furthest from mean activate faster
-                denom = std::abs(a->Wealth(a->GetCurrentMRSs()) - meanWealth);
-                if (denom == 0) {
-                    denom = 0.0001;
-                }
-                double lam = totalDistanceFromMean / denom;
-                a->SetLambda(lam);
-                totalLambda += lam;
-            } else if (activationMethod == 3) { // poor activate faster
-                denom = a->Wealth(a->GetCurrentMRSs());
-                if (denom == 0) {
-                    denom = 0.0001;
-                }
-                double lam = 1 / denom;
-                a->SetLambda(lam);
-                totalLambda += lam;
-        } else if (activationMethod == 4) { // rich activate faster
+        double lam;
+        switch (activationMethod) {
+            case 2:  // furthest from mean activate faster
+            denom = std::abs(a->Wealth(a->GetCurrentMRSs()) - meanWealth);
+            if (denom == 0) {
+                denom = 0.0001;
+            }
+            lam = totalDistanceFromMean / denom;
+            a->SetLambda(lam);
+            totalLambda += lam;
+            break;
+            case 3: // poor activate faster
             denom = a->Wealth(a->GetCurrentMRSs());
             if (denom == 0) {
                 denom = 0.0001;
             }
-            double lam = denom;
+            lam = 1 / denom;
             a->SetLambda(lam);
             totalLambda += lam;
-        } else if (activationMethod == 5) { // closest to mean activate faster
-            double lam = std::abs(a->Wealth(a->GetCurrentMRSs()) - meanWealth);
+            break;
+            case 4: // rich activate faster
+            denom = a->Wealth(a->GetCurrentMRSs());
+            if (denom == 0) {
+                denom = 0.0001;
+            }
+            lam = denom;
             a->SetLambda(lam);
             totalLambda += lam;
-        } 
+            break;
+            case 5: // closest to mean activate faster
+            lam = std::abs(a->Wealth(a->GetCurrentMRSs()) - meanWealth);
+            a->SetLambda(lam);
+            totalLambda += lam;
+            break;
+            default:
+            LOG(WARNING) << "Error: Accessing Poisson activation out of scope";
+            std::terminate();
+        }
+
     }
 
     //normalize lambdas
     for (auto &a : Agents) {
         auto i = static_cast<size_t>(&a - &Agents[0]);
-        double lam = a->GetLambda() * static_cast<double>(NumberOfAgents) * 1.1/totalLambda;
+        double lam = a->GetLambda() * static_cast<double>(NumberOfAgents) * 1.25/totalLambda; // was 1.1
         if (lam == 0) {
             lam = 1.0 / static_cast<double>(NumberOfAgents);
         }
@@ -428,8 +458,7 @@ void AgentPopulation::SetPoissonAgentDistribution() {
         //schedule agents based on lambda
         a->SetLambda(lam);
         a->SetNextTime(-1 * log(Rand->RandomDouble()) / a->GetLambda());
-        
-        while (a->GetNextTime() < 1 ) { //no agent is more than 20% of activations
+        while (a->GetNextTime() < 1 ) { 
             PoissonActivations.push_back(std::make_pair(a->GetNextTime(), a));
             a->SetNextTime(a->GetNextTime() + -1 * log(Rand->RandomDouble()) / a->GetLambda());
         }     
@@ -455,7 +484,7 @@ AlphaData(), EndowmentData(), LnMRSsData(), LnMRSsDataUpToDate(true), LastSumOfU
     
     AgentIndex = 0;
     for (size_t i = 0; i < static_cast<size_t>(NumberOfAgents); ++i) {
-        Agents.emplace_back(new Agent{NumberOfCommodities});
+        Agents.emplace_back(new Agent{NumberOfCommodities, i});
     }
 
     PoissonUpToDate = false;
@@ -541,17 +570,22 @@ void AgentPopulation::Reset() {
 
 void AgentPopulation::TradeInParallel (AgentPtr a1, AgentPtr a2) {
     AgentPtr LargerMRSAgent, SmallerMRSAgent;
+    size_t id1 = a1->GetId();
+    size_t id2 = a2->GetId();
     size_t Commodity1, Commodity2;
     double MRSratio12, MRSratio;
     double LAgentalpha1, LAgentalpha2, LAgentx1, LAgentx2, SAgentalpha1, SAgentalpha2, SAgentx1, SAgentx2;
     double num, denom, delta1, delta2;
     double Agent1PreTradeUtility, Agent2PreTradeUtility;
 
+    //std::lock_guard<std::mutex> lock1(AgentMutexes[a1->GetId()]);
+    //std::lock_guard<std::mutex> lock2(AgentMutexes[a2->GetId()]);
+
     if (debug) {
         Agent1PreTradeUtility = a1->Utility();
-        Agent2PreTradeUtility = a1->Utility();
+        Agent2PreTradeUtility = a2->Utility();
     }
-            //  Next, select the commodities to trade...
+    //  Next, select the commodities to trade...
     if (NumberOfCommodities == 2) {
         Commodity1 = 0;
         Commodity2 = 1;
@@ -603,7 +637,8 @@ void AgentPopulation::TradeInParallel (AgentPtr a1, AgentPtr a2) {
         ++TotalInteractions;
         Volume[Commodity1] += delta1;
         Volume[Commodity2] += delta2;
-    }   //  if (MRSratio...
+
+    }
 
     if (debug) {
         if (a1->Utility() < Agent1PreTradeUtility) {
@@ -641,12 +676,14 @@ long long AgentPopulation::ParallelEquilibrate(int NumberOfEquilibrationsSoFar) 
         }
 
         // first attempt : no fork-and-join
-        std::cout << std::thread::hardware_concurrency() << std::endl;
         ctpl::thread_pool p(std::thread::hardware_concurrency());
-
+        //ctpl::thread_pool p(1);
         for (int i = 0; i < PairwiseInteractionsPerPeriod; ++i) { 
             (this->*GetAgentPair) (Agent1, Agent2);
-            p.push([](int id, AgentPopulation* p, AgentPtr a1, AgentPtr a2){p->TradeInParallel(a1,a2);}, this, Agent1, Agent2);
+            p.push([](int id, AgentPopulation* pop, AgentPtr a1, AgentPtr a2){
+                 std::lock_guard<std::mutex> lock1(a1->m);
+                 std::lock_guard<std::mutex> lock2(a2->m);
+                pop->TradeInParallel(a1,a2);}, this, Agent1, Agent2);
         }
 
         //  Check for termination...
@@ -754,12 +791,12 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
     Converged = false;
     theTime = 0; 
     TotalInteractions = 0;
-    AgentPtr Agent1, Agent2, LargerMRSAgent, SmallerMRSAgent;
-    size_t Commodity1, Commodity2;
-    double MRSratio12, MRSratio;
-    double LAgentalpha1, LAgentalpha2, LAgentx1, LAgentx2, SAgentalpha1, SAgentalpha2, SAgentx1, SAgentx2;
-    double num, denom, delta1, delta2;
-    double Agent1PreTradeUtility, Agent2PreTradeUtility;
+    // AgentPtr Agent1, Agent2, LargerMRSAgent, SmallerMRSAgent;
+    // size_t Commodity1, Commodity2;
+    // double MRSratio12, MRSratio;
+    // double LAgentalpha1, LAgentalpha2, LAgentx1, LAgentx2, SAgentalpha1, SAgentalpha2, SAgentx1, SAgentx2;
+    // double num, denom, delta1, delta2;
+    // double Agent1PreTradeUtility, Agent2PreTradeUtility;
 
     LOG(INFO) << "Equilibration #" << NumberOfEquilibrationsSoFar << " starting";
     //  Next, initialize some variables...
@@ -777,6 +814,13 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
             ShockAgentPreferences();
         }
         for (int i = 1; i <= PairwiseInteractionsPerPeriod; ++i) {
+            AgentPtr Agent1, Agent2, LargerMRSAgent, SmallerMRSAgent;
+            size_t Commodity1, Commodity2;
+            double MRSratio12, MRSratio;
+            double LAgentalpha1, LAgentalpha2, LAgentx1, LAgentx2, SAgentalpha1, SAgentalpha2, SAgentx1, SAgentx2;
+            double num, denom, delta1, delta2;
+            double Agent1PreTradeUtility, Agent2PreTradeUtility;
+
             //  First, select the agents to be active...
             (this->*GetAgentPair) (Agent1, Agent2);
 
@@ -835,7 +879,8 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
                 ++TotalInteractions;
                 Volume[Commodity1] += delta1;
                 Volume[Commodity2] += delta2;
-            }   //  if (MRSratio...
+
+            }
 
             if (debug) {
                 if (Agent1->Utility() < Agent1PreTradeUtility) {

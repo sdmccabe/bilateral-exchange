@@ -3,7 +3,7 @@
 #This script runs the parameterizations necessary to generate an initial benchmark of the model.
 cd ..
 make
-cd serial-activation-suite
+cd parallel-activation-suite
 
 echo "agents,real,user,sys,memory" > ./activation-benchmark.csv
 

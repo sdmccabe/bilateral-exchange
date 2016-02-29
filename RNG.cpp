@@ -45,16 +45,17 @@ double RNG::ValueInRange(double min, double max) {
     return distribution(*generator);
 }
 
-RNG::RNG (bool randSeed, unsigned int seed, int numagents, int numcom, double shockmin, double shockmax, double minalpha, double maxalpha, double minwealth, double maxwealth) {
+RNG::RNG (bool randSeed, unsigned int s, int numagents, int numcom, double shockmin, double shockmax, double minalpha, double maxalpha, double minwealth, double maxwealth) {
 	// Seed the random number generator.
     if (!randSeed) {
         std::random_device rd;
         seed = rd();
-        rng.seed(seed);
-        LOG(INFO) << "Using random seed " << seed;
+        rng.seed(s);
+        LOG(INFO) << "Using random seed " << s;
     } else {
-        LOG(INFO) << "Using fixed seed " << seed;
-        rng.seed(seed);
+    	seed = s;
+        LOG(INFO) << "Using fixed seed " << s;
+        rng.seed(s);
     }
 
 	alpha_min = minalpha;
