@@ -265,8 +265,16 @@ class AgentPopulation {
     void TradeInParallel(AgentPtr a1, AgentPtr a2);
 
     void(AgentPopulation::*GetAgentPair) (AgentPtr& Agent1, AgentPtr& Agent2);
+    
 
     void TradeInFork (std::vector<AgentPtr> a);
+    
+    void(AgentPopulation::*GetAgentPairInFork) (AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a);
+    void GetRandomAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a);
+    void GetUniformAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a);
+    void GetFixedAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a);
+    void GetPoissonAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a);
+    void SetPoissonAgentDistributionInFork(std::vector<AgentPtr> a);
 
  public:
     explicit AgentPopulation(int size);

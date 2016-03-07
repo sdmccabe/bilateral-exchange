@@ -491,31 +491,32 @@ AlphaData(), EndowmentData(), LnMRSsData(), LnMRSsDataUpToDate(true), LastSumOfU
     switch (activationMethod) {
         case -1:
         GetAgentPair = &AgentPopulation::GetFixedAgentPair;
+        GetAgentPairInFork = &AgentPopulation::GetFixedAgentPairInFork;
         LOG(INFO) << "Using fixed activation";
         LOG(INFO) << "WARNING: Do not use fixed activation.";
         break;
         case 0:
-        GetAgentPair = &AgentPopulation::GetRandomAgentPair;
+        GetAgentPairInFork = &AgentPopulation::GetRandomAgentPairInFork;
         LOG(INFO) << "Using random activation";
         break;
         case 1:
-        GetAgentPair = &AgentPopulation::GetUniformAgentPair;
+        GetAgentPairInFork = &AgentPopulation::GetUniformAgentPairInFork;
         LOG(INFO) << "Using uniform activation";
         break;
         case 2:
-        GetAgentPair = &AgentPopulation::GetPoissonAgentPair;
+        GetAgentPairInFork = &AgentPopulation::GetPoissonAgentPairInFork;
         LOG(INFO) << "Using Poisson activation (λ = 1/|wealth - mean(wealth)|)";
         break;
         case 3:
-        GetAgentPair = &AgentPopulation::GetPoissonAgentPair;
+        GetAgentPairInFork = &AgentPopulation::GetPoissonAgentPairInFork;
         LOG(INFO) << "Using Poisson activation (λ = 1/wealth)";
         break;
         case 4:
-        GetAgentPair = &AgentPopulation::GetPoissonAgentPair;
+        GetAgentPairInFork = &AgentPopulation::GetPoissonAgentPairInFork;
         LOG(INFO) << "Using Poisson activation (λ = wealth)";
         break;
         case 5:
-        GetAgentPair = &AgentPopulation::GetPoissonAgentPair;
+        GetAgentPairInFork = &AgentPopulation::GetPoissonAgentPairInFork;
         LOG(INFO) << "Using Poisson activation (λ = |wealth - mean(wealth)|)";
         break;
         default:
@@ -658,14 +659,12 @@ long long AgentPopulation::ForkAndJoinEquilibrate(int NumberOfEquilibrationsSoFa
     Converged = false;
     theTime = 0; 
     TotalInteractions = 0;
-    AgentPtr Agent1, Agent2;
-
-    int split = std::thread::hardware_concurrency();
+    size_t split = std::thread::hardware_concurrency();
 
     std::vector<std::pair<size_t, size_t>> populations;
 
     // split the population
-    for (int i = 0; i < split; ++i) {
+    for (size_t i = 0; i < split; ++i) {
         std::pair<size_t, size_t> population = std::make_pair(i*(NumberOfAgents/split), (i+1)*(NumberOfAgents/split));
         populations.push_back(population);
         std::cout << population.first << " " << population.second << std::endl;
@@ -674,9 +673,9 @@ long long AgentPopulation::ForkAndJoinEquilibrate(int NumberOfEquilibrationsSoFa
     // test - operate on the first split
     std::vector<std::thread> threadPool;
 
-    for (int i = 0; i < split; ++i) {
-        auto pop = std::vector<AgentPtr>(Agents.begin() + populations[3].first, Agents.begin() + populations[3].second);
-        threadPool.push_back(std::thread(this->TradeInFork, pop)); // FIX THIS
+    for (size_t i = 0; i < split; ++i) {
+        auto pop = std::vector<AgentPtr>(Agents.begin() + populations[i].first, Agents.begin() + populations[i].second);
+        threadPool.push_back(std::thread(&AgentPopulation::TradeInFork, this, pop)); // FIX THIS
         std::cout << "Spawning thread " << i+1 << std::endl;
     }
     std::cout << "Joining threads" << std::endl;
@@ -696,8 +695,46 @@ long long AgentPopulation::ForkAndJoinEquilibrate(int NumberOfEquilibrationsSoFa
     std::terminate();
 }
 void AgentPopulation::TradeInFork (std::vector<AgentPtr> a) {
-    std::cout << "In function TradeInFork" << std::endl;
+    long long interactionsInFork, timeInFork;
+    bool convergedInFork; 
+    AgentPtr Agent1, Agent2;
+
+
+
+
+
+
+
+
+
+    
+    (this->*GetAgentPairInFork) (Agent1, Agent2, a);
+
+
+    std::cout << "In function TradeInFork: " << Agent1->GetId() << " " << Agent2->GetId() << std::endl;
     return;
+}
+
+
+void AgentPopulation::GetRandomAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a) {
+    auto s = a.size();
+    Agent1 = a[Rand->ValueInRange(0L,s-1)];
+    do {
+        Agent2 = a[Rand->ValueInRange(0L,s-1)];
+    } while (Agent2 == Agent1);
+}
+
+void AgentPopulation::GetUniformAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a) {
+return;
+}
+void AgentPopulation::GetFixedAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a) {
+return;
+}
+void AgentPopulation::GetPoissonAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a) {
+return;
+}
+void AgentPopulation::SetPoissonAgentDistributionInFork(std::vector<AgentPtr> a) {
+return;
 }
 
 
