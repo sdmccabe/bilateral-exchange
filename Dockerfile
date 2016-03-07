@@ -18,8 +18,10 @@ COPY main.cpp model/
 COPY main.h model/
 COPY parameters.cfg model/
 COPY easylogging++.h model/
+COPY ctpl_stl.h model/
 COPY Makefile model/
 COPY serial-activation-suite/ model/serial-activation-suite
+COPY parallel-activation-suite/ model/parallel-activation-suite
 WORKDIR /model/
 
 RUN wget http://www.hyperrealm.com/libconfig/libconfig-1.5.tar.gz
