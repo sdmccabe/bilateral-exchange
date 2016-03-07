@@ -403,11 +403,11 @@ void AgentPopulation::SetPoissonAgentDistribution() {
 
     //update lambdas based on distance from the mean
     //this is where the Poisson activation methods are differentiated
-    //TODO: "regular Poisson" - inverse distance from mean - don't really care about it
     for (auto &a : Agents) {
         double lam;
         switch (activationMethod) {
             case 2:  // furthest from mean activate faster
+            LOG(WARNING) << "WARNING: This Poisson method is still buggy.";
             denom = std::abs(a->Wealth(a->GetCurrentMRSs()) - meanWealth);
             if (denom == 0) {
                 denom = 0.0001;
@@ -459,7 +459,7 @@ void AgentPopulation::SetPoissonAgentDistribution() {
         a->SetLambda(lam);
         a->SetNextTime(-1 * log(Rand->RandomDouble()) / a->GetLambda());
         while (a->GetNextTime() < 1 ) { 
-            PoissonActivations.push_back(std::make_pair(a->GetNextTime(), a));
+            PoissonActivations.push_back(std::make_pair(a->GetNextTime(), a)); // double-check the order here
             a->SetNextTime(a->GetNextTime() + -1 * log(Rand->RandomDouble()) / a->GetLambda());
         }     
     }
@@ -634,6 +634,9 @@ void AgentPopulation::TradeInParallel (AgentPtr a1, AgentPtr a2) {
         LargerMRSAgent->IncreaseAllocation(Commodity1, -delta1);
         LargerMRSAgent->IncreaseAllocation(Commodity2, delta2);
 
+        SmallerMRSAgent->MarkSuccessfulTrade();
+        LargerMRSAgent->MarkSuccessfulTrade();
+
         ++TotalInteractions;
         Volume[Commodity1] += delta1;
         Volume[Commodity2] += delta2;
@@ -650,6 +653,52 @@ void AgentPopulation::TradeInParallel (AgentPtr a1, AgentPtr a2) {
     }
 }
 
+
+long long AgentPopulation::ForkAndJoinEquilibrate(int NumberOfEquilibrationsSoFar) {
+    Converged = false;
+    theTime = 0; 
+    TotalInteractions = 0;
+    AgentPtr Agent1, Agent2;
+
+    int split = std::thread::hardware_concurrency();
+
+    std::vector<std::pair<size_t, size_t>> populations;
+
+    // split the population
+    for (int i = 0; i < split; ++i) {
+        std::pair<size_t, size_t> population = std::make_pair(i*(NumberOfAgents/split), (i+1)*(NumberOfAgents/split));
+        populations.push_back(population);
+        std::cout << population.first << " " << population.second << std::endl;
+    }
+    
+    // test - operate on the first split
+    std::vector<std::thread> threadPool;
+
+    for (int i = 0; i < split; ++i) {
+        auto pop = std::vector<AgentPtr>(Agents.begin() + populations[3].first, Agents.begin() + populations[3].second);
+        threadPool.push_back(std::thread(this->TradeInFork, pop)); // FIX THIS
+        std::cout << "Spawning thread " << i+1 << std::endl;
+    }
+    std::cout << "Joining threads" << std::endl;
+    for (auto &t : threadPool) {
+        t.join();
+    }
+    std::cout << "Joined threads" << std::endl;
+    #if 0
+    for (auto &a : pop) {
+        std::cout << " " << a->GetId();
+    }
+    
+    std::cout << std::endl;
+    #endif
+
+
+    std::terminate();
+}
+void AgentPopulation::TradeInFork (std::vector<AgentPtr> a) {
+    std::cout << "In function TradeInFork" << std::endl;
+    return;
+}
 
 
 long long AgentPopulation::ParallelEquilibrate(int NumberOfEquilibrationsSoFar) {
@@ -680,6 +729,8 @@ long long AgentPopulation::ParallelEquilibrate(int NumberOfEquilibrationsSoFar) 
         //ctpl::thread_pool p(1);
         for (int i = 0; i < PairwiseInteractionsPerPeriod; ++i) { 
             (this->*GetAgentPair) (Agent1, Agent2);
+            Agent1->MarkActivated();
+            Agent2->MarkActivated();
             p.push([](int id, AgentPopulation* pop, AgentPtr a1, AgentPtr a2){
                  std::lock_guard<std::mutex> lock1(a1->m);
                  std::lock_guard<std::mutex> lock2(a2->m);
@@ -823,6 +874,8 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
 
             //  First, select the agents to be active...
             (this->*GetAgentPair) (Agent1, Agent2);
+            Agent1->MarkActivated();
+            Agent2->MarkActivated();
 
             if (debug) {
                 Agent1PreTradeUtility = Agent1->Utility();
@@ -875,6 +928,9 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
                 SmallerMRSAgent->IncreaseAllocation(Commodity2, -delta2);
                 LargerMRSAgent->IncreaseAllocation(Commodity1, -delta1);
                 LargerMRSAgent->IncreaseAllocation(Commodity2, delta2);
+
+                SmallerMRSAgent->MarkSuccessfulTrade();
+                LargerMRSAgent->MarkSuccessfulTrade();
 
                 ++TotalInteractions;
                 Volume[Commodity1] += delta1;
@@ -985,6 +1041,15 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
         if (PrintConvergenceStats) {
             ConvergenceStatistics(Volume);
         }
+
+        //remove this
+        //dump agent info
+        #if 1
+        for (auto &a : Agents) {
+            std::cout << a->GetId() << "," << a->GetNumberOfActivations() << "," << a->GetNumberOfTrades() << std::endl;
+        }
+        #endif
+
         return TotalInteractions;
     }
 }   //  AgentPopulation::Equilibrate
@@ -1253,6 +1318,8 @@ int main(int argc, char** argv) {
     //  Equilibrate the agent economy once...
     int EquilibrationNumber = 1;
     long long sum;
+    // remove the line below
+    sum = PopulationPtr->ForkAndJoinEquilibrate(EquilibrationNumber);
     if (DefaultSerialExecution) {
         sum = PopulationPtr->Equilibrate(EquilibrationNumber);
     } else {
@@ -1280,6 +1347,7 @@ int main(int argc, char** argv) {
     if (EquilibrationNumber > 2) {
         LOG(INFO) << "std. dev.: " << sqrt((sum2 - (EquilibrationNumber - 1) * avg * avg)/(EquilibrationNumber - 2));
     }
+
 
     if (outfile.is_open()) { outfile.close(); }
 }  // main()

@@ -50,11 +50,11 @@ RNG::RNG (bool randSeed, unsigned int s, int numagents, int numcom, double shock
     if (!randSeed) {
         std::random_device rd;
         seed = rd();
-        rng.seed(s);
-        LOG(INFO) << "Using random seed " << s;
+        rng.seed(seed);
+        LOG(INFO) << "Using random seed " << seed;
     } else {
     	seed = s;
-        LOG(INFO) << "Using fixed seed " << s;
+        LOG(INFO) << "Using fixed seed " << seed;
         rng.seed(s);
     }
 

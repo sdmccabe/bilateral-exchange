@@ -136,7 +136,8 @@ class Agent {
     double initialWealth;
     double lambda;  // for Poisson activation
     double nextTime;  // for Poisson activation
-
+    long long interactions = 0;
+    long long activations = 0;
  public:
     explicit Agent(int size, size_t x);
     void Init();
@@ -144,6 +145,18 @@ class Agent {
     
     
     std::mutex m;
+    void MarkActivated() {
+        activations++;
+    }
+    long long GetNumberOfActivations() {
+        return activations;
+    }
+    void MarkSuccessfulTrade() {
+        interactions++;
+    }
+    long long GetNumberOfTrades() {
+        return interactions;
+    }
     size_t GetId() {
         return id;
     }
@@ -253,6 +266,8 @@ class AgentPopulation {
 
     void(AgentPopulation::*GetAgentPair) (AgentPtr& Agent1, AgentPtr& Agent2);
 
+    void TradeInFork (std::vector<AgentPtr> a);
+
  public:
     explicit AgentPopulation(int size);
     bool Converged;
@@ -266,6 +281,7 @@ class AgentPopulation {
     void Reset();
     long long Equilibrate(int NumberOfEquilibrationsSoFar);
     long long ParallelEquilibrate(int NumberOfEquilibrationsSoFar);
+    long long ForkAndJoinEquilibrate(int NumberOfEquilibrationsSoFar);
     void ConvergenceStatistics(CommodityArray VolumeStats);
     void CompareTwoAgents(AgentPtr Agent1, AgentPtr Agent2);
     void ShockAgentPreferences();
