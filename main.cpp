@@ -496,26 +496,32 @@ AlphaData(), EndowmentData(), LnMRSsData(), LnMRSsDataUpToDate(true), LastSumOfU
         LOG(INFO) << "WARNING: Do not use fixed activation.";
         break;
         case 0:
+        GetAgentPair = &AgentPopulation::GetRandomAgentPair;
         GetAgentPairInFork = &AgentPopulation::GetRandomAgentPairInFork;
         LOG(INFO) << "Using random activation";
         break;
         case 1:
+        GetAgentPair = &AgentPopulation::GetUniformAgentPair;
         GetAgentPairInFork = &AgentPopulation::GetUniformAgentPairInFork;
         LOG(INFO) << "Using uniform activation";
         break;
         case 2:
+        GetAgentPair = &AgentPopulation::GetPoissonAgentPair;
         GetAgentPairInFork = &AgentPopulation::GetPoissonAgentPairInFork;
         LOG(INFO) << "Using Poisson activation (λ = 1/|wealth - mean(wealth)|)";
         break;
         case 3:
+        GetAgentPair = &AgentPopulation::GetPoissonAgentPair;
         GetAgentPairInFork = &AgentPopulation::GetPoissonAgentPairInFork;
         LOG(INFO) << "Using Poisson activation (λ = 1/wealth)";
         break;
         case 4:
+        GetAgentPair = &AgentPopulation::GetPoissonAgentPair;
         GetAgentPairInFork = &AgentPopulation::GetPoissonAgentPairInFork;
         LOG(INFO) << "Using Poisson activation (λ = wealth)";
         break;
         case 5:
+        GetAgentPair = &AgentPopulation::GetPoissonAgentPair;
         GetAgentPairInFork = &AgentPopulation::GetPoissonAgentPairInFork;
         LOG(INFO) << "Using Poisson activation (λ = |wealth - mean(wealth)|)";
         break;
@@ -608,11 +614,11 @@ void AgentPopulation::TradeInParallel (AgentPtr a1, AgentPtr a2) {
     
     if (MRSratio >= exp_trade_eps)  {  //  do exchange
         if (MRSratio12 > 1.0) {
-            LargerMRSAgent= a1;
-            SmallerMRSAgent= a2;
+            LargerMRSAgent = a1;
+            SmallerMRSAgent = a2;
         } else {
-            LargerMRSAgent= a2;
-            SmallerMRSAgent= a1;
+            LargerMRSAgent = a2;
+            SmallerMRSAgent = a1;
         }
         //  Here are the guts of bilateral Walrasian exchange
         SAgentalpha1 = SmallerMRSAgent->GetAlpha(Commodity1);
@@ -659,7 +665,9 @@ long long AgentPopulation::ForkAndJoinEquilibrate(int NumberOfEquilibrationsSoFa
     Converged = false;
     theTime = 0; 
     TotalInteractions = 0;
-    size_t split = std::thread::hardware_concurrency();
+    //std::mutex m;
+
+    size_t split = std::max(std::thread::hardware_concurrency(), static_cast<unsigned int>(NumberOfThreads));
 
     std::vector<std::pair<size_t, size_t>> populations;
 
@@ -667,52 +675,239 @@ long long AgentPopulation::ForkAndJoinEquilibrate(int NumberOfEquilibrationsSoFa
     for (size_t i = 0; i < split; ++i) {
         std::pair<size_t, size_t> population = std::make_pair(i*(NumberOfAgents/split), (i+1)*(NumberOfAgents/split));
         populations.push_back(population);
-        std::cout << population.first << " " << population.second << std::endl;
+        //std::cout << population.first << " " << population.second << std::endl;
     }
     
     // test - operate on the first split
     std::vector<std::thread> threadPool;
 
-    for (size_t i = 0; i < split; ++i) {
-        auto pop = std::vector<AgentPtr>(Agents.begin() + populations[i].first, Agents.begin() + populations[i].second);
-        threadPool.push_back(std::thread(&AgentPopulation::TradeInFork, this, pop)); // FIX THIS
-        std::cout << "Spawning thread " << i+1 << std::endl;
+    do {
+        LnMRSsDataUpToDate = false;  // Since these data are gonna change...
+
+        ++theTime;
+
+        if ((ShockPreferences) && (theTime % ShockPeriod == 0)) {
+            ShockAgentPreferences();
+        }
+
+        for (size_t i = 0; i < split; ++i) {
+            auto pop = std::vector<AgentPtr>(Agents.begin() + populations[i].first, Agents.begin() + populations[i].second);
+            threadPool.push_back(std::thread(&AgentPopulation::TradeInFork, this, pop));
+            //TradeInFork(pop);
+            //std::cout << "Spawning thread " << i+1 << std::endl;
+        }
+
+
+        for (auto &t : threadPool) {            
+            t.join();
+        }
+
+        threadPool.clear();
+
+        //std::cout << "Joined threads" << std::endl;
+            //  Check for termination...
+        if ((theTime > CheckTerminationThreshold) && (theTime % CheckTerminationPeriod == 0))  {
+            switch (termination_criterion) {
+                case -2:
+                if (theTime >= TerminationTime) {
+                    Converged = true;
+                }
+                break;
+                case -1:  //  Termination based on L2 norm of MRS distribution
+                ComputeLnMRSsDistribution();
+                if (LnMRSsData.L2StdDev() < termination_eps) {
+                    Converged = true;
+                }
+                break;
+                case 0:  //  Termination based on L∞ norm of MRS distribution
+                ComputeLnMRSsDistribution();
+                if (LnMRSsData.LinfStdDev() < termination_eps) {
+                    Converged = true;
+                }
+                break;
+                case 1:  //  Termination based on relative increase in V
+                if (ComputeRelativeIncreaseInSumOfUtilities() < termination_eps) {
+                    Converged = true;
+                }
+                break;
+                case 2:  //  Termination based on absolute increase in V
+                if (ComputeIncreaseInSumOfUtilities() < termination_eps) {
+                    Converged = true;
+                }
+                break;
+                default:
+                LOG(ERROR) << "Invalid termination criterion";
+                std::terminate();
+                break;
+            }   //  switch...
+        }
+        
+        //  Display stats if the time is right...
+        if (PrintIntermediateOutput) {
+            if (theTime % IntermediateOutputPrintPeriod == 0) {
+                LOG(INFO) << "Through time " << theTime << ", " << TotalInteractions << " total exchanges; ";
+                switch (termination_criterion) {
+                    case -2:
+                    if (!LnMRSsDataUpToDate) {
+                        ComputeLnMRSsDistribution();
+                    }
+                    LOG(INFO) << "current L2 s.d. in MRS = " << LnMRSsData.L2StdDev();
+                    break;
+                    case -1:
+                    if (!LnMRSsDataUpToDate) {
+                        ComputeLnMRSsDistribution();
+                    }
+                    LOG(INFO) << "current L2 s.d. in MRS = " << LnMRSsData.L2StdDev();
+                    break;
+                    case 0:
+                    if (!LnMRSsDataUpToDate) {
+                        ComputeLnMRSsDistribution();
+                    }
+                    LOG(INFO) << "current max s.d. in MRS = " << LnMRSsData.LinfStdDev();
+                    break;
+                    case 1:
+                    LOG(INFO) << "relative increase in ∑U = " << ComputeRelativeIncreaseInSumOfUtilities();
+                    break;
+                    case 2:
+                    LOG(INFO) << "increase in ∑U = " << ComputeIncreaseInSumOfUtilities();
+                    break;
+                    default:
+                    LOG(ERROR) << "Invalid termination criterion";
+                    std::terminate();
+                    break;
+                }   // switch...
+            }   //  theTime...
+
+        //  Store the sum of utilities if it will be needed next period for either termincation check or printing
+            if (termination_criterion > 0) {
+                if (((theTime > CheckTerminationThreshold) && ((theTime + 1) % CheckTerminationPeriod == 0)) || ((PrintIntermediateOutput) && ((theTime + 1) % IntermediateOutputPrintPeriod == 0))) {
+                    LastSumOfUtilities = ComputeSumOfUtilities();
+                }
+            }
+
+            if (writeToFile) { WriteLine(); }            
+        }
+    } while (!Converged);
+
+
+
+    //  Agents are either equilibrated or user has asked for termination; display stats for the former case
+    if (!Converged) {
+        LOG(INFO) << "Terminated by user!";
+        return 0;
+    } else {    //  the economy has converged...
+        LOG(INFO) << "Equilibrium achieved at time " << theTime << " via " << TotalInteractions << " interactions";
+        LOG(INFO) << "Equilibration #" << NumberOfEquilibrationsSoFar << " ended";
+        if (PrintConvergenceStats) {
+            ConvergenceStatistics(Volume);
+        }
+        return TotalInteractions;
     }
-    std::cout << "Joining threads" << std::endl;
-    for (auto &t : threadPool) {
-        t.join();
-    }
-    std::cout << "Joined threads" << std::endl;
     #if 0
-    for (auto &a : pop) {
-        std::cout << " " << a->GetId();
+    int x = 0;
+    for (auto &a : Agents) {
+        //std::cout << a->GetId() << ": " << a->GetNumberOfActivations();
+        x+= a->GetNumberOfActivations();
+        //std::cout << std::endl;
     }
     
-    std::cout << std::endl;
+    std::cout << "Sum: " << x << std::endl;
     #endif
-
-
-    std::terminate();
 }
+
+
 void AgentPopulation::TradeInFork (std::vector<AgentPtr> a) {
     long long interactionsInFork, timeInFork;
     bool convergedInFork; 
     AgentPtr Agent1, Agent2;
+    //std::mutex m;
+
+
+    //std::cout << PairwiseInteractionsPerPeriod/std::thread::hardware_concurrency() << " interactions on thread" << std::endl;
+    int t = std::max(std::thread::hardware_concurrency(), static_cast<unsigned int>(NumberOfThreads));
+    for (int i = 0; i < PairwiseInteractionsPerPeriod/t; ++i) {
+        (this->*GetAgentPairInFork) (Agent1, Agent2, a);
+        Agent1->MarkActivated();
+        Agent2->MarkActivated();
+
+        AgentPtr LargerMRSAgent, SmallerMRSAgent;
+        size_t id1 = Agent1->GetId();
+        size_t id2 = Agent2->GetId();
+        size_t Commodity1, Commodity2;
+        double MRSratio12, MRSratio;
+        double LAgentalpha1, LAgentalpha2, LAgentx1, LAgentx2, SAgentalpha1, SAgentalpha2, SAgentx1, SAgentx2;
+        double num, denom, delta1, delta2;
+        double Agent1PreTradeUtility, Agent2PreTradeUtility;
+
+
+        if (debug) {
+            Agent1PreTradeUtility = Agent1->Utility();
+            Agent2PreTradeUtility = Agent2->Utility();
+        }
+    //  Next, select the commodities to trade...
+        if (NumberOfCommodities == 2) {
+            Commodity1 = 0;
+            Commodity2 = 1;
+        } else {
+            Commodity1 = Rand->RandomCommodity();
+            do {
+                Commodity2 = Rand->RandomCommodity();
+            } while (Commodity2 == Commodity1);
+        }
+            //  Compare MRSs...
+
+        MRSratio12 = Agent1->MRS(Commodity2, Commodity1) / Agent2->MRS(Commodity2, Commodity1);
+        if (MRSratio12 > 1.0) {
+            MRSratio = MRSratio12;
+        } else {
+            MRSratio = 1.0/MRSratio12;
+        }
+
+
+    if (MRSratio >= exp_trade_eps)  {  //  do exchange
+        if (MRSratio12 > 1.0) {
+            LargerMRSAgent= Agent1;
+            SmallerMRSAgent= Agent2;
+        } else {
+            LargerMRSAgent= Agent2;
+            SmallerMRSAgent= Agent1;
+        }
+        //  Here are the guts of bilateral Walrasian exchange
+        SAgentalpha1 = SmallerMRSAgent->GetAlpha(Commodity1);
+        SAgentalpha2 = SmallerMRSAgent->GetAlpha(Commodity2);
+        SAgentx1 = SmallerMRSAgent->GetAllocation(Commodity1);
+        SAgentx2 = SmallerMRSAgent->GetAllocation(Commodity2);
+        LAgentalpha1 = LargerMRSAgent->GetAlpha(Commodity1);
+        LAgentalpha2 = LargerMRSAgent->GetAlpha(Commodity2);
+        LAgentx1 = LargerMRSAgent->GetAllocation(Commodity1);
+        LAgentx2 = LargerMRSAgent->GetAllocation(Commodity2);
+
+        num = (SAgentalpha1 * LAgentalpha2 * LAgentx1 * SAgentx2) - (LAgentalpha1 * SAgentalpha2 * LAgentx2 * SAgentx1);
+        denom = LAgentalpha1 * LAgentx2 + SAgentalpha1 * SAgentx2;
+        delta1 = num / denom;
+        denom = LAgentalpha2 * LAgentx1 + SAgentalpha2 * SAgentx1;
+        delta2 = num / denom;
+
+        SmallerMRSAgent->IncreaseAllocation(Commodity1, delta1);
+        SmallerMRSAgent->IncreaseAllocation(Commodity2, -delta2);
+        LargerMRSAgent->IncreaseAllocation(Commodity1, -delta1);
+        LargerMRSAgent->IncreaseAllocation(Commodity2, delta2);
+
+        SmallerMRSAgent->MarkSuccessfulTrade();
+        LargerMRSAgent->MarkSuccessfulTrade();
+
+         std::lock_guard<std::mutex> lock(m); // lock the global updates
+        ++TotalInteractions;
+        Volume[Commodity1] += delta1;
+        Volume[Commodity2] += delta2;
+
+    }
+}
 
 
 
-
-
-
-
-
-
-    
-    (this->*GetAgentPairInFork) (Agent1, Agent2, a);
-
-
-    std::cout << "In function TradeInFork: " << Agent1->GetId() << " " << Agent2->GetId() << std::endl;
-    return;
+//std::cout << "In function TradeInFork: " << Agent1->GetId() << " " << Agent2->GetId() << std::endl;
+return;
 }
 
 
@@ -725,16 +920,16 @@ void AgentPopulation::GetRandomAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent
 }
 
 void AgentPopulation::GetUniformAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a) {
-return;
+    return;
 }
 void AgentPopulation::GetFixedAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a) {
-return;
+    return;
 }
 void AgentPopulation::GetPoissonAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a) {
-return;
+    return;
 }
 void AgentPopulation::SetPoissonAgentDistributionInFork(std::vector<AgentPtr> a) {
-return;
+    return;
 }
 
 
@@ -762,16 +957,16 @@ long long AgentPopulation::ParallelEquilibrate(int NumberOfEquilibrationsSoFar) 
         }
 
         // first attempt : no fork-and-join
-        ctpl::thread_pool p(std::thread::hardware_concurrency());
+        ctpl::thread_pool p(std::max(std::thread::hardware_concurrency(), static_cast<unsigned int>(NumberOfThreads)));
         //ctpl::thread_pool p(1);
         for (int i = 0; i < PairwiseInteractionsPerPeriod; ++i) { 
             (this->*GetAgentPair) (Agent1, Agent2);
             Agent1->MarkActivated();
             Agent2->MarkActivated();
             p.push([](int id, AgentPopulation* pop, AgentPtr a1, AgentPtr a2){
-                 std::lock_guard<std::mutex> lock1(a1->m);
-                 std::lock_guard<std::mutex> lock2(a2->m);
-                pop->TradeInParallel(a1,a2);}, this, Agent1, Agent2);
+             std::lock_guard<std::mutex> lock1(a1->m);
+             std::lock_guard<std::mutex> lock2(a2->m);
+             pop->TradeInParallel(a1,a2);}, this, Agent1, Agent2);
         }
 
         //  Check for termination...
@@ -1081,7 +1276,7 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
 
         //remove this
         //dump agent info
-        #if 1
+        #if 0
         for (auto &a : Agents) {
             std::cout << a->GetId() << "," << a->GetNumberOfActivations() << "," << a->GetNumberOfTrades() << std::endl;
         }
@@ -1297,6 +1492,7 @@ void ReadConfigFile(std::string file) {
         if (config.lookupValue("wealth.max", wealthMax) && debug) { LOG(DEBUG) << "wealthMax: " << wealthMax; }
         if (config.lookupValue("parallel.disabled", DefaultSerialExecution) && debug) { LOG(DEBUG) << "DefaultSerialExecution: " << DefaultSerialExecution; }
         if (config.lookupValue("parallel.number_of_threads", NumberOfThreads) && debug) { LOG(DEBUG) << "NumberOfThreads: " << NumberOfThreads; }
+        if (config.lookupValue("parallel.fork_and_join", ForkAndJoin) && debug) { LOG(DEBUG) << "ForkAndJoin: " << NumberOfThreads; }
         if (config.lookupValue("num_equilibrations", RequestedEquilibrations) && debug) { LOG(DEBUG) << "RequestedEquilibrations: " << RequestedEquilibrations; }
         if (config.lookupValue("same_conditions_each_equilibration", SameAgentInitialCondition) && debug) { LOG(DEBUG) << "SameAgentInitialCondition: " << SameAgentInitialCondition; }
         if (config.lookupValue("trade.eps", trade_eps) && debug) { LOG(DEBUG) << "trade_eps: " << trade_eps; }
@@ -1347,20 +1543,23 @@ int main(int argc, char** argv) {
     InitMiscellaneous();
     AgentPopulationPtr PopulationPtr = new AgentPopulation(NumberOfCommodities);
 
-    #if 1
+    
     PopulationPtr->Init();
-    #endif
 
 
     //  Equilibrate the agent economy once...
     int EquilibrationNumber = 1;
     long long sum;
     // remove the line below
-    sum = PopulationPtr->ForkAndJoinEquilibrate(EquilibrationNumber);
+    //sum = PopulationPtr->ForkAndJoinEquilibrate(EquilibrationNumber);
     if (DefaultSerialExecution) {
         sum = PopulationPtr->Equilibrate(EquilibrationNumber);
     } else {
-        sum = PopulationPtr->ParallelEquilibrate(EquilibrationNumber);
+        if (ForkAndJoin) {
+            sum = PopulationPtr->ForkAndJoinEquilibrate(EquilibrationNumber);
+        } else {
+            sum = PopulationPtr->ParallelEquilibrate(EquilibrationNumber);
+        }
     }
     long long sum2 = sum*sum;
     //  Equilibrate again if the user has requested this...

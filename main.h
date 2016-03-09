@@ -59,6 +59,7 @@ bool fileAppend;
 bool writeToFile;
 std::ofstream outfile;
 int NumberOfThreads;
+bool ForkAndJoin;
 
 RNGptr Rand;
 
@@ -238,7 +239,6 @@ typedef std::shared_ptr<Agent> AgentPtr;
 
 class AgentPopulation {
     std::vector<AgentPtr> Agents;
-    //std::vector<mutex_wrapper> AgentMutexes;
     std::vector<size_t> AgentIndices;
     std::vector<std::pair<double,AgentPtr>> PoissonActivations;
     size_t AgentIndex = 0;
@@ -296,6 +296,7 @@ class AgentPopulation {
     std::string WriteWealthInfo();
     std::string WriteUtilityInfo();
     void WriteLine();
+    std::mutex m;
 };
 
 typedef AgentPopulation *AgentPopulationPtr;
