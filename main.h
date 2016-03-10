@@ -24,9 +24,9 @@ Extended by Stefan McCabe
 bool UseRandomSeed;
 unsigned int NonRandomSeed;
 double Version = 1.0;
-int NumberOfAgents;
-int NumberOfCommodities;
-int PairwiseInteractionsPerPeriod;
+unsigned int NumberOfAgents;
+unsigned int NumberOfCommodities;
+unsigned int PairwiseInteractionsPerPeriod;
 double alphaMin;
 double alphaMax;
 unsigned int wealthMin;
@@ -60,6 +60,8 @@ bool writeToFile;
 std::ofstream outfile;
 int NumberOfThreads;
 bool ForkAndJoin;
+bool ShuffleAfterJoin;
+bool DumpAgentInformation;
 
 RNGptr Rand;
 
@@ -262,7 +264,7 @@ class AgentPopulation {
     void GetFixedAgentPair(AgentPtr& Agent1, AgentPtr& Agent2);
     void GetPoissonAgentPair(AgentPtr& Agent1, AgentPtr& Agent2);
     void SetPoissonAgentDistribution();
-    void TradeInParallel(AgentPtr a1, AgentPtr a2);
+    void Trade(AgentPtr a1, AgentPtr a2);
 
     void(AgentPopulation::*GetAgentPair) (AgentPtr& Agent1, AgentPtr& Agent2);
     
@@ -275,6 +277,10 @@ class AgentPopulation {
     void GetFixedAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a);
     void GetPoissonAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a);
     void SetPoissonAgentDistributionInFork(std::vector<AgentPtr> a);
+
+    void IntermediateOutput();
+    bool TestConvergence();
+    void DumpAgentInfo();
 
  public:
     explicit AgentPopulation(int size);

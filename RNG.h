@@ -25,7 +25,7 @@ class RNG {
     double alpha_min, alpha_max, shock_min, shock_max, wealth_min, wealth_max;
 
  public:
-    RNG (bool randSeed, unsigned int s, int numagents, int numcom, double shockmin, double shockmax, double minalpha, double maxalpha, double minwealth, double maxwealth);
+    RNG (bool randSeed, unsigned int s, unsigned int numagents, unsigned int numcom, double shockmin, double shockmax, double minalpha, double maxalpha, double minwealth, double maxwealth);
     unsigned int GetSeed() { return seed; }
     void SetSeed(unsigned int s) {
         seed = s;
