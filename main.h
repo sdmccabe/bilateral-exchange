@@ -271,12 +271,12 @@ class AgentPopulation {
 
     void TradeInFork (std::vector<AgentPtr> a);
     
-    void(AgentPopulation::*GetAgentPairInFork) (AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a);
-    void GetRandomAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a);
-    void GetUniformAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a);
-    void GetFixedAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a);
-    void GetPoissonAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a);
-    void SetPoissonAgentDistributionInFork(std::vector<AgentPtr> a);
+    void(AgentPopulation::*GetAgentPairInFork) (AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a, std::vector<AgentPtr>::iterator &ait);
+    void GetRandomAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a, std::vector<AgentPtr>::iterator &ait);
+    void GetUniformAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a, std::vector<AgentPtr>::iterator &ait);
+    void GetFixedAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a, std::vector<AgentPtr>::iterator &ait);
+    void GetPoissonAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a, std::vector<AgentPtr>::iterator &ait);
+    void SetPoissonAgentDistributionInFork(std::vector<AgentPtr> a, std::vector<AgentPtr>::iterator &ait);
 
     void IntermediateOutput();
     bool TestConvergence();

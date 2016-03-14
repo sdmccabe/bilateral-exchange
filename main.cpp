@@ -470,7 +470,7 @@ void AgentPopulation::SetPoissonAgentDistribution() {
     PoissonUpToDate = true;
 }
 
-void AgentPopulation::GetRandomAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a) {
+void AgentPopulation::GetRandomAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a, std::vector<AgentPtr>::iterator &ait) {
     auto s = a.size();
     Agent1 = a[Rand->ValueInRange(0L,s-1)];
     do {
@@ -478,26 +478,44 @@ void AgentPopulation::GetRandomAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent
     } while (Agent2 == Agent1);
 }
 
-void AgentPopulation::GetUniformAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a) {
+void AgentPopulation::GetUniformAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a, std::vector<AgentPtr>::iterator &ait) {
     if (NumberOfAgents % 2 > 0 && AgentIndex == 0) {
         LOG(WARNING) << "Warning: Uniform activation requires an even number of agents.";
     }
-    // Agent1 = Agents[AgentIndices[AgentIndex++]];
-    // Agent2 = Agents[AgentIndices[AgentIndex++]];
-    // if (AgentIndex >= static_cast<size_t>(NumberOfAgents)) {
-    //     // if (debug) { LOG(DEBUG) << "Rolling over uniform indices..."; }
-    //     AgentIndex = 0;
-    //     std::shuffle(AgentIndices.begin(), AgentIndices.end(), Rand->GetGenerator());
-    // }
+    if (!ShuffleAfterJoin) {
+        LOG(WARNING) << "Warning: Uniform activation requires ShuffleAfterJoin = true";
+    }
+    Agent1 = *ait;
+    ait++;
+    Agent2 = *ait;
+    ait++;
+    if (ait == a.end()) {
+        ait == a.begin();
+    }
 }
-void AgentPopulation::GetFixedAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a) {
+
+void AgentPopulation::GetFixedAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a, std::vector<AgentPtr>::iterator &ait) {
+    if (NumberOfAgents % 2 > 0 && AgentIndex == 0) {
+        LOG(WARNING) << "Warning: Fixed activation requires an even number of agents.";
+    }
+    if (ShuffleAfterJoin) {
+        LOG(WARNING) << "Warning: Fixed activation requires ShuffleAfterJoin = false";
+    }
+    Agent1 = *ait;
+    ait++;
+    Agent2 = *ait;
+    ait++;
+    if (ait == a.end()) {
+        ait == a.begin();
+    }
+}
+
+void AgentPopulation::GetPoissonAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a, std::vector<AgentPtr>::iterator &ait) {
     return;
 }
-void AgentPopulation::GetPoissonAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a) {
-    return;
-}
-void AgentPopulation::SetPoissonAgentDistributionInFork(std::vector<AgentPtr> a) {
-    return;
+
+void AgentPopulation::SetPoissonAgentDistributionInFork(std::vector<AgentPtr> a, std::vector<AgentPtr>::iterator &ait) {
+    SetPoissonAgentDistribution(); // for now it will be sufficient to just do this globally.
 }
 
 
@@ -766,13 +784,14 @@ void AgentPopulation::TradeInFork (std::vector<AgentPtr> a) {
     long long interactionsInFork, timeInFork;
     bool convergedInFork; 
     AgentPtr Agent1, Agent2;
+    std::vector<AgentPtr>::iterator ait = a.begin();
     //std::mutex m;
 
 
     //std::cout << PairwiseInteractionsPerPeriod/std::thread::hardware_concurrency() << " interactions on thread" << std::endl;
     int t = std::max(std::thread::hardware_concurrency(), static_cast<unsigned int>(NumberOfThreads));
     for (int i = 0; i < PairwiseInteractionsPerPeriod/t; ++i) {
-        (this->*GetAgentPairInFork) (Agent1, Agent2, a);
+        (this->*GetAgentPairInFork) (Agent1, Agent2, a, ait);
         Agent1->MarkActivated();
         Agent2->MarkActivated();
 
@@ -976,10 +995,10 @@ long long AgentPopulation::ParallelEquilibrate(int NumberOfEquilibrationsSoFar) 
             Agent1->MarkActivated();
             Agent2->MarkActivated();
             p.push([](int id, AgentPopulation* pop, AgentPtr a1, AgentPtr a2){
-             std::lock_guard<std::mutex> lock1(a1->m);
-             std::lock_guard<std::mutex> lock2(a2->m);
-             pop->Trade(a1,a2);
-         }, this, Agent1, Agent2);
+               std::lock_guard<std::mutex> lock1(a1->m);
+               std::lock_guard<std::mutex> lock2(a2->m);
+               pop->Trade(a1,a2);
+           }, this, Agent1, Agent2);
         }
 
         //  Check for termination...
