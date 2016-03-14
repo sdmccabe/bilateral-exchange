@@ -16,8 +16,6 @@ Extended by Stefan McCabe
 //  D. Generalize to CES preferences?
 //  E. Shrink below 1000 lines?
 
-// I used this thread-safe random number generator in another project; it will probably be useful later.
-
 
 
 #include "./main.h"
@@ -472,6 +470,37 @@ void AgentPopulation::SetPoissonAgentDistribution() {
     PoissonUpToDate = true;
 }
 
+void AgentPopulation::GetRandomAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a) {
+    auto s = a.size();
+    Agent1 = a[Rand->ValueInRange(0L,s-1)];
+    do {
+        Agent2 = a[Rand->ValueInRange(0L,s-1)];
+    } while (Agent2 == Agent1);
+}
+
+void AgentPopulation::GetUniformAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a) {
+    if (NumberOfAgents % 2 > 0 && AgentIndex == 0) {
+        LOG(WARNING) << "Warning: Uniform activation requires an even number of agents.";
+    }
+    // Agent1 = Agents[AgentIndices[AgentIndex++]];
+    // Agent2 = Agents[AgentIndices[AgentIndex++]];
+    // if (AgentIndex >= static_cast<size_t>(NumberOfAgents)) {
+    //     // if (debug) { LOG(DEBUG) << "Rolling over uniform indices..."; }
+    //     AgentIndex = 0;
+    //     std::shuffle(AgentIndices.begin(), AgentIndices.end(), Rand->GetGenerator());
+    // }
+}
+void AgentPopulation::GetFixedAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a) {
+    return;
+}
+void AgentPopulation::GetPoissonAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a) {
+    return;
+}
+void AgentPopulation::SetPoissonAgentDistributionInFork(std::vector<AgentPtr> a) {
+    return;
+}
+
+
 AgentPopulation::AgentPopulation(int size):
 AlphaData(), EndowmentData(), LnMRSsData(), LnMRSsDataUpToDate(true), LastSumOfUtilities(0.0), GetAgentPair(NULL) {
     Volume.resize(static_cast<size_t>(size));
@@ -827,28 +856,6 @@ void AgentPopulation::TradeInFork (std::vector<AgentPtr> a) {
  return;
 }
 
-
-void AgentPopulation::GetRandomAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a) {
-    auto s = a.size();
-    Agent1 = a[Rand->ValueInRange(0L,s-1)];
-    do {
-        Agent2 = a[Rand->ValueInRange(0L,s-1)];
-    } while (Agent2 == Agent1);
-}
-
-void AgentPopulation::GetUniformAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a) {
-    return;
-}
-void AgentPopulation::GetFixedAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a) {
-    return;
-}
-void AgentPopulation::GetPoissonAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a) {
-    return;
-}
-void AgentPopulation::SetPoissonAgentDistributionInFork(std::vector<AgentPtr> a) {
-    return;
-}
-
 long long AgentPopulation::ForkAndJoinEquilibrate(int NumberOfEquilibrationsSoFar) {
     Converged = false;
     theTime = 0; 
@@ -969,10 +976,10 @@ long long AgentPopulation::ParallelEquilibrate(int NumberOfEquilibrationsSoFar) 
             Agent1->MarkActivated();
             Agent2->MarkActivated();
             p.push([](int id, AgentPopulation* pop, AgentPtr a1, AgentPtr a2){
-               std::lock_guard<std::mutex> lock1(a1->m);
-               std::lock_guard<std::mutex> lock2(a2->m);
-               pop->Trade(a1,a2);
-           }, this, Agent1, Agent2);
+             std::lock_guard<std::mutex> lock1(a1->m);
+             std::lock_guard<std::mutex> lock2(a2->m);
+             pop->Trade(a1,a2);
+         }, this, Agent1, Agent2);
         }
 
         //  Check for termination...
@@ -1077,9 +1084,9 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
 }   //  AgentPopulation::Equilibrate
 
 void AgentPopulation::DumpAgentInfo() {
-        for (auto &a : Agents) {
-            LOG(INFO) << a->GetId() << "," << a->GetNumberOfActivations() << "," << a->GetNumberOfTrades();
-        }
+    for (auto &a : Agents) {
+        LOG(INFO) << a->GetId() << "," << a->GetNumberOfActivations() << "," << a->GetNumberOfTrades();
+    }
 }
 
 void AgentPopulation::ConvergenceStatistics(CommodityArray VolumeStats) {
