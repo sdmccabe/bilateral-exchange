@@ -7,7 +7,7 @@ cd parallel-activation-suite
 
 echo "agents,real,user,sys,memory" > ./activation-benchmark.csv
 
-declare -a parameters=(-1 0 1 2 3 4)
+declare -a parameters=(-1 0 1 2 3 4 5)
 for x in ${parameters[@]}
 do
 	for ((i=0; i<25; i++))

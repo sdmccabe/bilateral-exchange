@@ -139,6 +139,7 @@ class Agent {
     double initialWealth;
     double lambda;  // for Poisson activation
     double nextTime;  // for Poisson activation
+    double initiative; // exogenous Poisson variable, distributed U(0,1)
     long long interactions = 0;
     long long activations = 0;
  public:
@@ -225,6 +226,9 @@ class Agent {
     double GetInitialWealth() {
         //std::lock_guard<std::mutex> lock(m);
         return initialWealth;
+    }
+    double GetInitiative() {
+        return initiative;
     }
 };
 

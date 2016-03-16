@@ -44,3 +44,4 @@ CMD ["bash"]
 
 #docker-machine create -d virtualbox --virtualbox-boot2docker-url file://$HOME/Dropbox/boot2docker-v1.9.1-fix1.iso --virtualbox-memory 1536 --virtualbox-disk-size 10000 fixedjava
 #docker-machine create -d virtualbox --virtualbox-boot2docker-url https://github.com/tianon/boot2docker-legacy/releases/download/v1.10.0-rc1/boot2docker.iso --virtualbox-memory 1536 --virtualbox-disk-size 10000 --virtualbox-cpu-count 2 fixedjava
+#docker-machine create -d virtualbox --virtualbox-boot2docker-url https://github.com/tianon/boot2docker-legacy/releases/download/v1.10.0-rc1/boot2docker.iso --virtualbox-memory 1024 --virtualbox-disk-size 10000 --virtualbox-cpu-count 2 fixedjava

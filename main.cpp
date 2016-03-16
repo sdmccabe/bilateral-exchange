@@ -166,6 +166,7 @@ Agent::Agent(int size, size_t x): initialUtility(0.0), initialWealth(0.0) {
     initialMRSs.resize(static_cast<size_t>(size)); 
     allocation.resize(static_cast<size_t>(size));  
     currentMRSs.resize(static_cast<size_t>(size));
+    initiative = Rand->ValueInRange(0.0, 1.0);
     Init();
 }
 
@@ -184,11 +185,13 @@ void Agent::Init() {
         auto i = static_cast<size_t>(&alpha - &alphas[0]);
         endowment[i] = Rand->RandomWealth();
         allocation[i] = endowment[i];
-        initialMRSs[i] = MRS(i, 1);
+        initialMRSs[i] = MRS(i, 0);
         currentMRSs[i] = initialMRSs[i];
     }
     initialUtility = Utility();
     initialWealth = Wealth(&initialMRSs); //TODO: Is this wealth or utility?
+
+    
 }   //  Agent:Init()
 
 void Agent::Reset() {
@@ -383,6 +386,7 @@ void AgentPopulation::SetPoissonAgentDistribution() {
     AgentIndex = 0;
 
     double totalWealth = 0.0;
+    //double totalUtility = 0.0;
     double totalDistanceFromMean = 0.0;
     double denom;
     double totalLambda = 0.0;
@@ -390,13 +394,17 @@ void AgentPopulation::SetPoissonAgentDistribution() {
     //determine mean wealth
     for (auto &a : Agents) {
         totalWealth += a->Wealth(a->GetCurrentMRSs());
+        //totalUtility += a->Utility();
     }
     double meanWealth = totalWealth / static_cast<double>(NumberOfAgents);
+    //double meanUtility = totalUtility / static_cast<double>(NumberOfAgents);
 
     //determine total distance from the mean
     for (auto &a : Agents) {
         double distFromMean = std::abs(a->Wealth(a->GetCurrentMRSs()) - meanWealth);
         totalDistanceFromMean += distFromMean;
+        // double distFromMean = std::abs(a->Utility() - meanUtility);
+        // totalDistanceFromMean += distFromMean;
     }
 
     //update lambdas based on distance from the mean
@@ -405,8 +413,9 @@ void AgentPopulation::SetPoissonAgentDistribution() {
         double lam;
         switch (activationMethod) {
             case 2:  // furthest from mean activate faster
-            LOG(WARNING) << "WARNING: This Poisson method is still buggy.";
+            //LOG(WARNING) << "WARNING: This Poisson method is still buggy.";
             denom = std::abs(a->Wealth(a->GetCurrentMRSs()) - meanWealth);
+            //denom = std::abs(a->Utility() - meanUtility);
             if (denom == 0) {
                 denom = 0.0001;
             }
@@ -416,6 +425,7 @@ void AgentPopulation::SetPoissonAgentDistribution() {
             break;
             case 3: // poor activate faster
             denom = a->Wealth(a->GetCurrentMRSs());
+            //denom = a->Utility();
             if (denom == 0) {
                 denom = 0.0001;
             }
@@ -425,6 +435,7 @@ void AgentPopulation::SetPoissonAgentDistribution() {
             break;
             case 4: // rich activate faster
             denom = a->Wealth(a->GetCurrentMRSs());
+            //denom = a->Utility();
             if (denom == 0) {
                 denom = 0.0001;
             }
@@ -434,6 +445,7 @@ void AgentPopulation::SetPoissonAgentDistribution() {
             break;
             case 5: // closest to mean activate faster
             lam = std::abs(a->Wealth(a->GetCurrentMRSs()) - meanWealth);
+            //lam = std::abs(a->Utility() - meanUtility);
             a->SetLambda(lam);
             totalLambda += lam;
             break;
@@ -556,6 +568,7 @@ AlphaData(), EndowmentData(), LnMRSsData(), LnMRSsDataUpToDate(true), LastSumOfU
         GetAgentPair = &AgentPopulation::GetPoissonAgentPair;
         GetAgentPairInFork = &AgentPopulation::GetPoissonAgentPairInFork;
         LOG(INFO) << "Using Poisson activation (λ = 1/|wealth - mean(wealth)|)";
+        LOG(WARNING) << "WARNING: This Poisson method is still buggy.";
         break;
         case 3:
         GetAgentPair = &AgentPopulation::GetPoissonAgentPair;
