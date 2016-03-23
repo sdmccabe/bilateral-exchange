@@ -22,6 +22,7 @@ COPY ctpl_stl.h model/
 COPY Makefile model/
 COPY serial-activation-suite/ model/serial-activation-suite
 COPY parallel-activation-suite/ model/parallel-activation-suite
+COPY forkjoin-activation-suite/ model/forkjoin-activation-suite
 WORKDIR /model/
 
 RUN wget http://www.hyperrealm.com/libconfig/libconfig-1.5.tar.gz
