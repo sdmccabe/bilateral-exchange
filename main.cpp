@@ -1008,10 +1008,10 @@ long long AgentPopulation::ParallelEquilibrate(int NumberOfEquilibrationsSoFar) 
             Agent1->MarkActivated();
             Agent2->MarkActivated();
             p.push([](int id, AgentPopulation* pop, AgentPtr a1, AgentPtr a2){
-               std::lock_guard<std::mutex> lock1(a1->m);
-               std::lock_guard<std::mutex> lock2(a2->m);
-               pop->Trade(a1,a2);
-           }, this, Agent1, Agent2);
+             std::lock_guard<std::mutex> lock1(a1->m);
+             std::lock_guard<std::mutex> lock2(a2->m);
+             pop->Trade(a1,a2);
+         }, this, Agent1, Agent2);
         }
 
         //  Check for termination...
@@ -1044,6 +1044,9 @@ long long AgentPopulation::ParallelEquilibrate(int NumberOfEquilibrationsSoFar) 
         LOG(INFO) << "Equilibration #" << NumberOfEquilibrationsSoFar << " ended";
         if (PrintConvergenceStats) {
             ConvergenceStatistics(Volume);
+        }
+        if(DumpAgentInformation) {
+            DumpAgentInfo();
         }
         return TotalInteractions;
     }
@@ -1111,6 +1114,9 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
             ConvergenceStatistics(Volume);
         }
 
+        if(DumpAgentInformation) {
+            DumpAgentInfo();
+        }
         return TotalInteractions;
     }
 }   //  AgentPopulation::Equilibrate
