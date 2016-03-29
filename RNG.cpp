@@ -7,6 +7,9 @@ Extended by Stefan McCabe
 12/11/2015
 */
 
+// The key mechanism here - the use of thread_local mt19337 pointers - 
+// was suggested on Stack Exchange.  TODO: Provide the link.
+
 #include "./RNG.h"
 #include <memory>
 #include <random>

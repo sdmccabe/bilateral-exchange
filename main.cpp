@@ -7,15 +7,6 @@ Extended by Stefan McCabe
 12/11/2015
 */
 
-//  Rob:
-//  Additional work to do on this code:
-//
-//  A. Multithread the main 'Equilibrate()' method
-//  B. Rationalize use of Init()s, Reset()s and constructors
-//  C. Use my 'timer()' object instead of what is here...
-//  D. Generalize to CES preferences?
-//  E. Shrink below 1000 lines?
-
 
 
 #include "./main.h"
@@ -189,7 +180,7 @@ void Agent::Init() {
         currentMRSs[i] = initialMRSs[i];
     }
     initialUtility = Utility();
-    initialWealth = Wealth(&initialMRSs); //TODO: Is this wealth or utility?
+    initialWealth = Wealth(&initialMRSs);
 
     
 }   //  Agent:Init()
@@ -376,7 +367,7 @@ void AgentPopulation::GetPoissonAgentPair(AgentPtr& Agent1, AgentPtr& Agent2) {
     }
 }
 
-//TODO: Verify all of this.
+
 void AgentPopulation::SetPoissonAgentDistribution() {
     // reset data structures
     PoissonActivations.clear();
@@ -799,10 +790,13 @@ void AgentPopulation::TradeInFork (std::vector<AgentPtr> a) {
     AgentPtr Agent1, Agent2;
     std::vector<AgentPtr>::iterator ait = a.begin();
     //std::mutex m;
-
+    std::vector<double> VolumeInFork;
+    VolumeInFork.resize(NumberOfCommodities);
 
     //std::cout << PairwiseInteractionsPerPeriod/std::thread::hardware_concurrency() << " interactions on thread" << std::endl;
     int t = std::max(std::thread::hardware_concurrency(), static_cast<unsigned int>(NumberOfThreads));
+    //std::cout << PairwiseInteractionsPerPeriod/t << std::endl;
+    interactionsInFork = 0;
     for (int i = 0; i < PairwiseInteractionsPerPeriod/t; ++i) {
         (this->*GetAgentPairInFork) (Agent1, Agent2, a, ait);
         Agent1->MarkActivated();
@@ -850,6 +844,7 @@ void AgentPopulation::TradeInFork (std::vector<AgentPtr> a) {
             LargerMRSAgent= Agent2;
             SmallerMRSAgent= Agent1;
         }
+        
         //  Here are the guts of bilateral Walrasian exchange
         SAgentalpha1 = SmallerMRSAgent->GetAlpha(Commodity1);
         SAgentalpha2 = SmallerMRSAgent->GetAlpha(Commodity2);
@@ -874,18 +869,23 @@ void AgentPopulation::TradeInFork (std::vector<AgentPtr> a) {
         SmallerMRSAgent->MarkSuccessfulTrade();
         LargerMRSAgent->MarkSuccessfulTrade();
 
-         std::lock_guard<std::mutex> lock(m); // lock the global updates
-         ++TotalInteractions;
-         Volume[Commodity1] += delta1;
-         Volume[Commodity2] += delta2;
+        interactionsInFork++;
+        VolumeInFork[Commodity1] += delta1;
+        VolumeInFork[Commodity2] += delta2;
+    }
+}
 
-     }
- }
+    //LOG(DEBUG) << "Locking";
+    std::lock_guard<std::mutex> lock(m); // lock the global updates
+    TotalInteractions += interactionsInFork;
 
-
-
+    for (auto& vol : Volume) {
+        auto i = static_cast<size_t>(&vol - &Volume[0]);
+        vol += VolumeInFork[i];
+    }
+    //LOG(DEBUG) << "Unlocking";
 //std::cout << "In function TradeInFork: " << Agent1->GetId() << " " << Agent2->GetId() << std::endl;
- return;
+    return;
 }
 
 long long AgentPopulation::ForkAndJoinEquilibrate(int NumberOfEquilibrationsSoFar) {
@@ -916,23 +916,22 @@ long long AgentPopulation::ForkAndJoinEquilibrate(int NumberOfEquilibrationsSoFa
         if ((ShockPreferences) && (theTime % ShockPeriod == 0)) {
             ShockAgentPreferences();
         }
-
+        // std::cout << "Fork" << std::endl;
         for (size_t i = 0; i < split; ++i) {
             auto pop = std::vector<AgentPtr>(Agents.begin() + populations[i].first, Agents.begin() + populations[i].second);
             threadPool.push_back(std::thread(&AgentPopulation::TradeInFork, this, pop));
             //TradeInFork(pop);
             //std::cout << "Spawning thread " << i+1 << std::endl;
         }
-
-
+        // std::cout << "Join" << std::endl;
         for (auto &t : threadPool) {            
             t.join();
         }
-
+        // std::cout << "Shuffle" << std::endl;
         if (ShuffleAfterJoin) {
             std::shuffle(Agents.begin(), Agents.end(), Rand->GetGenerator());
         }
-
+        // std::cout << "Clear" << std::endl;
         threadPool.clear();
 
         //std::cout << "Joined threads" << std::endl;
@@ -1122,9 +1121,16 @@ long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
 }   //  AgentPopulation::Equilibrate
 
 void AgentPopulation::DumpAgentInfo() {
+    const char* filename = "dump.csv";
+    std::ofstream dumpfile;
+
+    dumpfile.open(filename, std::ios::trunc);
+
+
     for (auto &a : Agents) {
-        LOG(INFO) << a->GetId() << "," << a->GetNumberOfActivations() << "," << a->GetNumberOfTrades();
+        dumpfile << a->GetId() << "," << a->GetNumberOfActivations() << "," << a->GetNumberOfTrades() << std::endl;
     }
+    dumpfile.close();
 }
 
 void AgentPopulation::ConvergenceStatistics(CommodityArray VolumeStats) {

@@ -165,66 +165,66 @@ class Agent {
         return id;
     }
     double GetAlpha(size_t CommodityIndex) {
-        //std::lock_guard<std::mutex> lock(m);
+        std::lock_guard<std::mutex> lock(m);
         return alphas[CommodityIndex];
     }
     void SetAlpha(size_t CommodityIndex, double alpha) {
-        //std::lock_guard<std::mutex> lock(m);
+        std::lock_guard<std::mutex> lock(m);
         alphas[CommodityIndex] = alpha;
     }
     void SetLambda(double lam) {
-        //std::lock_guard<std::mutex> lock(m);
+        std::lock_guard<std::mutex> lock(m);
         lambda = lam;
     }
     double GetLambda() {
-        //std::lock_guard<std::mutex> lock(m);
+        std::lock_guard<std::mutex> lock(m);
         return lambda;
     }
     void SetNextTime(double nextT) {
-        //std::lock_guard<std::mutex> lock(m);
+        std::lock_guard<std::mutex> lock(m);
         nextTime = nextT;
     }
     double GetNextTime() {
-        //std::lock_guard<std::mutex> lock(m);
+        std::lock_guard<std::mutex> lock(m);
         return nextTime;
     }
     double GetEndowment(size_t CommodityIndex) {
-        //std::lock_guard<std::mutex> lock(m);
+        std::lock_guard<std::mutex> lock(m);
         return endowment[CommodityIndex];
     }
     double MRS(size_t CommodityIndex, size_t Numeraire);
     void ComputeMRSs();
     double GetInitialMRS(size_t CommodityIndex) {
-        //std::lock_guard<std::mutex> lock(m);
+        std::lock_guard<std::mutex> lock(m);
         return initialMRSs[CommodityIndex];
     }
     double GetAllocation(size_t CommodityIndex) {
-        //std::lock_guard<std::mutex> lock(m);
+        std::lock_guard<std::mutex> lock(m);
         return allocation[CommodityIndex];
     }
     void IncreaseAllocation(size_t CommodityIndex, double amount) {
-        //std::lock_guard<std::mutex> lock(m);
+        std::lock_guard<std::mutex> lock(m);
         allocation[CommodityIndex] += amount;
     }
     double GetCurrentMRS(size_t CommodityIndex) {
-        //std::lock_guard<std::mutex> lock(m);
+        std::lock_guard<std::mutex> lock(m);
         return currentMRSs[CommodityIndex];
     }
     CommodityArrayPtr GetCurrentMRSs() {
-        //std::lock_guard<std::mutex> lock(m);
+        std::lock_guard<std::mutex> lock(m);
         return &currentMRSs;
     }
     double Utility();
     double GetInitialUtility() {
-        //std::lock_guard<std::mutex> lock(m);
+        std::lock_guard<std::mutex> lock(m);
         return initialUtility;
     }
     double Wealth(CommodityArrayPtr prices) {
-        //std::lock_guard<std::mutex> lock(m);
+        std::lock_guard<std::mutex> lock(m);
         return Dot(&allocation, prices);
     }
     double GetInitialWealth() {
-        //std::lock_guard<std::mutex> lock(m);
+        std::lock_guard<std::mutex> lock(m);
         return initialWealth;
     }
     double GetInitiative() {
