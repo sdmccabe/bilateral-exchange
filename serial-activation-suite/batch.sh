@@ -13,7 +13,7 @@ do
 	for ((i=0; i<25; i++))
 	do
 		#note, using gtime, replace with /usr/bin/time on linux
-		{ /usr/bin/time -f "${x},%e,%U,%S,%M" ../exchange -file=parameters-${x}.cfg ; } 2>> ./activation-benchmark.csv
+		{ /usr/bin/time -f "${x},%e,%U,%S,%M" ../exchange parameters-${x}.cfg ; } 2>> ./activation-benchmark.csv
 	done
 
 done

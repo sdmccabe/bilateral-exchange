@@ -257,6 +257,7 @@ class AgentPopulation {
     CommodityArray Volume;
     CommodityData AlphaData, EndowmentData, LnMRSsData;
     bool LnMRSsDataUpToDate;
+    tbb::concurrent_vector<std::tuple<long long, double, size_t, double, size_t>> results;
     void ComputeLnMRSsDistribution();
     double LastSumOfUtilities;
     double ComputeSumOfUtilities();
@@ -276,7 +277,7 @@ class AgentPopulation {
 
     void(AgentPopulation::*GetAgentPair) (AgentPtr& Agent1, AgentPtr& Agent2);
     
-
+    std::tuple<long long, double, size_t, double, size_t> ParallelTrade (AgentPtr a1, AgentPtr a2);
     void TradeInFork (tbb::concurrent_vector<AgentPtr> a);
     
     void(AgentPopulation::*GetAgentPairInFork) (AgentPtr& Agent1, AgentPtr& Agent2, tbb::concurrent_vector<AgentPtr> a, tbb::concurrent_vector<AgentPtr>::iterator &ait);

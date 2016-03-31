@@ -13,7 +13,6 @@ Extended by Stefan McCabe
 #include "tbb/tbb.h"
 #include "tbb/concurrent_vector.h"
 #include <assert.h>
-#include <gflags/gflags.h>
 #include <algorithm>
 #include <cmath>
 #include <fstream>
@@ -42,7 +41,7 @@ Extended by Stefan McCabe
 INITIALIZE_EASYLOGGINGPP
 
 // Declare gflags.
-DEFINE_string(file, "parameters.cfg", "Specify the configuation file containing the model parameters.");
+//DEFINE_string(file, "parameters.cfg", "Specify the configuation file containing the model parameters.");
 
 
 /*===========
@@ -312,6 +311,7 @@ void AgentPopulation::GetUniformAgentPair(AgentPtr& Agent1, AgentPtr& Agent2) {
     if (NumberOfAgents % 2 > 0 && AgentIndex == 0) {
         LOG(WARNING) << "Warning: Uniform activation requires an even number of agents.";
     }
+    std::lock_guard<std::mutex> lock(m);
     Agent1 = Agents[AgentIndices[AgentIndex++]];
     Agent2 = Agents[AgentIndices[AgentIndex++]];
     if (AgentIndex >= static_cast<size_t>(NumberOfAgents)) {
@@ -325,6 +325,7 @@ void AgentPopulation::GetFixedAgentPair(AgentPtr& Agent1, AgentPtr& Agent2) {
     if (NumberOfAgents % 2 > 0 && AgentIndex == 0) {
         LOG(WARNING) << "Warning: Fixed activation requires an even number of agents.";
     }
+    std::lock_guard<std::mutex> lock(m);
     Agent1 = Agents[AgentIndices[AgentIndex++]];
     Agent2 = Agents[AgentIndices[AgentIndex++]];
     if (AgentIndex >= static_cast<size_t>(NumberOfAgents)) {
@@ -334,6 +335,7 @@ void AgentPopulation::GetFixedAgentPair(AgentPtr& Agent1, AgentPtr& Agent2) {
 }
 
 void AgentPopulation::GetPoissonAgentPair(AgentPtr& Agent1, AgentPtr& Agent2) {
+    std::lock_guard<std::mutex> lock(m);
     if (!PoissonUpToDate) {
         SetPoissonAgentDistribution();
     }
@@ -630,6 +632,77 @@ void AgentPopulation::Reset() {
     }
 }   //  AgentPopulation::Reset
 
+void AgentPopulation::IntermediateOutput() {
+    LOG(INFO) << "Through time " << theTime << ", " << TotalInteractions << " total exchanges; ";
+
+    switch (termination_criterion) {
+        case -2:
+        if (!LnMRSsDataUpToDate) {
+            ComputeLnMRSsDistribution();
+        }
+        LOG(INFO) << "current L2 s.d. in MRS = " << LnMRSsData.L2StdDev();
+        break;
+        case -1:
+        if (!LnMRSsDataUpToDate) {
+            ComputeLnMRSsDistribution();
+        }
+        LOG(INFO) << "current L2 s.d. in MRS = " << LnMRSsData.L2StdDev();
+        break;
+        case 0:
+        if (!LnMRSsDataUpToDate) {
+            ComputeLnMRSsDistribution();
+        }
+        LOG(INFO) << "current max s.d. in MRS = " << LnMRSsData.LinfStdDev();
+        break;
+        case 1:
+        LOG(INFO) << "relative increase in ∑U = " << ComputeRelativeIncreaseInSumOfUtilities();
+        break;
+        case 2:
+        LOG(INFO) << "increase in ∑U = " << ComputeIncreaseInSumOfUtilities();
+        break;
+        default:
+        LOG(ERROR) << "Invalid termination criterion";
+        std::terminate();
+        break;
+    }   // switch...
+}
+
+bool AgentPopulation::TestConvergence() {
+    switch (termination_criterion) {
+        case -2:
+        if (theTime >= TerminationTime) {
+            return true;
+        }
+        break;
+        case -1:  //  Termination based on L2 norm of MRS distribution
+        ComputeLnMRSsDistribution();
+        if (LnMRSsData.L2StdDev() < termination_eps) {
+            return true;
+        }
+        break;
+        case 0:  //  Termination based on L∞ norm of MRS distribution
+        ComputeLnMRSsDistribution();
+        if (LnMRSsData.LinfStdDev() < termination_eps) {
+            return true;
+        }
+        break;
+        case 1:  //  Termination based on relative increase in V
+        if (ComputeRelativeIncreaseInSumOfUtilities() < termination_eps) {
+            return true;
+        }
+        break;
+        case 2:  //  Termination based on absolute increase in V
+        if (ComputeIncreaseInSumOfUtilities() < termination_eps) {
+            return true;
+        }
+        break;
+        default:
+        LOG(ERROR) << "Invalid termination criterion";
+        std::terminate();
+        break;
+    }   //  switch...
+    return false;
+}
 void AgentPopulation::Trade (AgentPtr a1, AgentPtr a2) {
     AgentPtr LargerMRSAgent, SmallerMRSAgent;
     size_t id1 = a1->GetId();
@@ -718,76 +791,95 @@ void AgentPopulation::Trade (AgentPtr a1, AgentPtr a2) {
     }
 }
 
-void AgentPopulation::IntermediateOutput() {
-    LOG(INFO) << "Through time " << theTime << ", " << TotalInteractions << " total exchanges; ";
+std::tuple<long long, double, size_t, double, size_t> AgentPopulation::ParallelTrade (AgentPtr a1, AgentPtr a2) {
+    AgentPtr LargerMRSAgent, SmallerMRSAgent;
+    size_t id1 = a1->GetId();
+    size_t id2 = a2->GetId();
+    size_t Commodity1, Commodity2;
+    double MRSratio12, MRSratio;
+    double LAgentalpha1, LAgentalpha2, LAgentx1, LAgentx2, SAgentalpha1, SAgentalpha2, SAgentx1, SAgentx2;
+    double num, denom;
+    double Agent1PreTradeUtility, Agent2PreTradeUtility;
 
-    switch (termination_criterion) {
-        case -2:
-        if (!LnMRSsDataUpToDate) {
-            ComputeLnMRSsDistribution();
-        }
-        LOG(INFO) << "current L2 s.d. in MRS = " << LnMRSsData.L2StdDev();
-        break;
-        case -1:
-        if (!LnMRSsDataUpToDate) {
-            ComputeLnMRSsDistribution();
-        }
-        LOG(INFO) << "current L2 s.d. in MRS = " << LnMRSsData.L2StdDev();
-        break;
-        case 0:
-        if (!LnMRSsDataUpToDate) {
-            ComputeLnMRSsDistribution();
-        }
-        LOG(INFO) << "current max s.d. in MRS = " << LnMRSsData.LinfStdDev();
-        break;
-        case 1:
-        LOG(INFO) << "relative increase in ∑U = " << ComputeRelativeIncreaseInSumOfUtilities();
-        break;
-        case 2:
-        LOG(INFO) << "increase in ∑U = " << ComputeIncreaseInSumOfUtilities();
-        break;
-        default:
-        LOG(ERROR) << "Invalid termination criterion";
-        std::terminate();
-        break;
-    }   // switch...
-}
+    long long interaction = 0;
+    double delta1 = 0.0;
+    double delta2 = 0.0;
+    //LOG(DEBUG) << a1->GetId() << " " << a2->GetId();
+    //std::lock_guard<std::mutex> lock1(AgentMutexes[a1->GetId()]);
+    //std::lock_guard<std::mutex> lock2(AgentMutexes[a2->GetId()]);
 
-bool AgentPopulation::TestConvergence() {
-    switch (termination_criterion) {
-        case -2:
-        if (theTime >= TerminationTime) {
-            return true;
+    if (debug) {
+        Agent1PreTradeUtility = a1->Utility();
+        Agent2PreTradeUtility = a2->Utility();
+    }
+    //  Next, select the commodities to trade...
+    if (NumberOfCommodities == 2) {
+        Commodity1 = 0;
+        Commodity2 = 1;
+    } else {
+        Commodity1 = Rand->RandomCommodity();
+        do {
+            Commodity2 = Rand->RandomCommodity();
+        } while (Commodity2 == Commodity1);
+    }
+            //  Compare MRSs...
+
+    MRSratio12 = a1->MRS(Commodity2, Commodity1) / a2->MRS(Commodity2, Commodity1);
+    if (MRSratio12 > 1.0) {
+        MRSratio = MRSratio12;
+    } else {
+        MRSratio = 1.0/MRSratio12;
+    }
+
+    
+    if (MRSratio >= exp_trade_eps)  {  //  do exchange
+        if (MRSratio12 > 1.0) {
+            LargerMRSAgent = a1;
+            SmallerMRSAgent = a2;
+        } else {
+            LargerMRSAgent = a2;
+            SmallerMRSAgent = a1;
         }
-        break;
-        case -1:  //  Termination based on L2 norm of MRS distribution
-        ComputeLnMRSsDistribution();
-        if (LnMRSsData.L2StdDev() < termination_eps) {
-            return true;
+        //  Here are the guts of bilateral Walrasian exchange
+        SAgentalpha1 = SmallerMRSAgent->GetAlpha(Commodity1);
+        SAgentalpha2 = SmallerMRSAgent->GetAlpha(Commodity2);
+        SAgentx1 = SmallerMRSAgent->GetAllocation(Commodity1);
+        SAgentx2 = SmallerMRSAgent->GetAllocation(Commodity2);
+        LAgentalpha1 = LargerMRSAgent->GetAlpha(Commodity1);
+        LAgentalpha2 = LargerMRSAgent->GetAlpha(Commodity2);
+        LAgentx1 = LargerMRSAgent->GetAllocation(Commodity1);
+        LAgentx2 = LargerMRSAgent->GetAllocation(Commodity2);
+
+        num = (SAgentalpha1 * LAgentalpha2 * LAgentx1 * SAgentx2) - (LAgentalpha1 * SAgentalpha2 * LAgentx2 * SAgentx1);
+        denom = LAgentalpha1 * LAgentx2 + SAgentalpha1 * SAgentx2;
+        delta1 = num / denom;
+        denom = LAgentalpha2 * LAgentx1 + SAgentalpha2 * SAgentx1;
+        delta2 = num / denom;
+
+        //std::cout << delta1 << std::endl;
+        SmallerMRSAgent->IncreaseAllocation(Commodity1, delta1);
+        SmallerMRSAgent->IncreaseAllocation(Commodity2, -delta2);
+        LargerMRSAgent->IncreaseAllocation(Commodity1, -delta1);
+        LargerMRSAgent->IncreaseAllocation(Commodity2, delta2);
+
+        SmallerMRSAgent->MarkSuccessfulTrade();
+        LargerMRSAgent->MarkSuccessfulTrade();
+
+        //std::lock_guard<std::mutex> lock(m); // lock the global updates
+        ++interaction;
+        // Volume[Commodity1] += delta1;
+        // Volume[Commodity2] += delta2;
+    }
+
+    if (debug) {
+        if (a1->Utility() < Agent1PreTradeUtility) {
+            LOG(WARNING) << "!!!Utility decreasing trade by agent #1!!!  Actual utility change = " << a1->Utility() - Agent1PreTradeUtility;
         }
-        break;
-        case 0:  //  Termination based on L∞ norm of MRS distribution
-        ComputeLnMRSsDistribution();
-        if (LnMRSsData.LinfStdDev() < termination_eps) {
-            return true;
+        if (a2->Utility() < Agent2PreTradeUtility) {
+            LOG(WARNING) << "!!!Utility decreasing trade by agent #2!!!  Actual utility change = " << a2->Utility() - Agent2PreTradeUtility;
         }
-        break;
-        case 1:  //  Termination based on relative increase in V
-        if (ComputeRelativeIncreaseInSumOfUtilities() < termination_eps) {
-            return true;
-        }
-        break;
-        case 2:  //  Termination based on absolute increase in V
-        if (ComputeIncreaseInSumOfUtilities() < termination_eps) {
-            return true;
-        }
-        break;
-        default:
-        LOG(ERROR) << "Invalid termination criterion";
-        std::terminate();
-        break;
-    }   //  switch...
-    return false;
+    }
+    return std::make_tuple(interaction, delta1, Commodity1, delta2, Commodity2);
 }
 
 void AgentPopulation::TradeInFork (tbb::concurrent_vector<AgentPtr> a) {
@@ -1006,17 +1098,27 @@ long long AgentPopulation::ParallelEquilibrate(int NumberOfEquilibrationsSoFar) 
             ShockAgentPreferences();
         }
         
+        
+        results.clear();
+        results.resize(PairwiseInteractionsPerPeriod);
+
         tbb::parallel_for(static_cast<size_t>(0), static_cast<size_t>(PairwiseInteractionsPerPeriod), static_cast<size_t>(1), [this](size_t i) {
             AgentPtr Agent1, Agent2;
             (this->*GetAgentPair) (Agent1, Agent2);
              //LOG(INFO) << Agent1->GetId();
              //LOG(INFO) << Agent2->GetId();
-            std::lock_guard<std::mutex> lock1(Agent1->m);
-            std::lock_guard<std::mutex> lock2(Agent2->m);
+            //std::lock_guard<std::mutex> lock1(Agent1->m);
+            //std::lock_guard<std::mutex> lock2(Agent2->m);
             Agent1->MarkActivated();
             Agent2->MarkActivated();
-            Trade(Agent1, Agent2);
+            results[i] = ParallelTrade(Agent1, Agent2);
         });
+
+        for (auto &r : results) {
+            TotalInteractions += std::get<0>(r);
+            Volume[std::get<2>(r)] += std::get<1>(r);
+            Volume[std::get<4>(r)] += std::get<3>(r);
+        }
 
         //  Check for termination...
         if ((theTime > CheckTerminationThreshold) && (theTime % CheckTerminationPeriod == 0))  {
@@ -1055,8 +1157,6 @@ long long AgentPopulation::ParallelEquilibrate(int NumberOfEquilibrationsSoFar) 
         return TotalInteractions;
     }
 }
-
-
 
 long long AgentPopulation::Equilibrate(int NumberOfEquilibrationsSoFar) {
     Converged = false;
@@ -1380,12 +1480,19 @@ int main(int argc, char** argv) {
     // Preliminaries: Parse flags, etc.
     std::string usage = "An agent-based model of bilateral exchange. Usage:\n";
     usage += argv[0];
-    gflags::SetUsageMessage(usage);
-    gflags::ParseCommandLineFlags(&argc, &argv, true);
+    //gflags::SetUsageMessage(usage);
+    //gflags::ParseCommandLineFlags(&argc, &argv, true);
     LOG(INFO) << "Opening log file...";
 
     // Read the config file passed through the -file flag, or read the default parameters.cfg.
-    ReadConfigFile(FLAGS_file);
+    std::string param_file = "";
+    if (argv[1] != NULL) {
+        param_file = argv[1];
+    }
+    if (param_file.empty()) {
+        param_file = "parameters.cfg";
+    }
+    ReadConfigFile(param_file);
 
     outputFilename = "data.csv"; // workaround for libconfig++ issue, TODO: correct
 
