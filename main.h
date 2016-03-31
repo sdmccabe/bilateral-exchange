@@ -12,6 +12,8 @@ Extended by Stefan McCabe
 #endif  // MAIN_H_
 
 #include "./RNG.h"
+#include "tbb/tbb.h"
+#include "tbb/concurrent_vector.h"
 #include <map>
 #include <memory>
 #include <mutex>
@@ -66,7 +68,7 @@ bool DumpAgentInformation;
 RNGptr Rand;
 
 
-typedef std::vector<double> CommodityArray;
+typedef tbb::concurrent_vector<double> CommodityArray;
 typedef CommodityArray *CommodityArrayPtr;
 
 // Functions
@@ -115,7 +117,7 @@ class Data {
 typedef Data *DataPtr;
 
 class CommodityData {
-    std::vector<Data> data;
+    tbb::concurrent_vector<Data> data;
 
  public:
     CommodityData();
@@ -150,6 +152,7 @@ class Agent {
     
     std::mutex m;
     void MarkActivated() {
+        //std::lock_guard<std::mutex> lock(m);
         activations++;
     }
     long long GetNumberOfActivations() {
@@ -165,66 +168,66 @@ class Agent {
         return id;
     }
     double GetAlpha(size_t CommodityIndex) {
-        std::lock_guard<std::mutex> lock(m);
+        //std::lock_guard<std::mutex> lock(m);
         return alphas[CommodityIndex];
     }
     void SetAlpha(size_t CommodityIndex, double alpha) {
-        std::lock_guard<std::mutex> lock(m);
+        //std::lock_guard<std::mutex> lock(m);
         alphas[CommodityIndex] = alpha;
     }
     void SetLambda(double lam) {
-        std::lock_guard<std::mutex> lock(m);
+        //std::lock_guard<std::mutex> lock(m);
         lambda = lam;
     }
     double GetLambda() {
-        std::lock_guard<std::mutex> lock(m);
+        //std::lock_guard<std::mutex> lock(m);
         return lambda;
     }
     void SetNextTime(double nextT) {
-        std::lock_guard<std::mutex> lock(m);
+        //std::lock_guard<std::mutex> lock(m);
         nextTime = nextT;
     }
     double GetNextTime() {
-        std::lock_guard<std::mutex> lock(m);
+        //std::lock_guard<std::mutex> lock(m);
         return nextTime;
     }
     double GetEndowment(size_t CommodityIndex) {
-        std::lock_guard<std::mutex> lock(m);
+        //std::lock_guard<std::mutex> lock(m);
         return endowment[CommodityIndex];
     }
     double MRS(size_t CommodityIndex, size_t Numeraire);
     void ComputeMRSs();
     double GetInitialMRS(size_t CommodityIndex) {
-        std::lock_guard<std::mutex> lock(m);
+        //std::lock_guard<std::mutex> lock(m);
         return initialMRSs[CommodityIndex];
     }
     double GetAllocation(size_t CommodityIndex) {
-        std::lock_guard<std::mutex> lock(m);
+        //std::lock_guard<std::mutex> lock(m);
         return allocation[CommodityIndex];
     }
     void IncreaseAllocation(size_t CommodityIndex, double amount) {
-        std::lock_guard<std::mutex> lock(m);
+        //std::lock_guard<std::mutex> lock(m);
         allocation[CommodityIndex] += amount;
     }
     double GetCurrentMRS(size_t CommodityIndex) {
-        std::lock_guard<std::mutex> lock(m);
+        //std::lock_guard<std::mutex> lock(m);
         return currentMRSs[CommodityIndex];
     }
     CommodityArrayPtr GetCurrentMRSs() {
-        std::lock_guard<std::mutex> lock(m);
+        //std::lock_guard<std::mutex> lock(m);
         return &currentMRSs;
     }
     double Utility();
     double GetInitialUtility() {
-        std::lock_guard<std::mutex> lock(m);
+        //std::lock_guard<std::mutex> lock(m);
         return initialUtility;
     }
     double Wealth(CommodityArrayPtr prices) {
-        std::lock_guard<std::mutex> lock(m);
+        //std::lock_guard<std::mutex> lock(m);
         return Dot(&allocation, prices);
     }
     double GetInitialWealth() {
-        std::lock_guard<std::mutex> lock(m);
+        //std::lock_guard<std::mutex> lock(m);
         return initialWealth;
     }
     double GetInitiative() {
@@ -244,9 +247,10 @@ typedef std::shared_ptr<Agent> AgentPtr;
 // };
 
 class AgentPopulation {
-    std::vector<AgentPtr> Agents;
-    std::vector<size_t> AgentIndices;
-    std::vector<std::pair<double,AgentPtr>> PoissonActivations;
+    //tbb::concurrent_vector<AgentPtr> Agents;
+    tbb::concurrent_vector<AgentPtr> Agents;
+    tbb::concurrent_vector<size_t> AgentIndices;
+    tbb::concurrent_vector<std::pair<double,AgentPtr>> PoissonActivations;
     size_t AgentIndex = 0;
     bool PoissonUpToDate;
     Data InitialOwnWealthData;
@@ -273,14 +277,14 @@ class AgentPopulation {
     void(AgentPopulation::*GetAgentPair) (AgentPtr& Agent1, AgentPtr& Agent2);
     
 
-    void TradeInFork (std::vector<AgentPtr> a);
+    void TradeInFork (tbb::concurrent_vector<AgentPtr> a);
     
-    void(AgentPopulation::*GetAgentPairInFork) (AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a, std::vector<AgentPtr>::iterator &ait);
-    void GetRandomAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a, std::vector<AgentPtr>::iterator &ait);
-    void GetUniformAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a, std::vector<AgentPtr>::iterator &ait);
-    void GetFixedAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a, std::vector<AgentPtr>::iterator &ait);
-    void GetPoissonAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, std::vector<AgentPtr> a, std::vector<AgentPtr>::iterator &ait);
-    void SetPoissonAgentDistributionInFork(std::vector<AgentPtr> a, std::vector<AgentPtr>::iterator &ait);
+    void(AgentPopulation::*GetAgentPairInFork) (AgentPtr& Agent1, AgentPtr& Agent2, tbb::concurrent_vector<AgentPtr> a, tbb::concurrent_vector<AgentPtr>::iterator &ait);
+    void GetRandomAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, tbb::concurrent_vector<AgentPtr> a, tbb::concurrent_vector<AgentPtr>::iterator &ait);
+    void GetUniformAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, tbb::concurrent_vector<AgentPtr> a, tbb::concurrent_vector<AgentPtr>::iterator &ait);
+    void GetFixedAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, tbb::concurrent_vector<AgentPtr> a, tbb::concurrent_vector<AgentPtr>::iterator &ait);
+    void GetPoissonAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, tbb::concurrent_vector<AgentPtr> a, tbb::concurrent_vector<AgentPtr>::iterator &ait);
+    void SetPoissonAgentDistributionInFork(tbb::concurrent_vector<AgentPtr> a, tbb::concurrent_vector<AgentPtr>::iterator &ait);
 
     void IntermediateOutput();
     bool TestConvergence();
