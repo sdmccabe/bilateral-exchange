@@ -40,9 +40,6 @@ Extended by Stefan McCabe
 // Initialize the logger. This should come immediately after the #includes are finished.
 INITIALIZE_EASYLOGGINGPP
 
-// Declare gflags.
-//DEFINE_string(file, "parameters.cfg", "Specify the configuation file containing the model parameters.");
-
 
 /*===========
     ==Methods==
@@ -382,7 +379,6 @@ void AgentPopulation::SetPoissonAgentDistribution() {
     AgentIndex = 0;
 
     double totalWealth = 0.0;
-    //double totalUtility = 0.0;
     double totalDistanceFromMean = 0.0;
     double denom;
     double totalLambda = 0.0;
@@ -390,17 +386,13 @@ void AgentPopulation::SetPoissonAgentDistribution() {
     //determine mean wealth
     for (auto &a : Agents) {
         totalWealth += a->Wealth(a->GetCurrentMRSs());
-        //totalUtility += a->Utility();
     }
     double meanWealth = totalWealth / static_cast<double>(NumberOfAgents);
-    //double meanUtility = totalUtility / static_cast<double>(NumberOfAgents);
 
     //determine total distance from the mean
     for (auto &a : Agents) {
         double distFromMean = std::abs(a->Wealth(a->GetCurrentMRSs()) - meanWealth);
         totalDistanceFromMean += distFromMean;
-        // double distFromMean = std::abs(a->Utility() - meanUtility);
-        // totalDistanceFromMean += distFromMean;
     }
 
     //update lambdas based on distance from the mean
@@ -411,7 +403,6 @@ void AgentPopulation::SetPoissonAgentDistribution() {
             case 2:  // furthest from mean activate faster
             //LOG(WARNING) << "WARNING: This Poisson method is still buggy.";
             denom = std::abs(a->Wealth(a->GetCurrentMRSs()) - meanWealth);
-            //denom = std::abs(a->Utility() - meanUtility);
             if (denom == 0) {
                 denom = 0.0001;
             }
@@ -421,7 +412,6 @@ void AgentPopulation::SetPoissonAgentDistribution() {
             break;
             case 3: // poor activate faster
             denom = a->Wealth(a->GetCurrentMRSs());
-            //denom = a->Utility();
             if (denom == 0) {
                 denom = 0.0001;
             }
@@ -431,7 +421,6 @@ void AgentPopulation::SetPoissonAgentDistribution() {
             break;
             case 4: // rich activate faster
             denom = a->Wealth(a->GetCurrentMRSs());
-            //denom = a->Utility();
             if (denom == 0) {
                 denom = 0.0001;
             }
@@ -441,7 +430,6 @@ void AgentPopulation::SetPoissonAgentDistribution() {
             break;
             case 5: // closest to mean activate faster
             lam = std::abs(a->Wealth(a->GetCurrentMRSs()) - meanWealth);
-            //lam = std::abs(a->Utility() - meanUtility);
             a->SetLambda(lam);
             totalLambda += lam;
             break;
@@ -490,9 +478,7 @@ void AgentPopulation::GetUniformAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agen
     if (NumberOfAgents % 2 > 0 && AgentIndex == 0) {
         LOG(WARNING) << "Warning: Uniform activation requires an even number of agents.";
     }
-    // if (!ShuffleAfterJoin) {
-    //     LOG(WARNING) << "Warning: Uniform activation requires ShuffleAfterJoin = true";
-    // }
+
     Agent1 = *ait;
     ait++;
     Agent2 = *ait;
@@ -506,9 +492,7 @@ void AgentPopulation::GetFixedAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2
     if (NumberOfAgents % 2 > 0 && AgentIndex == 0) {
         LOG(WARNING) << "Warning: Fixed activation requires an even number of agents.";
     }
-    // if (ShuffleAfterJoin) {
-    //     LOG(WARNING) << "Warning: Fixed activation requires ShuffleAfterJoin = false";
-    // }
+
     Agent1 = *ait;
     ait++;
     Agent2 = *ait;
@@ -519,11 +503,12 @@ void AgentPopulation::GetFixedAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2
 }
 
 void AgentPopulation::GetPoissonAgentPairInFork(AgentPtr& Agent1, AgentPtr& Agent2, tbb::concurrent_vector<AgentPtr> a, tbb::concurrent_vector<AgentPtr>::iterator &ait) {
+    LOG(WARNING) << "Warning: NYI";
     return;
 }
 
 void AgentPopulation::SetPoissonAgentDistributionInFork(tbb::concurrent_vector<AgentPtr> a, tbb::concurrent_vector<AgentPtr>::iterator &ait) {
-    SetPoissonAgentDistribution(); // for now it will be sufficient to just do this globally.
+    SetPoissonAgentDistribution();
 }
 
 
@@ -713,10 +698,6 @@ void AgentPopulation::Trade (AgentPtr a1, AgentPtr a2) {
     double num, denom, delta1, delta2;
     double Agent1PreTradeUtility, Agent2PreTradeUtility;
 
-    //LOG(DEBUG) << a1->GetId() << " " << a2->GetId();
-    //std::lock_guard<std::mutex> lock1(AgentMutexes[a1->GetId()]);
-    //std::lock_guard<std::mutex> lock2(AgentMutexes[a2->GetId()]);
-
     if (debug) {
         Agent1PreTradeUtility = a1->Utility();
         Agent2PreTradeUtility = a2->Utility();
@@ -804,9 +785,6 @@ std::tuple<long long, double, size_t, double, size_t> AgentPopulation::ParallelT
     long long interaction = 0;
     double delta1 = 0.0;
     double delta2 = 0.0;
-    //LOG(DEBUG) << a1->GetId() << " " << a2->GetId();
-    //std::lock_guard<std::mutex> lock1(AgentMutexes[a1->GetId()]);
-    //std::lock_guard<std::mutex> lock2(AgentMutexes[a2->GetId()]);
 
     if (debug) {
         Agent1PreTradeUtility = a1->Utility();
@@ -856,7 +834,6 @@ std::tuple<long long, double, size_t, double, size_t> AgentPopulation::ParallelT
         denom = LAgentalpha2 * LAgentx1 + SAgentalpha2 * SAgentx1;
         delta2 = num / denom;
 
-        //std::cout << delta1 << std::endl;
         SmallerMRSAgent->IncreaseAllocation(Commodity1, delta1);
         SmallerMRSAgent->IncreaseAllocation(Commodity2, -delta2);
         LargerMRSAgent->IncreaseAllocation(Commodity1, -delta1);
@@ -865,10 +842,7 @@ std::tuple<long long, double, size_t, double, size_t> AgentPopulation::ParallelT
         SmallerMRSAgent->MarkSuccessfulTrade();
         LargerMRSAgent->MarkSuccessfulTrade();
 
-        //std::lock_guard<std::mutex> lock(m); // lock the global updates
         ++interaction;
-        // Volume[Commodity1] += delta1;
-        // Volume[Commodity2] += delta2;
     }
 
     if (debug) {
@@ -887,13 +861,10 @@ void AgentPopulation::TradeInFork (tbb::concurrent_vector<AgentPtr> a) {
     bool convergedInFork; 
     AgentPtr Agent1, Agent2;
     tbb::concurrent_vector<AgentPtr>::iterator ait = a.begin();
-    //std::mutex m;
     tbb::concurrent_vector<double> VolumeInFork;
     VolumeInFork.resize(NumberOfCommodities);
 
-    //std::cout << PairwiseInteractionsPerPeriod/std::thread::hardware_concurrency() << " interactions on thread" << std::endl;
     int t = std::max(std::thread::hardware_concurrency(), static_cast<unsigned int>(NumberOfThreads));
-    //std::cout << PairwiseInteractionsPerPeriod/t << std::endl;
     interactionsInFork = 0;
     for (int i = 0; i < PairwiseInteractionsPerPeriod/t; ++i) {
         (this->*GetAgentPairInFork) (Agent1, Agent2, a, ait);
@@ -914,7 +885,8 @@ void AgentPopulation::TradeInFork (tbb::concurrent_vector<AgentPtr> a) {
             Agent1PreTradeUtility = Agent1->Utility();
             Agent2PreTradeUtility = Agent2->Utility();
         }
-    //  Next, select the commodities to trade...
+
+        //  Next, select the commodities to trade...
         if (NumberOfCommodities == 2) {
             Commodity1 = 0;
             Commodity2 = 1;
@@ -973,7 +945,6 @@ void AgentPopulation::TradeInFork (tbb::concurrent_vector<AgentPtr> a) {
     }
 }
 
-    //LOG(DEBUG) << "Locking";
     std::lock_guard<std::mutex> lock(m); // lock the global updates
     TotalInteractions += interactionsInFork;
 
@@ -981,8 +952,6 @@ void AgentPopulation::TradeInFork (tbb::concurrent_vector<AgentPtr> a) {
         auto i = static_cast<size_t>(&vol - &Volume[0]);
         vol += VolumeInFork[i];
     }
-    //LOG(DEBUG) << "Unlocking";
-//std::cout << "In function TradeInFork: " << Agent1->GetId() << " " << Agent2->GetId() << std::endl;
     return;
 }
 
@@ -990,7 +959,6 @@ long long AgentPopulation::ForkAndJoinEquilibrate(int NumberOfEquilibrationsSoFa
     Converged = false;
     theTime = 0; 
     TotalInteractions = 0;
-    //std::mutex m;
 
     size_t split = static_cast<size_t>(NumberOfThreads);
 
@@ -1000,10 +968,8 @@ long long AgentPopulation::ForkAndJoinEquilibrate(int NumberOfEquilibrationsSoFa
     for (size_t i = 0; i < split; ++i) {
         std::pair<size_t, size_t> population = std::make_pair(i*(NumberOfAgents/split), (i+1)*(NumberOfAgents/split));
         populations.push_back(population);
-        //std::cout << population.first << " " << population.second << std::endl;
     }
 
-    // test - operate on the first split
     tbb::concurrent_vector<std::thread> threadPool;
 
     do {
@@ -1015,25 +981,14 @@ long long AgentPopulation::ForkAndJoinEquilibrate(int NumberOfEquilibrationsSoFa
             ShockAgentPreferences();
         }
         // std::cout << "Fork" << std::endl;
-        //for (size_t i = 0; i < split; ++i) {
         tbb::parallel_for(static_cast<size_t>(0), split, static_cast<size_t>(1), [=](size_t i) {
             auto pop = tbb::concurrent_vector<AgentPtr>(Agents.begin() + populations[i].first, Agents.begin() + populations[i].second);
-            //threadPool.push_back(std::thread(&AgentPopulation::TradeInFork, this, pop));
             TradeInFork(pop);
-            //std::cout << "Spawning thread " << i+1 << std::endl;
         });
-        // std::cout << "Join" << std::endl;
-        // for (auto &t : threadPool) {            
-        //     t.join();
-        // }
-        // std::cout << "Shuffle" << std::endl;
         if (ShuffleAfterJoin) {
             std::shuffle(Agents.begin(), Agents.end(), Rand->GetGenerator());
         }
-        // std::cout << "Clear" << std::endl;
-       // threadPool.clear();
 
-        //std::cout << "Joined threads" << std::endl;
             //  Check for termination...
         if ((theTime > CheckTerminationThreshold) && (theTime % CheckTerminationPeriod == 0))  {
             Converged = TestConvergence();
@@ -1105,10 +1060,8 @@ long long AgentPopulation::ParallelEquilibrate(int NumberOfEquilibrationsSoFar) 
         tbb::parallel_for(static_cast<size_t>(0), static_cast<size_t>(PairwiseInteractionsPerPeriod), static_cast<size_t>(1), [this](size_t i) {
             AgentPtr Agent1, Agent2;
             (this->*GetAgentPair) (Agent1, Agent2);
-             //LOG(INFO) << Agent1->GetId();
-             //LOG(INFO) << Agent2->GetId();
-            //std::lock_guard<std::mutex> lock1(Agent1->m);
-            //std::lock_guard<std::mutex> lock2(Agent2->m);
+            std::lock_guard<std::mutex> lock1(Agent1->m);
+            std::lock_guard<std::mutex> lock2(Agent2->m);
             Agent1->MarkActivated();
             Agent2->MarkActivated();
             results[i] = ParallelTrade(Agent1, Agent2);
@@ -1230,7 +1183,6 @@ void AgentPopulation::DumpAgentInfo() {
     std::ofstream dumpfile;
 
     dumpfile.open(filename, std::ios::trunc);
-
 
     for (auto &a : Agents) {
         dumpfile << a->GetId() << "," << a->GetNumberOfActivations() << "," << a->GetNumberOfTrades() << std::endl;
@@ -1498,7 +1450,7 @@ int main(int argc, char** argv) {
 
     if (writeToFile) { OpenFile(outputFilename); }
 
-    if (!DefaultSerialExecution) {
+    if (!DefaultSerialExecution && NumberOfThreads > 0) {
         tbb::task_scheduler_init init(NumberOfThreads);
     }
 

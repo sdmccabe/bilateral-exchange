@@ -235,16 +235,7 @@ class Agent {
     }
 };
 
-//typedef Agent *AgentPtr;
 typedef std::shared_ptr<Agent> AgentPtr;
-
-//https://stackoverflow.com/questions/16465633/how-can-i-use-something-like-stdvectorstdmutex
-// struct mutex_wrapper : std::mutex
-// {
-//   mutex_wrapper() = default;
-//   mutex_wrapper(mutex_wrapper const&) noexcept : std::mutex() {}
-//   bool operator==(mutex_wrapper const&other) noexcept { return this==&other; }
-// };
 
 class AgentPopulation {
     //tbb::concurrent_vector<AgentPtr> Agents;
