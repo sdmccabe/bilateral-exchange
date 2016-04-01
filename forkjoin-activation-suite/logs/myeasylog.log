@@ -1,0 +1,649 @@
+2016-03-16 16:35:16,051 INFO  [default] Opening log file...
+2016-03-16 16:35:16,052 INFO  [default] Loading configuration from parameters--1.cfg...
+2016-03-16 16:35:16,058 INFO  [default] Loaded configuration from parameters--1.cfg
+2016-03-16 16:35:16,058 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1315] debug: 1
+2016-03-16 16:35:16,058 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1316] NumberOfCommodities: 10
+2016-03-16 16:35:16,058 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1317] NumberOfAgents: 1000000
+2016-03-16 16:35:16,058 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1318] UseRandomSeed: 0
+2016-03-16 16:35:16,058 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1319] NonRandomSeed: 42
+2016-03-16 16:35:16,058 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1320] PairwiseInteractionsPerPeriod: 500000
+2016-03-16 16:35:16,058 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1321] alphaMin: 0.01
+2016-03-16 16:35:16,058 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1322] alphaMax: 0.99
+2016-03-16 16:35:16,058 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1323] wealthMin: 50
+2016-03-16 16:35:16,058 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1324] wealthMax: 150
+2016-03-16 16:35:16,058 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1325] DefaultSerialExecution: 0
+2016-03-16 16:35:16,058 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1326] NumberOfThreads: 4
+2016-03-16 16:35:16,058 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1329] RequestedEquilibrations: 1
+2016-03-16 16:35:16,058 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1330] SameAgentInitialCondition: 0
+2016-03-16 16:35:16,058 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1331] trade_eps: 0.01
+2016-03-16 16:35:16,058 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1332] termination_criterion: -2
+2016-03-16 16:35:16,058 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1333] TerminationTime: 100
+2016-03-16 16:35:16,058 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1334] termination_eps: 0.01
+2016-03-16 16:35:16,059 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1335] CheckTerminationThreshold: 90
+2016-03-16 16:35:16,059 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1336] CheckTerminationPeriod: 10
+2016-03-16 16:35:16,059 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1337] ShockPreferences: 0
+2016-03-16 16:35:16,059 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1338] ShockPeriod: 10
+2016-03-16 16:35:16,059 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1339] MinShock: 1
+2016-03-16 16:35:16,059 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1340] MaxShock: 5
+2016-03-16 16:35:16,059 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1341] PrintEndowments: 0
+2016-03-16 16:35:16,059 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1342] PrintIntermediateOutput: 1
+2016-03-16 16:35:16,059 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1343] IntermediateOutputPrintPeriod: 1
+2016-03-16 16:35:16,059 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1344] PrintConvergenceStats: 1
+2016-03-16 16:35:16,059 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1345] PrintFinalCommodityList: 0
+2016-03-16 16:35:16,059 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1347] Activation Method: -1
+2016-03-16 16:35:16,059 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1348] Output filename: data.csv
+2016-03-16 16:35:16,059 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1349] Write to file?: 1
+2016-03-16 16:35:16,059 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1350] Append to file?: 1
+2016-03-16 16:35:16,059 DEBUG [default] [main@unknown-host] [void OpenFile(const char*)] [main.cpp:1239] Opening file data.csv
+2016-03-16 16:35:16,059 INFO  [default] Using random seed 1878487809
+2016-03-16 16:35:16,059 INFO  [default] Model version: 1
+2016-03-16 16:35:16,059 INFO  [default] Number of agents: 1000000
+2016-03-16 16:35:16,059 INFO  [default] Number of commodities: 10
+2016-03-16 16:35:16,059 INFO  [default] Trade epsilon: 0.01
+2016-03-16 16:35:16,059 INFO  [default] Time period: 1000000
+2016-03-16 16:35:16,059 INFO  [default] Termination period check rate: 10
+2016-03-16 16:35:16,059 INFO  [default] Termination period check threshold: 90
+2016-03-16 16:35:16,059 INFO  [default] Termination criterion: After 100 time steps
+2016-03-16 16:35:16,059 INFO  [default] Termination threshold: 0.01
+2016-03-16 16:35:16,059 INFO  [default] Parallel activation: TRUE
+2016-03-16 16:35:16,059 INFO  [default] Agent randomization size: 0
+2016-03-16 16:35:16,059 INFO  [default] Number of equilibrations: 1
+2016-03-16 16:35:16,059 INFO  [default] Vary agent initial conditions: 1
+2016-03-16 16:35:16,059 DEBUG [default] [main@unknown-host] [void MemoryObject::WriteMemoryRequirements()] [main.cpp:73] Size of Agent in memory: 240 bytes
+2016-03-16 16:35:16,059 DEBUG [default] [main@unknown-host] [void MemoryObject::WriteMemoryRequirements()] [main.cpp:74] Size of Data in memory: 40 bytes
+2016-03-16 16:35:16,059 DEBUG [default] [main@unknown-host] [void MemoryObject::WriteMemoryRequirements()] [main.cpp:75] Size of CommodityData in memory: 24 bytes
+2016-03-16 16:35:16,059 DEBUG [default] [main@unknown-host] [void MemoryObject::WriteMemoryRequirements()] [main.cpp:76] Size of AgentPopulation in memory: 360 bytes
+2016-03-16 16:35:16,059 DEBUG [default] [main@unknown-host] [void MemoryObject::WriteMemoryRequirements()] [main.cpp:77] Total bytes required (approximate): 240000400 bytes
+2016-03-16 16:35:18,899 INFO  [default] Using fixed activation
+2016-03-16 16:35:18,899 INFO  [default] WARNING: Do not use fixed activation.
+2016-03-16 16:35:21,418 INFO  [default] Average initial wealth (@ own prices) = 2203.9; standard deviation = 4300.84
+2016-03-16 16:35:21,418 INFO  [default] Initial sum of utilities = 1.52123e+19
+2016-03-16 16:35:21,418 INFO  [default] Equilibration #1 starting
+2016-03-16 16:35:28,160 INFO  [default] Through time 1, 497594 total exchanges; 
+2016-03-16 16:35:28,374 INFO  [default] current L2 s.d. in MRS = 3.85052
+2016-03-16 16:35:37,994 INFO  [default] Through time 2, 994609 total exchanges; 
+2016-03-16 16:35:38,208 INFO  [default] current L2 s.d. in MRS = 3.74165
+2016-03-16 16:35:47,673 INFO  [default] Through time 3, 1490911 total exchanges; 
+2016-03-16 16:35:47,892 INFO  [default] current L2 s.d. in MRS = 3.64073
+2016-03-16 16:35:57,073 INFO  [default] Through time 4, 1986636 total exchanges; 
+2016-03-16 16:35:57,333 INFO  [default] current L2 s.d. in MRS = 3.5465
+2016-03-16 16:36:05,848 INFO  [default] Through time 5, 2481006 total exchanges; 
+2016-03-16 16:36:06,108 INFO  [default] current L2 s.d. in MRS = 3.45931
+2016-03-16 16:36:14,205 INFO  [default] Through time 6, 2977030 total exchanges; 
+2016-03-16 16:36:14,415 INFO  [default] current L2 s.d. in MRS = 3.37744
+2016-03-16 16:36:23,218 INFO  [default] Through time 7, 3471428 total exchanges; 
+2016-03-16 16:36:23,450 INFO  [default] current L2 s.d. in MRS = 3.30234
+2016-03-16 16:36:32,708 INFO  [default] Through time 8, 3963673 total exchanges; 
+2016-03-16 16:36:32,933 INFO  [default] current L2 s.d. in MRS = 3.23262
+2016-03-16 16:36:42,516 INFO  [default] Through time 9, 4458830 total exchanges; 
+2016-03-16 16:36:42,756 INFO  [default] current L2 s.d. in MRS = 3.16757
+2016-03-16 16:36:50,675 INFO  [default] Through time 10, 4951583 total exchanges; 
+2016-03-16 16:36:50,901 INFO  [default] current L2 s.d. in MRS = 3.10681
+2016-03-16 16:37:00,479 INFO  [default] Through time 11, 5444191 total exchanges; 
+2016-03-16 16:37:00,696 INFO  [default] current L2 s.d. in MRS = 3.05044
+2016-03-16 16:37:07,869 INFO  [default] Through time 12, 5936192 total exchanges; 
+2016-03-16 16:37:08,312 INFO  [default] current L2 s.d. in MRS = 2.99854
+2016-03-16 16:37:16,600 INFO  [default] Through time 13, 6423196 total exchanges; 
+2016-03-16 16:37:17,668 INFO  [default] current L2 s.d. in MRS = 2.95044
+2016-03-16 16:37:26,027 INFO  [default] Through time 14, 6918499 total exchanges; 
+2016-03-16 16:37:26,265 INFO  [default] current L2 s.d. in MRS = 2.90621
+2016-03-16 16:37:34,535 INFO  [default] Through time 15, 7407775 total exchanges; 
+2016-03-16 16:37:34,817 INFO  [default] current L2 s.d. in MRS = 2.86498
+2016-03-16 16:37:43,148 INFO  [default] Through time 16, 7898543 total exchanges; 
+2016-03-16 16:37:43,587 INFO  [default] current L2 s.d. in MRS = 2.82683
+2016-03-16 16:37:52,022 INFO  [default] Through time 17, 8384541 total exchanges; 
+2016-03-16 16:37:53,237 INFO  [default] current L2 s.d. in MRS = 2.79153
+2016-03-16 16:38:00,874 INFO  [default] Through time 18, 8876276 total exchanges; 
+2016-03-16 16:38:01,133 INFO  [default] current L2 s.d. in MRS = 2.75938
+2016-03-16 16:38:10,714 INFO  [default] Through time 19, 9364146 total exchanges; 
+2016-03-16 16:38:10,929 INFO  [default] current L2 s.d. in MRS = 2.72964
+2016-03-16 16:38:20,264 INFO  [default] Through time 20, 9851341 total exchanges; 
+2016-03-16 16:38:20,480 INFO  [default] current L2 s.d. in MRS = 2.70191
+2016-03-16 16:38:29,060 INFO  [default] Through time 21, 10337768 total exchanges; 
+2016-03-16 16:38:29,286 INFO  [default] current L2 s.d. in MRS = 2.67639
+2016-03-16 16:38:38,599 INFO  [default] Through time 22, 10823514 total exchanges; 
+2016-03-16 16:38:38,836 INFO  [default] current L2 s.d. in MRS = 2.65309
+2016-03-16 16:38:47,475 INFO  [default] Through time 23, 11308265 total exchanges; 
+2016-03-16 16:38:47,751 INFO  [default] current L2 s.d. in MRS = 2.6315
+2016-03-16 16:38:57,080 INFO  [default] Through time 24, 11792275 total exchanges; 
+2016-03-16 16:38:57,289 INFO  [default] current L2 s.d. in MRS = 2.61127
+2016-03-16 16:39:06,805 INFO  [default] Through time 25, 12275489 total exchanges; 
+2016-03-16 16:39:07,037 INFO  [default] current L2 s.d. in MRS = 2.59294
+2016-03-16 16:39:14,611 INFO  [default] Through time 26, 12756890 total exchanges; 
+2016-03-16 16:39:14,955 INFO  [default] current L2 s.d. in MRS = 2.57613
+2016-03-16 16:39:23,257 INFO  [default] Through time 27, 13239072 total exchanges; 
+2016-03-16 16:39:23,524 INFO  [default] current L2 s.d. in MRS = 2.56056
+2016-03-16 16:39:31,768 INFO  [default] Through time 28, 13719249 total exchanges; 
+2016-03-16 16:39:31,999 INFO  [default] current L2 s.d. in MRS = 2.54631
+2016-03-16 16:39:40,573 INFO  [default] Through time 29, 14198246 total exchanges; 
+2016-03-16 16:39:40,787 INFO  [default] current L2 s.d. in MRS = 2.53328
+2016-03-16 16:39:50,231 INFO  [default] Through time 30, 14676181 total exchanges; 
+2016-03-16 16:39:50,446 INFO  [default] current L2 s.d. in MRS = 2.5211
+2016-03-16 16:39:59,982 INFO  [default] Through time 31, 15152646 total exchanges; 
+2016-03-16 16:40:00,197 INFO  [default] current L2 s.d. in MRS = 2.51006
+2016-03-16 16:40:08,846 INFO  [default] Through time 32, 15627785 total exchanges; 
+2016-03-16 16:40:09,069 INFO  [default] current L2 s.d. in MRS = 2.49989
+2016-03-16 16:40:18,643 INFO  [default] Through time 33, 16101746 total exchanges; 
+2016-03-16 16:40:19,030 INFO  [default] current L2 s.d. in MRS = 2.49058
+2016-03-16 16:40:28,334 INFO  [default] Through time 34, 16574581 total exchanges; 
+2016-03-16 16:40:28,547 INFO  [default] current L2 s.d. in MRS = 2.4821
+2016-03-16 16:40:36,600 INFO  [default] Through time 35, 17045651 total exchanges; 
+2016-03-16 16:40:37,420 INFO  [default] current L2 s.d. in MRS = 2.47446
+2016-03-16 16:40:45,675 INFO  [default] Through time 36, 17513634 total exchanges; 
+2016-03-16 16:40:46,471 INFO  [default] current L2 s.d. in MRS = 2.46741
+2016-03-16 16:40:54,083 INFO  [default] Through time 37, 17983295 total exchanges; 
+2016-03-16 16:40:54,312 INFO  [default] current L2 s.d. in MRS = 2.46077
+2016-03-16 16:41:02,134 INFO  [default] Through time 38, 18436045 total exchanges; 
+2016-03-16 16:41:02,441 INFO  [default] current L2 s.d. in MRS = 2.45473
+2016-03-16 16:41:10,247 INFO  [default] Through time 39, 18910104 total exchanges; 
+2016-03-16 16:41:10,509 INFO  [default] current L2 s.d. in MRS = 2.44925
+2016-03-16 16:41:18,181 INFO  [default] Through time 40, 19374586 total exchanges; 
+2016-03-16 16:41:18,413 INFO  [default] current L2 s.d. in MRS = 2.44411
+2016-03-16 16:41:27,577 INFO  [default] Through time 41, 19835951 total exchanges; 
+2016-03-16 16:41:27,837 INFO  [default] current L2 s.d. in MRS = 2.43952
+2016-03-16 16:41:36,502 INFO  [default] Through time 42, 20295577 total exchanges; 
+2016-03-16 16:41:36,733 INFO  [default] current L2 s.d. in MRS = 2.43527
+2016-03-16 16:41:45,226 INFO  [default] Through time 43, 20752166 total exchanges; 
+2016-03-16 16:41:45,442 INFO  [default] current L2 s.d. in MRS = 2.43143
+2016-03-16 16:41:53,097 INFO  [default] Through time 44, 21204889 total exchanges; 
+2016-03-16 16:41:53,569 INFO  [default] current L2 s.d. in MRS = 2.42788
+2016-03-16 16:42:02,742 INFO  [default] Through time 45, 21657939 total exchanges; 
+2016-03-16 16:42:03,021 INFO  [default] current L2 s.d. in MRS = 2.42466
+2016-03-16 16:42:11,599 INFO  [default] Through time 46, 22107612 total exchanges; 
+2016-03-16 16:42:11,826 INFO  [default] current L2 s.d. in MRS = 2.42169
+2016-03-16 16:42:20,462 INFO  [default] Through time 47, 22552136 total exchanges; 
+2016-03-16 16:42:20,682 INFO  [default] current L2 s.d. in MRS = 2.41899
+2016-03-16 16:42:29,383 INFO  [default] Through time 48, 22998146 total exchanges; 
+2016-03-16 16:42:29,616 INFO  [default] current L2 s.d. in MRS = 2.41641
+2016-03-16 16:42:37,875 INFO  [default] Through time 49, 23439914 total exchanges; 
+2016-03-16 16:42:38,110 INFO  [default] current L2 s.d. in MRS = 2.41404
+2016-03-16 16:42:46,649 INFO  [default] Through time 50, 23873125 total exchanges; 
+2016-03-16 16:42:46,898 INFO  [default] current L2 s.d. in MRS = 2.41193
+2016-03-16 16:42:55,425 INFO  [default] Through time 51, 24312039 total exchanges; 
+2016-03-16 16:42:55,694 INFO  [default] current L2 s.d. in MRS = 2.41005
+2016-03-16 16:43:04,770 INFO  [default] Through time 52, 24743531 total exchanges; 
+2016-03-16 16:43:05,014 INFO  [default] current L2 s.d. in MRS = 2.40831
+2016-03-16 16:43:13,037 INFO  [default] Through time 53, 25173997 total exchanges; 
+2016-03-16 16:43:13,261 INFO  [default] current L2 s.d. in MRS = 2.40671
+2016-03-16 16:43:22,126 INFO  [default] Through time 54, 25598742 total exchanges; 
+2016-03-16 16:43:22,858 INFO  [default] current L2 s.d. in MRS = 2.40519
+2016-03-16 16:43:31,143 INFO  [default] Through time 55, 26018472 total exchanges; 
+2016-03-16 16:43:31,377 INFO  [default] current L2 s.d. in MRS = 2.40386
+2016-03-16 16:43:38,646 INFO  [default] Through time 56, 26435337 total exchanges; 
+2016-03-16 16:43:39,025 INFO  [default] current L2 s.d. in MRS = 2.40259
+2016-03-16 16:43:47,588 INFO  [default] Through time 57, 26852721 total exchanges; 
+2016-03-16 16:43:47,808 INFO  [default] current L2 s.d. in MRS = 2.40141
+2016-03-16 16:43:55,936 INFO  [default] Through time 58, 27252814 total exchanges; 
+2016-03-16 16:43:56,249 INFO  [default] current L2 s.d. in MRS = 2.40035
+2016-03-16 16:44:03,856 INFO  [default] Through time 59, 27667550 total exchanges; 
+2016-03-16 16:44:04,080 INFO  [default] current L2 s.d. in MRS = 2.39937
+2016-03-16 16:44:13,104 INFO  [default] Through time 60, 28068736 total exchanges; 
+2016-03-16 16:44:13,321 INFO  [default] current L2 s.d. in MRS = 2.3985
+2016-03-16 16:44:21,232 INFO  [default] Through time 61, 28465738 total exchanges; 
+2016-03-16 16:44:21,444 INFO  [default] current L2 s.d. in MRS = 2.39768
+2016-03-16 16:44:29,001 INFO  [default] Through time 62, 28853346 total exchanges; 
+2016-03-16 16:44:29,260 INFO  [default] current L2 s.d. in MRS = 2.39695
+2016-03-16 16:44:38,438 INFO  [default] Through time 63, 29245236 total exchanges; 
+2016-03-16 16:44:38,667 INFO  [default] current L2 s.d. in MRS = 2.39628
+2016-03-16 16:44:47,361 INFO  [default] Through time 64, 29627909 total exchanges; 
+2016-03-16 16:44:48,758 INFO  [default] current L2 s.d. in MRS = 2.39566
+2016-03-16 16:44:56,801 INFO  [default] Through time 65, 29999665 total exchanges; 
+2016-03-16 16:44:57,267 INFO  [default] current L2 s.d. in MRS = 2.39511
+2016-03-16 16:45:06,702 INFO  [default] Through time 66, 30377404 total exchanges; 
+2016-03-16 16:45:06,929 INFO  [default] current L2 s.d. in MRS = 2.39457
+2016-03-16 16:45:14,738 INFO  [default] Through time 67, 30731929 total exchanges; 
+2016-03-16 16:45:15,005 INFO  [default] current L2 s.d. in MRS = 2.39412
+2016-03-16 16:45:23,974 INFO  [default] Through time 68, 31104734 total exchanges; 
+2016-03-16 16:45:24,204 INFO  [default] current L2 s.d. in MRS = 2.39368
+2016-03-16 16:45:32,872 INFO  [default] Through time 69, 31459959 total exchanges; 
+2016-03-16 16:45:33,096 INFO  [default] current L2 s.d. in MRS = 2.39328
+2016-03-16 16:45:41,329 INFO  [default] Through time 70, 31809375 total exchanges; 
+2016-03-16 16:45:41,943 INFO  [default] current L2 s.d. in MRS = 2.3929
+2016-03-16 16:45:49,655 INFO  [default] Through time 71, 32153906 total exchanges; 
+2016-03-16 16:45:49,873 INFO  [default] current L2 s.d. in MRS = 2.39258
+2016-03-16 16:45:57,676 INFO  [default] Through time 72, 32491470 total exchanges; 
+2016-03-16 16:45:57,900 INFO  [default] current L2 s.d. in MRS = 2.39226
+2016-03-16 16:46:05,974 INFO  [default] Through time 73, 32823030 total exchanges; 
+2016-03-16 16:46:06,203 INFO  [default] current L2 s.d. in MRS = 2.39197
+2016-03-16 16:46:13,607 INFO  [default] Through time 74, 33147759 total exchanges; 
+2016-03-16 16:46:13,954 INFO  [default] current L2 s.d. in MRS = 2.39171
+2016-03-16 16:46:22,663 INFO  [default] Through time 75, 33466807 total exchanges; 
+2016-03-16 16:46:23,563 INFO  [default] current L2 s.d. in MRS = 2.39145
+2016-03-16 16:46:32,639 INFO  [default] Through time 76, 33779340 total exchanges; 
+2016-03-16 16:46:32,952 INFO  [default] current L2 s.d. in MRS = 2.39123
+2016-03-16 16:46:42,039 INFO  [default] Through time 77, 34084650 total exchanges; 
+2016-03-16 16:46:42,284 INFO  [default] current L2 s.d. in MRS = 2.39103
+2016-03-16 16:46:51,533 INFO  [default] Through time 78, 34384264 total exchanges; 
+2016-03-16 16:46:51,970 INFO  [default] current L2 s.d. in MRS = 2.39085
+2016-03-16 16:47:00,960 INFO  [default] Through time 79, 34671567 total exchanges; 
+2016-03-16 16:47:01,286 INFO  [default] current L2 s.d. in MRS = 2.39068
+2016-03-16 16:47:11,062 INFO  [default] Through time 80, 34962560 total exchanges; 
+2016-03-16 16:47:11,274 INFO  [default] current L2 s.d. in MRS = 2.39052
+2016-03-16 16:47:19,773 INFO  [default] Through time 81, 35241645 total exchanges; 
+2016-03-16 16:47:20,015 INFO  [default] current L2 s.d. in MRS = 2.39038
+2016-03-16 16:47:28,597 INFO  [default] Through time 82, 35514101 total exchanges; 
+2016-03-16 16:47:28,859 INFO  [default] current L2 s.d. in MRS = 2.39024
+2016-03-16 16:47:37,237 INFO  [default] Through time 83, 35779978 total exchanges; 
+2016-03-16 16:47:37,469 INFO  [default] current L2 s.d. in MRS = 2.39011
+2016-03-16 16:47:46,420 INFO  [default] Through time 84, 36038897 total exchanges; 
+2016-03-16 16:47:46,638 INFO  [default] current L2 s.d. in MRS = 2.39
+2016-03-16 16:47:56,258 INFO  [default] Through time 85, 36290709 total exchanges; 
+2016-03-16 16:47:56,478 INFO  [default] current L2 s.d. in MRS = 2.3899
+2016-03-16 16:48:05,756 INFO  [default] Through time 86, 36535985 total exchanges; 
+2016-03-16 16:48:05,965 INFO  [default] current L2 s.d. in MRS = 2.3898
+2016-03-16 16:48:15,225 INFO  [default] Through time 87, 36773914 total exchanges; 
+2016-03-16 16:48:15,439 INFO  [default] current L2 s.d. in MRS = 2.38971
+2016-03-16 16:48:24,266 INFO  [default] Through time 88, 37005475 total exchanges; 
+2016-03-16 16:48:24,483 INFO  [default] current L2 s.d. in MRS = 2.38962
+2016-03-16 16:48:32,967 INFO  [default] Through time 89, 37230030 total exchanges; 
+2016-03-16 16:48:33,185 INFO  [default] current L2 s.d. in MRS = 2.38954
+2016-03-16 16:48:41,513 INFO  [default] Through time 90, 37448354 total exchanges; 
+2016-03-16 16:48:41,818 INFO  [default] current L2 s.d. in MRS = 2.38946
+2016-03-16 16:48:50,382 INFO  [default] Through time 91, 37659747 total exchanges; 
+2016-03-16 16:48:50,813 INFO  [default] current L2 s.d. in MRS = 2.3894
+2016-03-16 16:48:59,205 INFO  [default] Through time 92, 37864468 total exchanges; 
+2016-03-16 16:48:59,483 INFO  [default] current L2 s.d. in MRS = 2.38933
+2016-03-16 16:49:08,695 INFO  [default] Through time 93, 38063351 total exchanges; 
+2016-03-16 16:49:08,949 INFO  [default] current L2 s.d. in MRS = 2.38927
+2016-03-16 16:49:16,523 INFO  [default] Through time 94, 38255314 total exchanges; 
+2016-03-16 16:49:16,735 INFO  [default] current L2 s.d. in MRS = 2.38922
+2016-03-16 16:49:25,527 INFO  [default] Through time 95, 38441036 total exchanges; 
+2016-03-16 16:49:25,751 INFO  [default] current L2 s.d. in MRS = 2.38918
+2016-03-16 16:49:35,354 INFO  [default] Through time 96, 38620464 total exchanges; 
+2016-03-16 16:49:35,574 INFO  [default] current L2 s.d. in MRS = 2.38912
+2016-03-16 16:49:45,029 INFO  [default] Through time 97, 38794157 total exchanges; 
+2016-03-16 16:49:45,241 INFO  [default] current L2 s.d. in MRS = 2.38908
+2016-03-16 16:49:54,450 INFO  [default] Through time 98, 38961809 total exchanges; 
+2016-03-16 16:49:54,667 INFO  [default] current L2 s.d. in MRS = 2.38904
+2016-03-16 16:50:04,178 INFO  [default] Through time 99, 39123628 total exchanges; 
+2016-03-16 16:50:04,395 INFO  [default] current L2 s.d. in MRS = 2.38901
+2016-03-16 16:50:12,291 INFO  [default] Through time 100, 39279023 total exchanges; 
+2016-03-16 16:50:12,743 INFO  [default] current L2 s.d. in MRS = 2.38897
+2016-03-16 16:50:14,026 INFO  [default] Equilibrium achieved at time 100 via 39279381 interactions
+2016-03-16 16:50:14,026 INFO  [default] Equilibration #1 ended
+2016-03-16 16:50:14,649 INFO  [default] Average initial wealth (@ market prices) = 998.696; standard deviation = 91.1164
+2016-03-16 16:50:14,649 INFO  [default] Average final wealth (@ market prices)   = 998.696; standard deviation = 106.826
+2016-03-16 16:50:14,649 INFO  [default] Average change in market wealth          = 1.39266e-16; standard deviation = 66.8968
+2016-03-16 16:50:14,649 INFO  [default] Average final wealth (@ own prices)      = 1299.81; standard deviation = 1213.44
+2016-03-16 16:50:14,649 INFO  [default] Average change in own wealth             = -904.096; standard deviation = 3934.09
+2016-03-16 16:50:14,649 INFO  [default] Minimum increase in utility              = 35.2843; maximum increase = 1.68096e+17
+2016-03-16 16:50:15,011 INFO  [default] Final sum of utilities                   = 2.008e+19
+2016-03-16 16:50:15,011 INFO  [default] Average number of interactions: 3.92794e+07
+2016-03-16 16:50:15,108 INFO  [default] Opening log file...
+2016-03-16 16:50:15,113 INFO  [default] Loading configuration from parameters--1.cfg...
+2016-03-16 16:50:15,115 INFO  [default] Loaded configuration from parameters--1.cfg
+2016-03-16 16:50:15,115 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1315] debug: 1
+2016-03-16 16:50:15,115 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1316] NumberOfCommodities: 10
+2016-03-16 16:50:15,115 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1317] NumberOfAgents: 1000000
+2016-03-16 16:50:15,115 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1318] UseRandomSeed: 0
+2016-03-16 16:50:15,115 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1319] NonRandomSeed: 42
+2016-03-16 16:50:15,115 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1320] PairwiseInteractionsPerPeriod: 500000
+2016-03-16 16:50:15,115 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1321] alphaMin: 0.01
+2016-03-16 16:50:15,119 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1322] alphaMax: 0.99
+2016-03-16 16:50:15,119 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1323] wealthMin: 50
+2016-03-16 16:50:15,119 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1324] wealthMax: 150
+2016-03-16 16:50:15,119 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1325] DefaultSerialExecution: 0
+2016-03-16 16:50:15,119 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1326] NumberOfThreads: 4
+2016-03-16 16:50:15,119 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1329] RequestedEquilibrations: 1
+2016-03-16 16:50:15,119 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1330] SameAgentInitialCondition: 0
+2016-03-16 16:50:15,119 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1331] trade_eps: 0.01
+2016-03-16 16:50:15,150 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1332] termination_criterion: -2
+2016-03-16 16:50:15,150 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1333] TerminationTime: 100
+2016-03-16 16:50:15,150 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1334] termination_eps: 0.01
+2016-03-16 16:50:15,150 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1335] CheckTerminationThreshold: 90
+2016-03-16 16:50:15,150 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1336] CheckTerminationPeriod: 10
+2016-03-16 16:50:15,150 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1337] ShockPreferences: 0
+2016-03-16 16:50:15,150 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1338] ShockPeriod: 10
+2016-03-16 16:50:15,150 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1339] MinShock: 1
+2016-03-16 16:50:15,151 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1340] MaxShock: 5
+2016-03-16 16:50:15,151 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1341] PrintEndowments: 0
+2016-03-16 16:50:15,151 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1342] PrintIntermediateOutput: 1
+2016-03-16 16:50:15,151 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1343] IntermediateOutputPrintPeriod: 1
+2016-03-16 16:50:15,151 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1344] PrintConvergenceStats: 1
+2016-03-16 16:50:15,151 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1345] PrintFinalCommodityList: 0
+2016-03-16 16:50:15,151 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1347] Activation Method: -1
+2016-03-16 16:50:15,151 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1348] Output filename: data.csv
+2016-03-16 16:50:15,151 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1349] Write to file?: 1
+2016-03-16 16:50:15,151 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1350] Append to file?: 1
+2016-03-16 16:50:15,154 DEBUG [default] [main@unknown-host] [void OpenFile(const char*)] [main.cpp:1239] Opening file data.csv
+2016-03-16 16:50:15,154 INFO  [default] Using random seed 2991119297
+2016-03-16 16:50:15,154 INFO  [default] Model version: 1
+2016-03-16 16:50:15,154 INFO  [default] Number of agents: 1000000
+2016-03-16 16:50:15,154 INFO  [default] Number of commodities: 10
+2016-03-16 16:50:15,154 INFO  [default] Trade epsilon: 0.01
+2016-03-16 16:50:15,154 INFO  [default] Time period: 1000000
+2016-03-16 16:50:15,154 INFO  [default] Termination period check rate: 10
+2016-03-16 16:50:15,154 INFO  [default] Termination period check threshold: 90
+2016-03-16 16:50:15,154 INFO  [default] Termination criterion: After 100 time steps
+2016-03-16 16:50:15,154 INFO  [default] Termination threshold: 0.01
+2016-03-16 16:50:15,154 INFO  [default] Parallel activation: TRUE
+2016-03-16 16:50:15,154 INFO  [default] Agent randomization size: 0
+2016-03-16 16:50:15,154 INFO  [default] Number of equilibrations: 1
+2016-03-16 16:50:15,154 INFO  [default] Vary agent initial conditions: 1
+2016-03-16 16:50:15,154 DEBUG [default] [main@unknown-host] [void MemoryObject::WriteMemoryRequirements()] [main.cpp:73] Size of Agent in memory: 240 bytes
+2016-03-16 16:50:15,154 DEBUG [default] [main@unknown-host] [void MemoryObject::WriteMemoryRequirements()] [main.cpp:74] Size of Data in memory: 40 bytes
+2016-03-16 16:50:15,154 DEBUG [default] [main@unknown-host] [void MemoryObject::WriteMemoryRequirements()] [main.cpp:75] Size of CommodityData in memory: 24 bytes
+2016-03-16 16:50:15,154 DEBUG [default] [main@unknown-host] [void MemoryObject::WriteMemoryRequirements()] [main.cpp:76] Size of AgentPopulation in memory: 360 bytes
+2016-03-16 16:50:15,154 DEBUG [default] [main@unknown-host] [void MemoryObject::WriteMemoryRequirements()] [main.cpp:77] Total bytes required (approximate): 240000400 bytes
+2016-03-16 16:50:16,803 INFO  [default] Using fixed activation
+2016-03-16 16:50:16,803 INFO  [default] WARNING: Do not use fixed activation.
+2016-03-16 16:50:18,531 INFO  [default] Average initial wealth (@ own prices) = 2199.77; standard deviation = 4266.72
+2016-03-16 16:50:18,531 INFO  [default] Initial sum of utilities = 1.46393e+19
+2016-03-16 16:50:18,531 INFO  [default] Equilibration #1 starting
+2016-03-16 16:50:25,449 INFO  [default] Through time 1, 497687 total exchanges; 
+2016-03-16 16:50:25,666 INFO  [default] current L2 s.d. in MRS = 3.85343
+2016-03-16 16:50:33,767 INFO  [default] Through time 2, 994798 total exchanges; 
+2016-03-16 16:50:33,991 INFO  [default] current L2 s.d. in MRS = 3.74505
+2016-03-16 16:50:42,647 INFO  [default] Through time 3, 1491000 total exchanges; 
+2016-03-16 16:50:42,854 INFO  [default] current L2 s.d. in MRS = 3.64375
+2016-03-16 16:50:52,020 INFO  [default] Through time 4, 1987144 total exchanges; 
+2016-03-16 16:50:52,263 INFO  [default] current L2 s.d. in MRS = 3.54896
+2016-03-16 16:51:01,421 INFO  [default] Through time 5, 2482563 total exchanges; 
+2016-03-16 16:51:01,639 INFO  [default] current L2 s.d. in MRS = 3.46116
+2016-03-16 16:51:09,998 INFO  [default] Through time 6, 2977332 total exchanges; 
+2016-03-16 16:51:10,205 INFO  [default] current L2 s.d. in MRS = 3.38011
+2016-03-16 16:51:19,527 INFO  [default] Through time 7, 3471894 total exchanges; 
+2016-03-16 16:51:19,736 INFO  [default] current L2 s.d. in MRS = 3.30589
+2016-03-16 16:51:29,435 INFO  [default] Through time 8, 3965924 total exchanges; 
+2016-03-16 16:51:29,639 INFO  [default] current L2 s.d. in MRS = 3.23588
+2016-03-16 16:51:38,382 INFO  [default] Through time 9, 4459445 total exchanges; 
+2016-03-16 16:51:38,621 INFO  [default] current L2 s.d. in MRS = 3.17107
+2016-03-16 16:51:46,446 INFO  [default] Through time 10, 4948475 total exchanges; 
+2016-03-16 16:51:46,813 INFO  [default] current L2 s.d. in MRS = 3.1109
+2016-03-16 16:51:54,512 INFO  [default] Through time 11, 5444826 total exchanges; 
+2016-03-16 16:51:54,727 INFO  [default] current L2 s.d. in MRS = 3.05438
+2016-03-16 16:52:02,622 INFO  [default] Through time 12, 5936882 total exchanges; 
+2016-03-16 16:52:02,882 INFO  [default] current L2 s.d. in MRS = 3.00219
+2016-03-16 16:52:09,697 INFO  [default] Through time 13, 6428374 total exchanges; 
+2016-03-16 16:52:09,985 INFO  [default] current L2 s.d. in MRS = 2.9532
+2016-03-16 16:52:18,057 INFO  [default] Through time 14, 6919118 total exchanges; 
+2016-03-16 16:52:18,288 INFO  [default] current L2 s.d. in MRS = 2.90831
+2016-03-16 16:52:26,991 INFO  [default] Through time 15, 7409672 total exchanges; 
+2016-03-16 16:52:27,234 INFO  [default] current L2 s.d. in MRS = 2.86771
+2016-03-16 16:52:36,994 INFO  [default] Through time 16, 7899383 total exchanges; 
+2016-03-16 16:52:37,215 INFO  [default] current L2 s.d. in MRS = 2.82937
+2016-03-16 16:52:46,254 INFO  [default] Through time 17, 8388570 total exchanges; 
+2016-03-16 16:52:46,472 INFO  [default] current L2 s.d. in MRS = 2.79401
+2016-03-16 16:52:55,427 INFO  [default] Through time 18, 8877051 total exchanges; 
+2016-03-16 16:52:55,650 INFO  [default] current L2 s.d. in MRS = 2.76126
+2016-03-16 16:53:03,388 INFO  [default] Through time 19, 9290554 total exchanges; 
+2016-03-16 16:53:04,174 INFO  [default] current L2 s.d. in MRS = 2.73175
+2016-03-16 16:53:12,009 INFO  [default] Through time 20, 9851927 total exchanges; 
+2016-03-16 16:53:12,235 INFO  [default] current L2 s.d. in MRS = 2.70341
+2016-03-16 16:53:21,880 INFO  [default] Through time 21, 10338387 total exchanges; 
+2016-03-16 16:53:22,099 INFO  [default] current L2 s.d. in MRS = 2.6781
+2016-03-16 16:53:30,592 INFO  [default] Through time 22, 10823816 total exchanges; 
+2016-03-16 16:53:30,821 INFO  [default] current L2 s.d. in MRS = 2.65469
+2016-03-16 16:53:39,790 INFO  [default] Through time 23, 11308139 total exchanges; 
+2016-03-16 16:53:40,130 INFO  [default] current L2 s.d. in MRS = 2.63334
+2016-03-16 16:53:48,742 INFO  [default] Through time 24, 11792391 total exchanges; 
+2016-03-16 16:53:48,962 INFO  [default] current L2 s.d. in MRS = 2.61374
+2016-03-16 16:53:56,811 INFO  [default] Through time 25, 12273727 total exchanges; 
+2016-03-16 16:53:57,062 INFO  [default] current L2 s.d. in MRS = 2.59551
+2016-03-16 16:54:06,028 INFO  [default] Through time 26, 12757488 total exchanges; 
+2016-03-16 16:54:06,253 INFO  [default] current L2 s.d. in MRS = 2.57852
+2016-03-16 16:54:15,732 INFO  [default] Through time 27, 13238617 total exchanges; 
+2016-03-16 16:54:15,962 INFO  [default] current L2 s.d. in MRS = 2.5631
+2016-03-16 16:54:24,436 INFO  [default] Through time 28, 13718955 total exchanges; 
+2016-03-16 16:54:24,698 INFO  [default] current L2 s.d. in MRS = 2.54874
+2016-03-16 16:54:33,102 INFO  [default] Through time 29, 14198107 total exchanges; 
+2016-03-16 16:54:33,326 INFO  [default] current L2 s.d. in MRS = 2.53584
+2016-03-16 16:54:42,028 INFO  [default] Through time 30, 14675896 total exchanges; 
+2016-03-16 16:54:42,262 INFO  [default] current L2 s.d. in MRS = 2.52392
+2016-03-16 16:54:51,268 INFO  [default] Through time 31, 15152561 total exchanges; 
+2016-03-16 16:54:51,491 INFO  [default] current L2 s.d. in MRS = 2.51285
+2016-03-16 16:55:00,562 INFO  [default] Through time 32, 15628103 total exchanges; 
+2016-03-16 16:55:00,781 INFO  [default] current L2 s.d. in MRS = 2.50274
+2016-03-16 16:55:09,992 INFO  [default] Through time 33, 16102199 total exchanges; 
+2016-03-16 16:55:10,212 INFO  [default] current L2 s.d. in MRS = 2.49342
+2016-03-16 16:55:18,927 INFO  [default] Through time 34, 16574814 total exchanges; 
+2016-03-16 16:55:19,151 INFO  [default] current L2 s.d. in MRS = 2.48499
+2016-03-16 16:55:28,037 INFO  [default] Through time 35, 17045276 total exchanges; 
+2016-03-16 16:55:28,560 INFO  [default] current L2 s.d. in MRS = 2.47736
+2016-03-16 16:55:36,711 INFO  [default] Through time 36, 17510194 total exchanges; 
+2016-03-16 16:55:37,001 INFO  [default] current L2 s.d. in MRS = 2.47019
+2016-03-16 16:55:45,579 INFO  [default] Through time 37, 17983452 total exchanges; 
+2016-03-16 16:55:46,045 INFO  [default] current L2 s.d. in MRS = 2.46361
+2016-03-16 16:55:54,098 INFO  [default] Through time 38, 18449197 total exchanges; 
+2016-03-16 16:55:54,724 INFO  [default] current L2 s.d. in MRS = 2.45766
+2016-03-16 16:56:03,884 INFO  [default] Through time 39, 18912654 total exchanges; 
+2016-03-16 16:56:04,126 INFO  [default] current L2 s.d. in MRS = 2.45205
+2016-03-16 16:56:13,486 INFO  [default] Through time 40, 19376967 total exchanges; 
+2016-03-16 16:56:13,702 INFO  [default] current L2 s.d. in MRS = 2.4469
+2016-03-16 16:56:22,592 INFO  [default] Through time 41, 19837372 total exchanges; 
+2016-03-16 16:56:22,817 INFO  [default] current L2 s.d. in MRS = 2.44231
+2016-03-16 16:56:32,319 INFO  [default] Through time 42, 20296431 total exchanges; 
+2016-03-16 16:56:32,542 INFO  [default] current L2 s.d. in MRS = 2.43814
+2016-03-16 16:56:41,517 INFO  [default] Through time 43, 20744661 total exchanges; 
+2016-03-16 16:56:42,094 INFO  [default] current L2 s.d. in MRS = 2.4344
+2016-03-16 16:56:50,775 INFO  [default] Through time 44, 21206790 total exchanges; 
+2016-03-16 16:56:51,121 INFO  [default] current L2 s.d. in MRS = 2.43088
+2016-03-16 16:57:00,256 INFO  [default] Through time 45, 21658880 total exchanges; 
+2016-03-16 16:57:00,483 INFO  [default] current L2 s.d. in MRS = 2.42759
+2016-03-16 16:57:09,009 INFO  [default] Through time 46, 22107733 total exchanges; 
+2016-03-16 16:57:09,235 INFO  [default] current L2 s.d. in MRS = 2.42453
+2016-03-16 16:57:18,880 INFO  [default] Through time 47, 22554807 total exchanges; 
+2016-03-16 16:57:19,115 INFO  [default] current L2 s.d. in MRS = 2.42186
+2016-03-16 16:57:27,148 INFO  [default] Through time 48, 22999112 total exchanges; 
+2016-03-16 16:57:27,363 INFO  [default] current L2 s.d. in MRS = 2.41936
+2016-03-16 16:57:36,899 INFO  [default] Through time 49, 23440399 total exchanges; 
+2016-03-16 16:57:37,114 INFO  [default] current L2 s.d. in MRS = 2.4171
+2016-03-16 16:57:46,750 INFO  [default] Through time 50, 23878813 total exchanges; 
+2016-03-16 16:57:46,967 INFO  [default] current L2 s.d. in MRS = 2.41505
+2016-03-16 16:57:55,420 INFO  [default] Through time 51, 24314255 total exchanges; 
+2016-03-16 16:57:55,630 INFO  [default] current L2 s.d. in MRS = 2.41311
+2016-03-16 16:58:05,029 INFO  [default] Through time 52, 24746595 total exchanges; 
+2016-03-16 16:58:05,254 INFO  [default] current L2 s.d. in MRS = 2.41134
+2016-03-16 16:58:14,911 INFO  [default] Through time 53, 25175173 total exchanges; 
+2016-03-16 16:58:15,123 INFO  [default] current L2 s.d. in MRS = 2.40974
+2016-03-16 16:58:23,879 INFO  [default] Through time 54, 25600374 total exchanges; 
+2016-03-16 16:58:24,105 INFO  [default] current L2 s.d. in MRS = 2.40825
+2016-03-16 16:58:32,762 INFO  [default] Through time 55, 26021675 total exchanges; 
+2016-03-16 16:58:34,160 INFO  [default] current L2 s.d. in MRS = 2.40687
+2016-03-16 16:58:45,501 INFO  [default] Through time 56, 26439924 total exchanges; 
+2016-03-16 16:58:46,608 INFO  [default] current L2 s.d. in MRS = 2.40568
+2016-03-16 16:58:55,671 INFO  [default] Through time 57, 26853687 total exchanges; 
+2016-03-16 16:58:55,919 INFO  [default] current L2 s.d. in MRS = 2.40452
+2016-03-16 16:59:04,906 INFO  [default] Through time 58, 27263397 total exchanges; 
+2016-03-16 16:59:05,198 INFO  [default] current L2 s.d. in MRS = 2.40351
+2016-03-16 16:59:14,557 INFO  [default] Through time 59, 27669799 total exchanges; 
+2016-03-16 16:59:15,087 INFO  [default] current L2 s.d. in MRS = 2.40258
+2016-03-16 16:59:24,895 INFO  [default] Through time 60, 28070625 total exchanges; 
+2016-03-16 16:59:25,106 INFO  [default] current L2 s.d. in MRS = 2.4017
+2016-03-16 16:59:33,969 INFO  [default] Through time 61, 28467329 total exchanges; 
+2016-03-16 16:59:34,212 INFO  [default] current L2 s.d. in MRS = 2.40094
+2016-03-16 16:59:43,417 INFO  [default] Through time 62, 28858903 total exchanges; 
+2016-03-16 16:59:43,628 INFO  [default] current L2 s.d. in MRS = 2.4002
+2016-03-16 16:59:53,191 INFO  [default] Through time 63, 29246007 total exchanges; 
+2016-03-16 16:59:53,400 INFO  [default] current L2 s.d. in MRS = 2.39956
+2016-03-16 17:00:02,875 INFO  [default] Through time 64, 29628909 total exchanges; 
+2016-03-16 17:00:03,086 INFO  [default] current L2 s.d. in MRS = 2.39891
+2016-03-16 17:00:12,110 INFO  [default] Through time 65, 30005872 total exchanges; 
+2016-03-16 17:00:12,346 INFO  [default] current L2 s.d. in MRS = 2.39835
+2016-03-16 17:00:26,085 INFO  [default] Through time 66, 30377609 total exchanges; 
+2016-03-16 17:00:27,419 INFO  [default] current L2 s.d. in MRS = 2.39782
+2016-03-16 17:00:35,468 INFO  [default] Through time 67, 30744818 total exchanges; 
+2016-03-16 17:00:35,839 INFO  [default] current L2 s.d. in MRS = 2.39733
+2016-03-16 17:00:45,325 INFO  [default] Through time 68, 31106239 total exchanges; 
+2016-03-16 17:00:45,538 INFO  [default] current L2 s.d. in MRS = 2.39687
+2016-03-16 17:21:33,314 INFO  [default] Through time 69, 31461941 total exchanges; 
+2016-03-16 17:21:37,043 INFO  [default] current L2 s.d. in MRS = 2.39647
+2016-03-16 17:21:48,944 INFO  [default] Through time 70, 31811491 total exchanges; 
+2016-03-16 17:21:51,488 INFO  [default] current L2 s.d. in MRS = 2.39609
+2016-03-16 17:22:01,982 INFO  [default] Through time 71, 32155612 total exchanges; 
+2016-03-16 17:22:02,504 INFO  [default] current L2 s.d. in MRS = 2.39574
+2016-03-16 17:22:11,068 INFO  [default] Through time 72, 32491328 total exchanges; 
+2016-03-16 17:22:11,489 INFO  [default] current L2 s.d. in MRS = 2.39545
+2016-03-16 17:22:19,708 INFO  [default] Through time 73, 32824768 total exchanges; 
+2016-03-16 17:22:20,166 INFO  [default] current L2 s.d. in MRS = 2.3952
+2016-03-16 17:22:28,141 INFO  [default] Through time 74, 33150053 total exchanges; 
+2016-03-16 17:22:28,373 INFO  [default] current L2 s.d. in MRS = 2.39492
+2016-03-16 17:22:37,207 INFO  [default] Through time 75, 33468642 total exchanges; 
+2016-03-16 17:22:37,894 INFO  [default] current L2 s.d. in MRS = 2.39468
+2016-03-16 17:22:45,956 INFO  [default] Through time 76, 33782064 total exchanges; 
+2016-03-16 17:22:46,172 INFO  [default] current L2 s.d. in MRS = 2.39445
+2016-03-16 17:22:55,665 INFO  [default] Through time 77, 34088441 total exchanges; 
+2016-03-16 17:22:55,870 INFO  [default] current L2 s.d. in MRS = 2.39428
+2016-03-16 17:23:05,275 INFO  [default] Through time 78, 34387658 total exchanges; 
+2016-03-16 17:23:05,542 INFO  [default] current L2 s.d. in MRS = 2.3941
+2016-03-16 17:23:14,509 INFO  [default] Through time 79, 34680593 total exchanges; 
+2016-03-16 17:23:15,245 INFO  [default] current L2 s.d. in MRS = 2.39395
+2016-03-16 17:23:23,953 INFO  [default] Through time 80, 34966477 total exchanges; 
+2016-03-16 17:23:24,172 INFO  [default] current L2 s.d. in MRS = 2.39379
+2016-03-16 17:23:33,469 INFO  [default] Through time 81, 35245214 total exchanges; 
+2016-03-16 17:23:33,755 INFO  [default] current L2 s.d. in MRS = 2.39365
+2016-03-16 17:23:36,380 FATAL [default] CRASH HANDLED; Application has crashed due to [SIGINT] signal
+2016-03-16 17:23:36,381 WARN  [default] Aborting application. Reason: Fatal log at [./easylogging++.h:5583]
+2016-03-16 17:23:38,756 INFO  [default] Opening log file...
+2016-03-16 17:23:38,758 INFO  [default] Loading configuration from parameters--1.cfg...
+2016-03-16 17:23:38,759 INFO  [default] Loaded configuration from parameters--1.cfg
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1315] debug: 1
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1316] NumberOfCommodities: 10
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1317] NumberOfAgents: 1000000
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1318] UseRandomSeed: 0
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1319] NonRandomSeed: 42
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1320] PairwiseInteractionsPerPeriod: 500000
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1321] alphaMin: 0.01
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1322] alphaMax: 0.99
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1323] wealthMin: 50
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1324] wealthMax: 150
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1325] DefaultSerialExecution: 0
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1326] NumberOfThreads: 4
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1329] RequestedEquilibrations: 1
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1330] SameAgentInitialCondition: 0
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1331] trade_eps: 0.01
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1332] termination_criterion: -2
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1333] TerminationTime: 100
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1334] termination_eps: 0.01
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1335] CheckTerminationThreshold: 90
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1336] CheckTerminationPeriod: 10
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1337] ShockPreferences: 0
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1338] ShockPeriod: 10
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1339] MinShock: 1
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1340] MaxShock: 5
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1341] PrintEndowments: 0
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1342] PrintIntermediateOutput: 1
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1343] IntermediateOutputPrintPeriod: 1
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1344] PrintConvergenceStats: 1
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1345] PrintFinalCommodityList: 0
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1347] Activation Method: -1
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1348] Output filename: data.csv
+2016-03-16 17:23:38,759 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1349] Write to file?: 1
+2016-03-16 17:23:38,760 DEBUG [default] [main@unknown-host] [void ReadConfigFile(std::string)] [main.cpp:1350] Append to file?: 1
+2016-03-16 17:23:38,789 DEBUG [default] [main@unknown-host] [void OpenFile(const char*)] [main.cpp:1239] Opening file data.csv
+2016-03-16 17:23:38,789 INFO  [default] Using random seed 3957113217
+2016-03-16 17:23:38,790 INFO  [default] Model version: 1
+2016-03-16 17:23:38,790 INFO  [default] Number of agents: 1000000
+2016-03-16 17:23:38,790 INFO  [default] Number of commodities: 10
+2016-03-16 17:23:38,790 INFO  [default] Trade epsilon: 0.01
+2016-03-16 17:23:38,790 INFO  [default] Time period: 1000000
+2016-03-16 17:23:38,790 INFO  [default] Termination period check rate: 10
+2016-03-16 17:23:38,790 INFO  [default] Termination period check threshold: 90
+2016-03-16 17:23:38,790 INFO  [default] Termination criterion: After 100 time steps
+2016-03-16 17:23:38,790 INFO  [default] Termination threshold: 0.01
+2016-03-16 17:23:38,790 INFO  [default] Parallel activation: TRUE
+2016-03-16 17:23:38,790 INFO  [default] Agent randomization size: 0
+2016-03-16 17:23:38,790 INFO  [default] Number of equilibrations: 1
+2016-03-16 17:23:38,790 INFO  [default] Vary agent initial conditions: 1
+2016-03-16 17:23:38,790 DEBUG [default] [main@unknown-host] [void MemoryObject::WriteMemoryRequirements()] [main.cpp:73] Size of Agent in memory: 240 bytes
+2016-03-16 17:23:38,790 DEBUG [default] [main@unknown-host] [void MemoryObject::WriteMemoryRequirements()] [main.cpp:74] Size of Data in memory: 40 bytes
+2016-03-16 17:23:38,790 DEBUG [default] [main@unknown-host] [void MemoryObject::WriteMemoryRequirements()] [main.cpp:75] Size of CommodityData in memory: 24 bytes
+2016-03-16 17:23:38,790 DEBUG [default] [main@unknown-host] [void MemoryObject::WriteMemoryRequirements()] [main.cpp:76] Size of AgentPopulation in memory: 360 bytes
+2016-03-16 17:23:38,790 DEBUG [default] [main@unknown-host] [void MemoryObject::WriteMemoryRequirements()] [main.cpp:77] Total bytes required (approximate): 240000400 bytes
+2016-03-16 17:23:40,558 INFO  [default] Using fixed activation
+2016-03-16 17:23:40,558 INFO  [default] WARNING: Do not use fixed activation.
+2016-03-16 17:23:42,257 INFO  [default] Average initial wealth (@ own prices) = 2215.16; standard deviation = 4318.21
+2016-03-16 17:23:42,258 INFO  [default] Initial sum of utilities = 1.50044e+19
+2016-03-16 17:23:42,258 INFO  [default] Equilibration #1 starting
+2016-03-16 17:23:49,295 INFO  [default] Through time 1, 497602 total exchanges; 
+2016-03-16 17:23:49,641 INFO  [default] current L2 s.d. in MRS = 3.85548
+2016-03-16 17:23:57,358 INFO  [default] Through time 2, 994593 total exchanges; 
+2016-03-16 17:23:57,579 INFO  [default] current L2 s.d. in MRS = 3.74572
+2016-03-16 17:24:05,668 INFO  [default] Through time 3, 1491002 total exchanges; 
+2016-03-16 17:24:05,882 INFO  [default] current L2 s.d. in MRS = 3.64465
+2016-03-16 17:24:15,466 INFO  [default] Through time 4, 1986945 total exchanges; 
+2016-03-16 17:24:15,794 INFO  [default] current L2 s.d. in MRS = 3.5507
+2016-03-16 17:24:24,256 INFO  [default] Through time 5, 2482251 total exchanges; 
+2016-03-16 17:24:24,624 INFO  [default] current L2 s.d. in MRS = 3.46313
+2016-03-16 17:24:33,834 INFO  [default] Through time 6, 2977175 total exchanges; 
+2016-03-16 17:24:34,181 INFO  [default] current L2 s.d. in MRS = 3.38212
+2016-03-16 17:24:43,864 INFO  [default] Through time 7, 3470947 total exchanges; 
+2016-03-16 17:24:44,111 INFO  [default] current L2 s.d. in MRS = 3.30627
+2016-03-16 17:24:52,556 INFO  [default] Through time 8, 3965603 total exchanges; 
+2016-03-16 17:24:52,759 INFO  [default] current L2 s.d. in MRS = 3.23606
+2016-03-16 17:25:02,224 INFO  [default] Through time 9, 4459020 total exchanges; 
+2016-03-16 17:25:02,432 INFO  [default] current L2 s.d. in MRS = 3.17094
+2016-03-16 17:25:11,228 INFO  [default] Through time 10, 4951794 total exchanges; 
+2016-03-16 17:25:11,448 INFO  [default] current L2 s.d. in MRS = 3.11048
+2016-03-16 17:25:19,217 INFO  [default] Through time 11, 5443262 total exchanges; 
+2016-03-16 17:25:19,527 INFO  [default] current L2 s.d. in MRS = 3.05436
+2016-03-16 17:25:28,610 INFO  [default] Through time 12, 5936590 total exchanges; 
+2016-03-16 17:25:28,889 INFO  [default] current L2 s.d. in MRS = 3.00185
+2016-03-16 17:25:36,865 INFO  [default] Through time 13, 6428120 total exchanges; 
+2016-03-16 17:25:37,087 INFO  [default] current L2 s.d. in MRS = 2.95393
+2016-03-16 17:25:45,553 INFO  [default] Through time 14, 6918888 total exchanges; 
+2016-03-16 17:25:45,768 INFO  [default] current L2 s.d. in MRS = 2.90936
+2016-03-16 17:25:54,216 INFO  [default] Through time 15, 7409566 total exchanges; 
+2016-03-16 17:25:54,432 INFO  [default] current L2 s.d. in MRS = 2.86836
+2016-03-16 17:26:03,682 INFO  [default] Through time 16, 7899342 total exchanges; 
+2016-03-16 17:26:03,961 INFO  [default] current L2 s.d. in MRS = 2.83033
+2016-03-16 17:26:13,544 INFO  [default] Through time 17, 8388519 total exchanges; 
+2016-03-16 17:26:13,761 INFO  [default] current L2 s.d. in MRS = 2.79481
+2016-03-16 17:26:23,040 INFO  [default] Through time 18, 8876980 total exchanges; 
+2016-03-16 17:26:23,253 INFO  [default] current L2 s.d. in MRS = 2.76224
+2016-03-16 17:26:32,426 INFO  [default] Through time 19, 9364418 total exchanges; 
+2016-03-16 17:26:32,654 INFO  [default] current L2 s.d. in MRS = 2.73246
+2016-03-16 17:26:41,921 INFO  [default] Through time 20, 9852065 total exchanges; 
+2016-03-16 17:26:42,155 INFO  [default] current L2 s.d. in MRS = 2.70475
+2016-03-16 17:26:51,411 INFO  [default] Through time 21, 10338513 total exchanges; 
+2016-03-16 17:26:51,636 INFO  [default] current L2 s.d. in MRS = 2.67924
+2016-03-16 17:27:01,005 INFO  [default] Through time 22, 10824180 total exchanges; 
+2016-03-16 17:27:01,244 INFO  [default] current L2 s.d. in MRS = 2.65583
+2016-03-16 17:27:10,553 INFO  [default] Through time 23, 11309009 total exchanges; 
+2016-03-16 17:27:10,865 INFO  [default] current L2 s.d. in MRS = 2.63427
+2016-03-16 17:27:19,261 INFO  [default] Through time 24, 11792898 total exchanges; 
+2016-03-16 17:27:19,553 INFO  [default] current L2 s.d. in MRS = 2.61449
+2016-03-16 17:27:28,574 INFO  [default] Through time 25, 12275946 total exchanges; 
+2016-03-16 17:27:28,803 INFO  [default] current L2 s.d. in MRS = 2.59623
+2016-03-16 17:27:37,530 INFO  [default] Through time 26, 12757806 total exchanges; 
+2016-03-16 17:27:37,762 INFO  [default] current L2 s.d. in MRS = 2.57915
+2016-03-16 17:27:47,442 INFO  [default] Through time 27, 13238946 total exchanges; 
+2016-03-16 17:27:47,659 INFO  [default] current L2 s.d. in MRS = 2.56351
+2016-03-16 17:27:57,249 INFO  [default] Through time 28, 13719149 total exchanges; 
+2016-03-16 17:27:57,496 INFO  [default] current L2 s.d. in MRS = 2.54911
+2016-03-16 17:28:05,631 INFO  [default] Through time 29, 14197174 total exchanges; 
+2016-03-16 17:28:05,978 INFO  [default] current L2 s.d. in MRS = 2.53584
+2016-03-16 17:28:14,458 INFO  [default] Through time 30, 14675658 total exchanges; 
+2016-03-16 17:28:14,899 INFO  [default] current L2 s.d. in MRS = 2.52369
+2016-03-16 17:28:24,178 INFO  [default] Through time 31, 15152184 total exchanges; 
+2016-03-16 17:28:24,460 INFO  [default] current L2 s.d. in MRS = 2.51278
+2016-03-16 17:28:33,639 INFO  [default] Through time 32, 15627338 total exchanges; 
+2016-03-16 17:28:33,857 INFO  [default] current L2 s.d. in MRS = 2.50277
+2016-03-16 17:28:42,855 INFO  [default] Through time 33, 16097653 total exchanges; 
+2016-03-16 17:28:44,246 INFO  [default] current L2 s.d. in MRS = 2.49344
+2016-03-16 17:28:53,538 INFO  [default] Through time 34, 16573709 total exchanges; 
+2016-03-16 17:28:54,014 INFO  [default] current L2 s.d. in MRS = 2.48495
+2016-03-16 17:29:02,561 INFO  [default] Through time 35, 17045077 total exchanges; 
+2016-03-16 17:29:02,794 INFO  [default] current L2 s.d. in MRS = 2.47712
+2016-03-16 17:29:11,538 INFO  [default] Through time 36, 17514919 total exchanges; 
+2016-03-16 17:29:11,758 INFO  [default] current L2 s.d. in MRS = 2.4698
+2016-03-16 17:29:21,001 INFO  [default] Through time 37, 17982696 total exchanges; 
+2016-03-16 17:29:21,238 INFO  [default] current L2 s.d. in MRS = 2.46344
+2016-03-16 17:29:30,624 INFO  [default] Through time 38, 18449047 total exchanges; 
+2016-03-16 17:29:30,844 INFO  [default] current L2 s.d. in MRS = 2.45731
+2016-03-16 17:29:40,487 INFO  [default] Through time 39, 18913644 total exchanges; 
+2016-03-16 17:29:40,703 INFO  [default] current L2 s.d. in MRS = 2.45184
+2016-03-16 17:29:49,677 INFO  [default] Through time 40, 19376335 total exchanges; 
+2016-03-16 17:29:49,888 INFO  [default] current L2 s.d. in MRS = 2.44674
+2016-03-16 17:29:59,400 INFO  [default] Through time 41, 19837026 total exchanges; 
+2016-03-16 17:29:59,607 INFO  [default] current L2 s.d. in MRS = 2.44215
+2016-03-16 17:30:07,953 INFO  [default] Through time 42, 20295686 total exchanges; 
+2016-03-16 17:30:08,556 INFO  [default] current L2 s.d. in MRS = 2.43794
+2016-03-16 17:30:17,906 INFO  [default] Through time 43, 20752383 total exchanges; 
+2016-03-16 17:30:18,160 INFO  [default] current L2 s.d. in MRS = 2.43407
+2016-03-16 17:30:26,015 INFO  [default] Through time 44, 21206432 total exchanges; 
+2016-03-16 17:30:26,290 INFO  [default] current L2 s.d. in MRS = 2.4305
+2016-03-16 17:30:34,860 INFO  [default] Through time 45, 21658356 total exchanges; 
+2016-03-16 17:30:35,082 INFO  [default] current L2 s.d. in MRS = 2.42718
+2016-03-16 17:30:44,633 INFO  [default] Through time 46, 22108275 total exchanges; 
+2016-03-16 17:30:44,865 INFO  [default] current L2 s.d. in MRS = 2.42423
