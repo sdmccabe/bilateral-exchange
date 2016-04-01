@@ -352,19 +352,19 @@ void AgentPopulation::GetPoissonAgentPair(AgentPtr& Agent1, AgentPtr& Agent2) {
         PoissonUpToDate = false;
     }
     if (Agent1 == nullptr) {
-        std::cout << "null pointer in Agent1" << std::endl;
+        LOG(WARNING) << "null pointer in Agent1" << std::endl;
         std::terminate();
     }
     if (Agent2 == nullptr) {
-        std::cout << "null pointer in Agent2" << std::endl;
+        LOG(WARNING) << "null pointer in Agent2" << std::endl;
         std::terminate();
     }
     if (Agent1 == NULL) {
-        std::cout << "null pointer in Agent1" << std::endl;
+        LOG(WARNING) << "null pointer in Agent1" << std::endl;
         std::terminate();
     }
     if (Agent2 == NULL) {
-        std::cout << "null pointer in Agent2" << std::endl;
+        LOG(WARNING) << "null pointer in Agent2" << std::endl;
         std::terminate();
     }
 }
@@ -864,9 +864,16 @@ void AgentPopulation::TradeInFork (tbb::concurrent_vector<AgentPtr> a) {
     tbb::concurrent_vector<double> VolumeInFork;
     VolumeInFork.resize(NumberOfCommodities);
 
-    int t = std::max(std::thread::hardware_concurrency(), static_cast<unsigned int>(NumberOfThreads));
+    //int t = std::max(std::thread::hardware_concurrency(), static_cast<unsigned int>(NumberOfThreads));
+    int t = NumberOfThreads;
+    if (t == 0) {
+        t = std::thread::hardware_concurrency();
+    }
+    //std::cout << t << std::endl;
+
     interactionsInFork = 0;
     for (int i = 0; i < PairwiseInteractionsPerPeriod/t; ++i) {
+        //std::cout << i << std::endl;
         (this->*GetAgentPairInFork) (Agent1, Agent2, a, ait);
         Agent1->MarkActivated();
         Agent2->MarkActivated();
@@ -946,6 +953,7 @@ void AgentPopulation::TradeInFork (tbb::concurrent_vector<AgentPtr> a) {
 }
 
     std::lock_guard<std::mutex> lock(m); // lock the global updates
+    //std::cout << "acquired lock" << std::endl;
     TotalInteractions += interactionsInFork;
 
     for (auto& vol : Volume) {
@@ -961,6 +969,10 @@ long long AgentPopulation::ForkAndJoinEquilibrate(int NumberOfEquilibrationsSoFa
     TotalInteractions = 0;
 
     size_t split = static_cast<size_t>(NumberOfThreads);
+    if (split == 0) {
+        split = std::thread::hardware_concurrency();
+    }
+    //std::cout << split << std::endl;
 
     tbb::concurrent_vector<std::pair<size_t, size_t>> populations;
 
@@ -982,6 +994,7 @@ long long AgentPopulation::ForkAndJoinEquilibrate(int NumberOfEquilibrationsSoFa
         }
         // std::cout << "Fork" << std::endl;
         tbb::parallel_for(static_cast<size_t>(0), split, static_cast<size_t>(1), [=](size_t i) {
+            //std::cout << "reached" << std::endl;
             auto pop = tbb::concurrent_vector<AgentPtr>(Agents.begin() + populations[i].first, Agents.begin() + populations[i].second);
             TradeInFork(pop);
         });
