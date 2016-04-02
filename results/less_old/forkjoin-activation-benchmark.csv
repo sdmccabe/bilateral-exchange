@@ -1,0 +1,226 @@
+agents,real,user,sys,memory
+-1,29.73,53.22,0.32,14560
+-1,24.09,43.18,0.21,13744
+-1,22.64,40.54,0.17,13868
+-1,25.69,45.77,0.27,15228
+-1,25.10,44.94,0.19,13744
+-1,23.17,41.81,0.15,13824
+-1,21.84,38.70,0.16,13900
+-1,20.48,36.87,0.17,15048
+-1,19.44,35.00,0.12,13900
+-1,23.25,41.83,0.18,13704
+-1,37.54,65.96,0.74,13748
+-1,26.12,46.83,0.21,14980
+-1,24.45,43.48,0.23,13796
+-1,20.45,36.23,0.09,13828
+-1,19.00,34.13,0.07,13996
+-1,22.51,40.07,0.12,13904
+-1,21.21,38.29,0.15,13748
+-1,19.49,34.93,0.11,14360
+-1,19.56,35.14,0.12,13792
+-1,20.93,37.41,0.15,13716
+-1,27.62,49.14,0.18,13744
+-1,22.38,39.31,0.17,13780
+-1,21.33,38.35,0.12,15684
+-1,20.50,36.07,0.19,13816
+-1,20.06,36.28,0.13,13732
+0,20.52,36.19,0.24,13868
+0,20.13,36.22,0.14,13756
+0,19.80,35.44,0.15,14384
+0,20.87,37.39,0.21,14556
+0,19.89,35.65,0.14,13720
+0,19.47,34.97,0.11,13892
+0,19.29,34.81,0.12,13860
+0,21.24,37.83,0.16,15736
+0,21.59,38.41,0.18,13884
+0,21.70,38.72,0.17,13720
+0,23.11,41.36,0.11,13880
+0,20.52,36.49,0.21,13784
+0,21.25,37.71,0.17,13736
+0,21.52,38.56,0.16,13748
+0,20.97,37.37,0.20,13768
+0,20.91,37.68,0.06,15428
+0,20.26,36.24,0.22,13884
+0,22.10,39.50,0.13,13784
+0,33.36,59.64,0.32,13748
+0,24.27,43.63,0.23,13736
+0,21.60,38.70,0.17,13796
+0,20.20,36.11,0.08,13928
+0,19.45,35.15,0.08,13772
+0,20.08,35.96,0.22,13744
+0,19.99,35.61,0.25,13900
+1,32.33,59.30,0.08,13784
+1,28.41,51.41,0.13,14608
+1,32.52,59.51,0.13,13688
+1,32.38,58.60,0.18,15192
+1,33.96,61.80,0.32,13812
+1,29.42,53.30,0.24,13808
+1,24.63,44.82,0.13,13816
+1,31.95,58.43,0.25,13720
+1,27.18,49.79,0.14,15068
+1,24.85,44.77,0.15,13920
+1,27.73,50.56,0.16,13748
+1,26.15,47.90,0.12,13720
+1,25.35,45.97,0.12,13796
+1,27.63,50.58,0.15,13852
+1,27.38,50.10,0.12,13748
+1,25.25,46.01,0.08,13696
+1,28.34,51.68,0.11,13752
+1,27.47,50.09,0.11,13772
+1,23.79,43.09,0.19,13860
+1,27.73,50.55,0.21,13792
+1,27.04,49.40,0.07,13804
+1,24.44,44.37,0.16,14660
+1,28.01,51.18,0.10,13792
+1,26.47,48.24,0.15,13684
+1,24.23,44.02,0.13,13712
+Command terminated by signal 6
+3,0.05,0.04,0.01,11640
+Command terminated by signal 6
+3,0.05,0.05,0.00,11572
+Command terminated by signal 6
+3,0.05,0.05,0.00,11532
+Command terminated by signal 6
+3,0.05,0.04,0.00,11572
+Command terminated by signal 6
+3,0.05,0.04,0.00,13588
+Command terminated by signal 6
+3,0.05,0.04,0.00,11600
+Command terminated by signal 6
+3,0.05,0.04,0.01,11552
+Command terminated by signal 6
+3,0.05,0.05,0.00,11548
+Command terminated by signal 6
+3,0.04,0.04,0.00,11716
+Command terminated by signal 6
+3,0.05,0.05,0.00,11476
+Command terminated by signal 6
+3,0.05,0.05,0.00,11676
+Command terminated by signal 6
+3,0.05,0.04,0.01,11580
+Command terminated by signal 6
+3,0.05,0.05,0.00,11540
+Command terminated by signal 6
+3,0.06,0.05,0.00,11452
+Command terminated by signal 6
+3,0.05,0.05,0.00,11636
+Command terminated by signal 6
+3,0.05,0.05,0.00,11636
+Command terminated by signal 6
+3,0.05,0.04,0.01,11420
+Command terminated by signal 6
+3,0.06,0.05,0.00,11448
+Command terminated by signal 6
+3,0.05,0.05,0.00,11516
+Command terminated by signal 6
+3,0.05,0.05,0.00,11640
+Command terminated by signal 6
+3,0.05,0.04,0.01,13620
+Command terminated by signal 6
+3,0.05,0.05,0.00,11568
+Command terminated by signal 6
+3,0.05,0.05,0.00,13632
+Command terminated by signal 6
+3,0.05,0.05,0.00,11548
+Command terminated by signal 6
+3,0.04,0.04,0.00,11508
+Command terminated by signal 6
+4,0.05,0.05,0.00,11624
+Command terminated by signal 6
+4,0.05,0.05,0.00,13628
+Command terminated by signal 6
+4,0.05,0.04,0.01,11556
+Command terminated by signal 6
+4,0.04,0.04,0.00,11560
+Command terminated by signal 6
+4,0.05,0.03,0.02,11692
+Command terminated by signal 6
+4,0.05,0.05,0.00,11636
+Command terminated by signal 6
+4,0.05,0.04,0.01,13760
+Command terminated by signal 6
+4,0.05,0.05,0.00,11684
+Command terminated by signal 6
+4,0.05,0.04,0.00,11500
+Command terminated by signal 6
+4,0.05,0.04,0.01,11704
+Command terminated by signal 6
+4,0.05,0.04,0.01,11472
+Command terminated by signal 6
+4,0.05,0.05,0.00,11588
+Command terminated by signal 6
+4,0.04,0.04,0.00,13488
+Command terminated by signal 6
+4,0.05,0.05,0.00,11504
+Command terminated by signal 6
+4,0.05,0.04,0.01,11632
+Command terminated by signal 6
+4,0.04,0.04,0.00,11604
+Command terminated by signal 6
+4,0.05,0.04,0.00,11456
+Command terminated by signal 6
+4,0.05,0.04,0.01,13768
+Command terminated by signal 6
+4,0.05,0.04,0.01,11500
+Command terminated by signal 6
+4,0.05,0.04,0.01,13616
+Command terminated by signal 6
+4,0.04,0.04,0.00,13684
+Command terminated by signal 6
+4,0.05,0.05,0.00,11588
+Command terminated by signal 6
+4,0.05,0.05,0.00,11672
+Command terminated by signal 6
+4,0.05,0.04,0.01,11540
+Command terminated by signal 6
+4,0.05,0.04,0.01,11612
+Command terminated by signal 6
+5,0.04,0.04,0.00,11512
+Command terminated by signal 6
+5,0.05,0.05,0.00,11548
+Command terminated by signal 6
+5,0.05,0.04,0.01,13656
+Command terminated by signal 6
+5,0.05,0.04,0.00,11468
+Command terminated by signal 6
+5,0.05,0.05,0.00,11468
+Command terminated by signal 6
+5,0.05,0.04,0.01,13584
+Command terminated by signal 6
+5,0.04,0.04,0.00,11756
+Command terminated by signal 6
+5,0.05,0.05,0.00,11448
+Command terminated by signal 6
+5,0.05,0.05,0.00,11680
+Command terminated by signal 6
+5,0.05,0.04,0.01,11680
+Command terminated by signal 6
+5,0.05,0.05,0.00,13612
+Command terminated by signal 6
+5,0.05,0.04,0.01,15636
+Command terminated by signal 6
+5,0.05,0.04,0.01,11468
+Command terminated by signal 6
+5,0.06,0.05,0.00,11592
+Command terminated by signal 6
+5,0.05,0.04,0.01,13688
+Command terminated by signal 6
+5,0.06,0.05,0.00,11644
+Command terminated by signal 6
+5,0.04,0.04,0.00,11692
+Command terminated by signal 6
+5,0.05,0.04,0.01,11592
+Command terminated by signal 6
+5,0.05,0.05,0.00,11588
+Command terminated by signal 6
+5,0.06,0.05,0.00,11592
+Command terminated by signal 6
+5,0.06,0.05,0.00,11536
+Command terminated by signal 6
+5,0.06,0.05,0.00,11388
+Command terminated by signal 6
+5,0.05,0.04,0.00,11476
+Command terminated by signal 6
+5,0.06,0.04,0.01,11616
+Command terminated by signal 6
+5,0.05,0.04,0.01,11544

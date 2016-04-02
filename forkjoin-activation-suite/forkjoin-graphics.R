@@ -7,7 +7,7 @@ library(scales)
 #d <- read_csv("~/Dropbox/data-pull/forkjoin-run-3-3.csv")
 d <- read_csv("~/c/exchange/results/new/forkjoin_results.csv")
 # Drop some bad data
-d$activation.method <- factor(d$activation.method, levels = c("-1", "0", "1", "2", "3", "4", "5"), labels = c("Fixed", "Random", "Uniform", "Poisson-1", "Poisson-Poor", "Poisson-Rich", "Poisson-Middle"))
+d$activation.method <- factor(d$activation.method, levels = c("-1", "0", "1", "2", "3", "4", "5"), labels = c("Fixed", "Random", "Uniform", "Random w/shuffle", "Poisson-Poor", "Poisson-Rich", "Poisson-Middle"))
 d <- dplyr::filter(d, activation.method != "Poisson-1") # re-do this
 d <- dplyr::mutate(d, run = (row_number() - 1) %/% 100)
 
