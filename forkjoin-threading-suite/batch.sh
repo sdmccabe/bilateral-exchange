@@ -7,7 +7,7 @@ cd forkjoin-threading-suite
 
 echo "threads,shuffle,real,user,sys,memory" > ./activation-benchmark.csv
 
-declare -a parameters=(0 1 2 4 5 10 20 40 50 100 200 400 500 1000 2000 4000 5000)
+declare -a parameters=(2 4 5 10 20 40 50 100 200 400 500 1000 2000 4000 5000)
 for x in ${parameters[@]}
 do
 	for ((i=0; i<10; i++))
