@@ -12,7 +12,7 @@ d <- dplyr::filter(d, activation.method != "Poisson-1") # re-do this
 d <- dplyr::mutate(d, run = (row_number() - 1) %/% 100)
 
 
-interactions.plot <- ggplot(d, aes(x=time, y=interactions, group = run, color = factor(activation.method))) + 
+interactions.plot <- ggplot(d, aes(x=time, y=interactions, group = run, color = factor(activation.method), linetype = factor(activation.method))) + 
   #geom_point(alpha = 0.01) + 
   stat_summary(fun.y = "mean", geom = "line", size = 1, alpha = 1, aes(group = factor(activation.method))) + 
   scale_color_discrete(name="Activation Method") +
@@ -20,9 +20,10 @@ interactions.plot <- ggplot(d, aes(x=time, y=interactions, group = run, color = 
   xlab("Time") +
   ylab("Number of Interactions") +
   scale_y_continuous(labels = comma) +
+  scale_linetype_discrete(name="Activation Method") +
   ggtitle("Number of Interactions over Time")
 
-wealthmin.plot <- ggplot(d, aes(x=time, y=currentwealth.min, group = run, color = factor(activation.method))) + 
+wealthmin.plot <- ggplot(d, aes(x=time, y=currentwealth.min, group = run, color = factor(activation.method), linetype = factor(activation.method))) + 
   #geom_point(alpha = 0.01) + 
   stat_summary(fun.y = "mean", geom = "line", size = 1, alpha = 1, aes(group = factor(activation.method))) + 
   scale_color_discrete(name="Activation Method") +
@@ -30,19 +31,21 @@ wealthmin.plot <- ggplot(d, aes(x=time, y=currentwealth.min, group = run, color 
   xlab("Time") +
   ylab("Minimum Agent Wealth") +
   scale_y_continuous(labels = comma) +
+  scale_linetype_discrete(name="Activation Method") +
   ggtitle("Minimum Agent Wealth over Time")
 
-wealthmax.plot <- ggplot(d, aes(x=time, y=currentwealth.max, group = run, color = factor(activation.method))) + 
+wealthmax.plot <- ggplot(d, aes(x=time, y=currentwealth.max, group = run, color = factor(activation.method), linetype = factor(activation.method))) + 
   #geom_point(alpha = 0.01) + 
   stat_summary(fun.y = "mean", geom = "line", size = 1, alpha = 1, aes(group = factor(activation.method))) + 
   scale_color_discrete(name="Activation Method") +
   theme_classic(base_family = "serif", base_size = 12) +
   xlab("Time") +
   ylab("Maximum Agent Wealth") +
-  scale_y_continuous(labels = comma)+ 
+  scale_y_continuous(labels = comma) +
+  scale_linetype_discrete(name="Activation Method") +
   ggtitle("Max Agent Wealth over Time")
 
-wealthavg.plot <- ggplot(d, aes(x=time, y=currentwealth.avg, group = run, color = factor(activation.method))) + 
+wealthavg.plot <- ggplot(d, aes(x=time, y=currentwealth.avg, group = run, color = factor(activation.method), linetype = factor(activation.method))) + 
   #geom_point(alpha = 0.01) + 
   stat_summary(fun.y = "mean", geom = "line", size = 1, alpha = 1, aes(group = factor(activation.method))) + 
   scale_color_discrete(name="Activation Method") +
@@ -50,9 +53,10 @@ wealthavg.plot <- ggplot(d, aes(x=time, y=currentwealth.avg, group = run, color 
   xlab("Time") +
   ylab("Average Agent Wealth") +
   scale_y_continuous(labels = comma) +
+  scale_linetype_discrete(name="Activation Method") +
   ggtitle("Mean Agent Wealth over Time")
 
-wealthsd.plot <- ggplot(d, aes(x=time, y=currentwealth.sd, group = run, color = factor(activation.method))) + 
+wealthsd.plot <- ggplot(d, aes(x=time, y=currentwealth.sd, group = run, color = factor(activation.method), linetype = factor(activation.method))) + 
   #geom_point(alpha = 0.01) + 
   stat_summary(fun.y = "mean", geom = "line", size = 1, alpha = 1, aes(group = factor(activation.method))) + 
   scale_color_discrete(name="Activation Method") +
@@ -60,9 +64,10 @@ wealthsd.plot <- ggplot(d, aes(x=time, y=currentwealth.sd, group = run, color = 
   xlab("Time") +
   ylab("S. D. of Agent Wealth") +
   scale_y_continuous(labels = comma) +
+  scale_linetype_discrete(name="Activation Method") +
   ggtitle("Standard Deviation of Agent Wealth over Time")
 
-utilitymin.plot <- ggplot(d, aes(x=time, y=utility.min, group = run, color = factor(activation.method))) + 
+utilitymin.plot <- ggplot(d, aes(x=time, y=utility.min, group = run, color = factor(activation.method), linetype = factor(activation.method))) + 
   #geom_point(alpha = 0.01) + 
   stat_summary(fun.y = "mean", geom = "line", size = 1, alpha = 1, aes(group = factor(activation.method))) + 
   scale_color_discrete(name="Activation Method") +
@@ -70,9 +75,10 @@ utilitymin.plot <- ggplot(d, aes(x=time, y=utility.min, group = run, color = fac
   xlab("Time") +
   ylab("Minimum Agent Utility") +
   scale_y_continuous(labels = comma) +
+  scale_linetype_discrete(name="Activation Method") +
   ggtitle("Minimum Agent Utility over Time")
 
-utilitymax.plot <- ggplot(d, aes(x=time, y=utility.max, group = run, color = factor(activation.method))) + 
+utilitymax.plot <- ggplot(d, aes(x=time, y=utility.max, group = run, color = factor(activation.method), linetype = factor(activation.method))) + 
   #geom_point(alpha = 0.01) + 
   stat_summary(fun.y = "mean", geom = "line", size = 1, alpha = 1, aes(group = factor(activation.method))) + 
   scale_color_discrete(name="Activation Method") +
@@ -80,9 +86,10 @@ utilitymax.plot <- ggplot(d, aes(x=time, y=utility.max, group = run, color = fac
   xlab("Time") +
   ylab("Maximum Agent Utility") +
   scale_y_continuous(labels = comma) + 
+  scale_linetype_discrete(name="Activation Method") +
   ggtitle("Maximum Agent Utility over Time")
 
-utilityavg.plot <- ggplot(d, aes(x=time, y=utility.avg, group = run, color = factor(activation.method))) + 
+utilityavg.plot <- ggplot(d, aes(x=time, y=utility.avg, group = run, color = factor(activation.method), linetype = factor(activation.method))) + 
   #geom_point(alpha = 0.01) + 
   stat_summary(fun.y = "mean", geom = "line", size = 1, alpha = 1, aes(group = factor(activation.method))) + 
   scale_color_discrete(name="Activation Method") +
@@ -90,9 +97,10 @@ utilityavg.plot <- ggplot(d, aes(x=time, y=utility.avg, group = run, color = fac
   xlab("Time") +
   ylab("Average Agent Utility") +
   scale_y_continuous(labels = comma) + 
+  scale_linetype_discrete(name="Activation Method") +
   ggtitle("Average Agent Utility over Time")
 
-utilitysd.plot <- ggplot(d, aes(x=time, y=utility.sd, group = run, color = factor(activation.method))) + 
+utilitysd.plot <- ggplot(d, aes(x=time, y=utility.sd, group = run, color = factor(activation.method), linetype = factor(activation.method))) + 
   #geom_point(alpha = 0.01) + 
   stat_summary(fun.y = "mean", geom = "line", size = 1, alpha = 1, aes(group = factor(activation.method))) + 
   scale_color_discrete(name="Activation Method") +
@@ -100,9 +108,10 @@ utilitysd.plot <- ggplot(d, aes(x=time, y=utility.sd, group = run, color = facto
   xlab("Time") +
   ylab("S. D. of Agent Utility") +
   scale_y_continuous(labels = comma) + 
+  scale_linetype_discrete(name="Activation Method") +
   ggtitle("Standard Deviation of Agent Utility Over Time")
 
-l2sdmrs.plot <- ggplot(d, aes(x=time, y=L2.sd.MRS, group = run, color = factor(activation.method))) + 
+l2sdmrs.plot <- ggplot(d, aes(x=time, y=L2.sd.MRS, group = run, color = factor(activation.method), linetype = factor(activation.method))) + 
   #geom_point(alpha = 0.01) + 
   stat_summary(fun.y = "mean", geom = "line", size = 1, alpha = 1, aes(group = factor(activation.method))) + 
   scale_color_discrete(name="Activation Method") +
@@ -110,9 +119,10 @@ l2sdmrs.plot <- ggplot(d, aes(x=time, y=L2.sd.MRS, group = run, color = factor(a
   xlab("Time") +
   ylab("L2 S. D. of Agent MRSes") +
   scale_y_continuous(labels = comma) + 
+  scale_linetype_discrete(name="Activation Method") +
   ggtitle("Standard Deviation of Agent MRSes over Time")
 
-maxsdmrs.plot <- ggplot(d, aes(x=time, y=max.sd.MRS, group = run, color = factor(activation.method))) + 
+maxsdmrs.plot <- ggplot(d, aes(x=time, y=max.sd.MRS, group = run, color = factor(activation.method), linetype = factor(activation.method))) + 
   #geom_point(alpha = 0.01) + 
   stat_summary(fun.y = "mean", geom = "line", size = 1, alpha = 1, aes(group = factor(activation.method))) + 
   scale_color_discrete(name="Activation Method") +
@@ -120,6 +130,7 @@ maxsdmrs.plot <- ggplot(d, aes(x=time, y=max.sd.MRS, group = run, color = factor
   xlab("Time") +
   ylab("Max S. D. of Agent MRSes") +
   scale_y_continuous(labels = comma) +
+  scale_linetype_discrete(name="Activation Method") +
   ggtitle("Standard Deviation of Agent MRSes over Time")
 
 

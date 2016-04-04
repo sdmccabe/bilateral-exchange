@@ -8,7 +8,8 @@ Extended by Stefan McCabe
 */
 
 // The key mechanism here - the use of thread_local mt19337 pointers - 
-// was suggested on Stack Exchange.  TODO: Provide the link.
+// was suggested on Stack Exchange.
+// https://stackoverflow.com/questions/21237905/how-do-i-generate-thread-safe-uniform-random-numbers
 
 #include "./RNG.h"
 #include <memory>
