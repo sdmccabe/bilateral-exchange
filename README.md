@@ -4,7 +4,7 @@ This is an agent-based model (ABM) of economic exchange, originally presented in
 
 Dependencies:
 
-- GCC 5+
+- GCC (only tested on GCC 5+)
 - Intel Threading Building Blocks
 - libconfig++
 
