@@ -6,13 +6,10 @@ TARGET = main
 all: $(TARGET)
 
 $(TARGET): $(TARGET).cpp
-	$(CC) $(CFLAGS) -O2 -o exchange RNG.cpp $(TARGET).cpp -pthread -ltbb -lconfig++ 
-#if I need to use boost libraries, I need to fix the link with:
-#-I/usr/local/gcc/include -L/usr/local/gcc/lib -lboost_regex
-# install_name_tool -change libboost_regex.dylib /usr/local/gcc/lib/libboost_regex.dylib exchange
+	$(CC) $(CFLAGS) -O2 -o exchange RNG.cpp $(TARGET).cpp  -ltbb -lconfig++ 
 
 debug:
-	$(CC) $(CFLAGS) -O0 -g -o exchange RNG.cpp $(TARGET).cpp -pthread -ltbb -lconfig++ -pg
+	$(CC) $(CFLAGS) -O0 -g -o exchange RNG.cpp $(TARGET).cpp -ltbb -lconfig++ -pg
 
 clean: 
 	$(RM) exchange

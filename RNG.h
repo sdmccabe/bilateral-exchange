@@ -11,10 +11,7 @@ Extended by Stefan McCabe
 #define RNG_H_
 #endif  // RNG_H_
 
-#include <memory>
 #include <random>
-#include <string>
-#include <vector>
 #include <fstream>
 
 class RNG {

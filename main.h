@@ -14,13 +14,8 @@ Extended by Stefan McCabe
 #include "./RNG.h"
 #include "tbb/tbb.h"
 #include "tbb/concurrent_vector.h"
-#include <map>
-#include <memory>
 #include <mutex>
-#include <random>
-#include <string>
-#include <vector>
-#include <fstream>
+
 
 // Global variables specifying model parameters. See parameters.cfg for documentation.
 bool UseRandomSeed;

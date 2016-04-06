@@ -12,12 +12,7 @@ Extended by Stefan McCabe
 // https://stackoverflow.com/questions/21237905/how-do-i-generate-thread-safe-uniform-random-numbers
 
 #include "./RNG.h"
-#include <memory>
-#include <random>
-#include <string>
-#include <vector>
 #include <thread>
-#include <fstream>
 #define ELPP_THREAD_SAFE
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wundef"

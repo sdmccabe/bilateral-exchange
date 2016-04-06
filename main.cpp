@@ -12,19 +12,7 @@ Extended by Stefan McCabe
 #include "./main.h"
 #include "tbb/tbb.h"
 #include "tbb/concurrent_vector.h"
-#include <assert.h>
-#include <algorithm>
-#include <cmath>
-#include <fstream>
-#include <iostream>
 #include <libconfig.h++>
-#include <map>
-#include <memory>
-#include <mutex>
-#include <random>
-#include <string>
-#include <thread>
-#include <vector>
 #define ELPP_THREAD_SAFE
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wundef"
@@ -33,7 +21,6 @@ Extended by Stefan McCabe
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wctor-dtor-privacy"
 #include "./easylogging++.h"
-#include "./ctpl_stl.h"
 #pragma GCC diagnostic pop
 
 
